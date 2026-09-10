@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 **AppSolar V2** — CRM para empresas de energia solar. Gerencia o pipeline completo: leads → orçamentos → contratos → visitas técnicas → instalação. Dois roles de usuário com áreas separadas: **Admin** e **Consultor**.
 
-Stack: Laravel 12 · PHP 8.3 · Inertia.js v2 · React 18 · TypeScript · MUI v7 · Vite 6 · MySQL 8.4
+Stack: Laravel 13 · PHP 8.3 · Inertia.js v2 · React 18 · TypeScript · MUI v7 · Vite 6 · MySQL 8.4
 
 ## Development commands
 
@@ -166,6 +166,7 @@ Todas em `database/migrations/`. Seeders principais:
 Campos críticos do schema:
 - `orcamentos.status` enum: `novo | aprovando | aprovado | aprovacao_reprovada | instalando | finalizado`
 - `orcamentos.grupo_tarifario` enum: `B1 | B2 | B3 | A4 | A3a | A3 | A2 | A1`
+- `orcamentos.modalidade_tarifaria` enum: `convencional | THS_VERDE | THS_AZUL` — só relevante pro Grupo A (Horo-Sazonal Verde/Azul)
 - `orcamento_infos.bloquear_edicao` boolean — impede edição pelo consultor quando true
 - `users.tipo` enum: `admin | consultor`
 
@@ -314,6 +315,7 @@ Acesso: `usePage<PageProps>().props`
 **Build limpo.** Todos os módulos do Admin e Consultor estão implementados.
 
 ### Pendências conhecidas
-- `Admin/Produtos/Inversores`, `Paineis`, `Trafos` — controllers e pages prontos, mas **sem rotas no `web.php`** e **sem entrada no sidebar**
-- **PDF do orçamento** — rota `consultor.orcamentos.pdf` existe, botão na UI existe, mas sem implementação no controller e sem biblioteca PDF instalada
+- `Admin/Produtos/Inversores`, `Paineis`, `Trafos` — controllers e pages prontos, mas **sem rotas no `web.php`** e **sem entrada no sidebar** (`navConfig.tsx` só linka Catálogo, Kits, Categorias, Marcas)
+- **PDF do orçamento** — rota `consultor.orcamentos.pdf` existe em `web.php` apontando para `OrcamentosController::pdf`, mas **esse método não existe** no controller (rota quebrada — 500 se acessada). O botão "PDF" existe em `Consultor/Orcamentos/Show.tsx` mas **sem `onClick`** (não dispara nada). Nenhuma lib de PDF está instalada (`composer.json` não tem `barryvdh/laravel-dompdf` nem similar)
+- **PDF do contrato** — rota `consultor.contratos.pdf` e `ContratosController::pdf()` existem, mas o método só re-renderiza a página `Consultor/Contratos/Show` via Inertia — não gera PDF de fato
 - **Admin Clientes Form** — sem CEP lookup (o `Consultor/Clientes/Form.tsx` tem; o Admin não)

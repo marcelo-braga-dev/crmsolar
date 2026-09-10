@@ -6,7 +6,7 @@ CRM para empresas de energia solar. Gerencia o pipeline completo de vendas: **le
 
 | Camada     | Tecnologia                                      |
 |------------|-------------------------------------------------|
-| Backend    | Laravel 12 · PHP 8.3                            |
+| Backend    | Laravel 13 · PHP 8.3                            |
 | Frontend   | React 18 · TypeScript · Inertia.js v2           |
 | UI         | MUI v7 · Recharts                               |
 | Build      | Vite 6                                          |
@@ -127,6 +127,12 @@ database/
   migrations/          — 34 migrations
   seeders/             — dados de estrutura + dados de teste
 ```
+
+## Limitações conhecidas
+
+- **Catálogo de Inversores/Painéis/Trafos (Admin)** — telas prontas, mas ainda sem rota registrada e sem entrada no menu lateral
+- **PDF de orçamento e de contrato** — ainda não geram PDF de fato (sem biblioteca de PDF instalada); os botões/rotas existem na interface mas não estão funcionais
+- **Cadastro de Clientes (Admin)** — sem busca automática de CEP (o formulário do Consultor já tem)
 
 ## Comandos úteis
 
