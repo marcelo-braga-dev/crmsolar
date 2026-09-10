@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Orcamento;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class OrcamentosController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $orcamentos = Orcamento::query()
+            ->with([
+                'consultor:id,name',
+                'cliente:id,nome,razao_social,tipo_pessoa',
+                'cidade:id,cidade,estado',
+            ])
+            ->when($request->search, fn ($q, $s) =>
+                $q->where(fn ($q) => $q
+                    ->where('id', 'like', "%{$s}%")
+                    ->orWhereHas('cliente', fn ($q) => $q
+                        ->where('nome', 'like', "%{$s}%")
+                        ->orWhere('razao_social', 'like', "%{$s}%"))))
+            ->when($request->status, fn ($q, $s) => $q->where('status', $s))
+            ->when($request->consultor_id, fn ($q, $id) => $q->where('consultor_id', $id))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
+
+        return Inertia::render('Admin/Orcamentos/Index', [
+            'orcamentos' => $orcamentos,
+            'filters' => $request->only(['search', 'status', 'consultor_id']),
+            'consultores' => User::where('tipo', '!=', 'admin')
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'stats' => [
+                'total' => Orcamento::count(),
+                'novos' => Orcamento::where('status', 'novo')->count(),
+                'aprovados' => Orcamento::where('status', 'aprovado')->count(),
+                'instalando' => Orcamento::where('status', 'instalando')->count(),
+                'valor_total' => (float) Orcamento::whereIn('status', ['aprovado', 'instalando', 'finalizado'])->sum('preco_total'),
+            ],
+        ]);
+    }
+
+    public function show(Orcamento $orcamento): Response
+    {
+        $orcamento->load([
+            'consultor:id,name,email',
+            'cliente',
+            'cidade:id,cidade,estado',
+            'info',
+            'itens',
+            'historicos.usuario:id,name',
+            'aprovacao',
+        ]);
+
+        return Inertia::render('Admin/Orcamentos/Show', [
+            'orcamento' => $orcamento,
+        ]);
+    }
+
+    public function edit(Orcamento $orcamento): Response
+    {
+        $orcamento->load(['cliente', 'cidade', 'info', 'itens']);
+
+        return Inertia::render('Admin/Orcamentos/Edit', [
+            'orcamento' => $orcamento,
+        ]);
+    }
+
+    public function update(Request $request, Orcamento $orcamento): \Illuminate\Http\RedirectResponse
+    {
+        $data = $request->validate([
+            'status' => 'required|in:novo,aprovando,aprovado,aprovacao_reprovada,instalando,finalizado',
+            'anotacoes' => 'nullable|string',
+        ]);
+
+        $orcamento->update($data);
+
+        return back()->with('success', 'Orçamento atualizado com sucesso.');
+    }
+}
