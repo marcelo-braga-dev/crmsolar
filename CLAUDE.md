@@ -344,7 +344,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 
 ### Testes
 
-**309 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**316 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -359,6 +359,9 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 - **Integração Aldo** — tela mostra que está indisponível e o botão fica desabilitado (`AldoController::DISPONIVEL`)
 - **Fluxos Convencional/Demanda** — exigem e gravam `grupo_tarifario` (B1/B2/B3 ou A4–A1)
 - **Transições de status** — `Orcamento::TRANSICOES` + `podeIrPara()`; Admin só vê/aplica destinos permitidos; Consultor só envia para aprovação a partir de `novo`/`aprovacao_reprovada`
+- **Validação dos fluxos de orçamento** — FormRequests em `app/Http/Requests/Consultor/Dimensionamento/` (base `DimensionamentoRequest`: a mesma classe valida cálculo e `*.store`, que acrescenta `kit_id`/anotações). THS Azul agora é exigido também ao salvar
+- **Fluxos Convencional/Demanda** estendem `BaseGrupoController` (usam `mapearKits` e `salvarOrcamento`)
+- **Precificação** carrega as margens uma vez por requisição (antes 3 queries por kit); busca de produtos exige 2+ caracteres
 - **Exclusões com vínculo** — fornecedor com histórico de integração é bloqueado; erro de FK em qualquer DELETE vira aviso em vez de 500 (`bootstrap/app.php`)
 
 ### Pendências conhecidas (funcionalidade)
@@ -368,10 +371,6 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 ### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live
 
 #### 🟡 Qualidade
-- Regras de validação duplicadas (~7 controllers × `calcular` + `store`) → extrair FormRequests por grupo.
-- `Dimensionamento/{Convencional,Demanda}Controller` duplicam `BaseGrupoController::salvarOrcamento`.
-- `PrecificacaoService::calcular` faz 3 queries por kit, chamado em loop por `mapearKits` → carregar margens uma vez.
-- `OrcamentoItensController::buscarProdutos` — `LIKE %q%` sem mínimo de caracteres.
 - Sem log de auditoria para mudanças de preço, margem e status.
 
 #### 🔵 Melhorias recomendadas
