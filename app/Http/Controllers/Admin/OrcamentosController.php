@@ -63,6 +63,7 @@ class OrcamentosController extends Controller
 
         return Inertia::render('Admin/Orcamentos/Show', [
             'orcamento' => $orcamento,
+            'transicoes' => Orcamento::TRANSICOES[$orcamento->status] ?? [],
         ]);
     }
 
@@ -74,6 +75,10 @@ class OrcamentosController extends Controller
         ]);
 
         $statusAnterior = $orcamento->status;
+
+        if ($data['status'] !== $statusAnterior && ! $orcamento->podeIrPara($data['status'])) {
+            return back()->withErrors(['status' => "Não é possível mudar de \"{$statusAnterior}\" para \"{$data['status']}\"."]);
+        }
 
         $orcamento->update($data);
 

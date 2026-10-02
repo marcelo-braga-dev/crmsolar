@@ -49,8 +49,7 @@ interface OrcamentoItem {
 
 interface Historico {
     id: number;
-    status_anterior?: string;
-    status_novo?: string;
+    status: OrcamentoStatus;
     mensagem?: string;
     created_at: string;
     usuario?: { id: number; name: string };
@@ -80,7 +79,16 @@ interface OrcamentoFull {
     historicos: Historico[];
 }
 
-interface Props extends PageProps { orcamento: OrcamentoFull }
+interface Props extends PageProps { orcamento: OrcamentoFull; transicoes: OrcamentoStatus[] }
+
+const STATUS_LABEL: Record<OrcamentoStatus, string> = {
+    novo: 'Novo',
+    aprovando: 'Para Aprovação',
+    aprovado: 'Aprovado',
+    aprovacao_reprovada: 'Reprovado',
+    instalando: 'Em Instalação',
+    finalizado: 'Finalizado',
+};
 
 function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
     return (
@@ -91,12 +99,12 @@ function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
     );
 }
 
-export default function OrcamentosShow({ orcamento }: Props) {
+export default function OrcamentosShow({ orcamento, transicoes }: Props) {
     const nome = orcamento.cliente?.tipo_pessoa === 'pj'
         ? orcamento.cliente?.razao_social
         : orcamento.cliente?.nome;
 
-    const { data, setData, put, processing } = useForm({
+    const { data, setData, put, processing, errors } = useForm({
         status: orcamento.status,
         anotacoes: orcamento.anotacoes ?? '',
     });
@@ -251,17 +259,15 @@ export default function OrcamentosShow({ orcamento }: Props) {
                                         </Box>
                                         <Box sx={{ flexGrow: 1 }}>
                                             <Typography variant="body2">
-                                                {h.mensagem ?? `Status alterado para ${h.status_novo}`}
+                                                {h.mensagem ?? `Status alterado para ${STATUS_LABEL[h.status]}`}
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 {h.usuario?.name ?? 'Sistema'} · {new Date(h.created_at).toLocaleString('pt-BR')}
                                             </Typography>
                                         </Box>
-                                        {h.status_novo && (
-                                            <Box sx={{ flexShrink: 0 }}>
-                                                <Chip label={h.status_novo} size="small" variant="outlined" />
-                                            </Box>
-                                        )}
+                                        <Box sx={{ flexShrink: 0 }}>
+                                            <Chip label={STATUS_LABEL[h.status]} size="small" variant="outlined" />
+                                        </Box>
                                     </Box>
                                 ))}
                             </CardContent>
@@ -280,13 +286,12 @@ export default function OrcamentosShow({ orcamento }: Props) {
                                 select label="Status" fullWidth
                                 value={data.status}
                                 onChange={(e) => setData('status', e.target.value as OrcamentoStatus)}
+                                error={!!errors.status}
+                                helperText={errors.status ?? (transicoes.length === 0 ? 'Status final — não pode ser alterado' : undefined)}
                             >
-                                <MenuItem value="novo">Novo</MenuItem>
-                                <MenuItem value="aprovando">Para Aprovação</MenuItem>
-                                <MenuItem value="aprovado">Aprovado</MenuItem>
-                                <MenuItem value="aprovacao_reprovada">Reprovado</MenuItem>
-                                <MenuItem value="instalando">Em Instalação</MenuItem>
-                                <MenuItem value="finalizado">Finalizado</MenuItem>
+                                {[orcamento.status, ...transicoes].map((s) => (
+                                    <MenuItem key={s} value={s}>{STATUS_LABEL[s]}</MenuItem>
+                                ))}
                             </TextField>
                             <TextField
                                 label="Anotações" fullWidth multiline rows={4}

@@ -26,6 +26,24 @@ class Orcamento extends Model
         'preco_total' => 'decimal:2',
     ];
 
+    /**
+     * Transições de status permitidas (de → para). Fonte única para Admin e Consultor.
+     * Inclui um passo de volta para correções (ex.: aprovado → aprovando).
+     */
+    public const TRANSICOES = [
+        'novo' => ['aprovando'],
+        'aprovando' => ['aprovado', 'aprovacao_reprovada', 'novo'],
+        'aprovacao_reprovada' => ['aprovando', 'novo'],
+        'aprovado' => ['instalando', 'aprovando'],
+        'instalando' => ['finalizado', 'aprovado'],
+        'finalizado' => [],
+    ];
+
+    public function podeIrPara(string $status): bool
+    {
+        return in_array($status, self::TRANSICOES[$this->status] ?? [], true);
+    }
+
     protected static function boot(): void
     {
         parent::boot();
