@@ -21,7 +21,7 @@ import { PageProps, PaginatedData } from '@/types';
 
 interface Historico {
     id: number;
-    tipo: 'aldo' | 'edeltec' | 'excel' | 'manual';
+    tipo: 'edeltec' | 'excel' | 'manual';
     status: 'iniciado' | 'concluido' | 'erro';
     itens_importados: number;
     itens_atualizados: number;
@@ -44,7 +44,6 @@ const statusConfig = {
 };
 
 const tipoConfig = {
-    aldo: { label: 'Aldo', color: 'primary' as const },
     edeltec: { label: 'Edeltec', color: 'secondary' as const },
     excel: { label: 'Excel', color: 'default' as const },
     manual: { label: 'Manual', color: 'default' as const },
@@ -81,7 +80,6 @@ export default function HistoricoIndex({ historicos, filters }: Props) {
                         onChange={(e) => { setTipo(e.target.value); applyFilters({ tipo: e.target.value }); }}
                         sx={{ minWidth: 150 }}>
                         <MenuItem value="">Todos</MenuItem>
-                        <MenuItem value="aldo">Aldo</MenuItem>
                         <MenuItem value="edeltec">Edeltec</MenuItem>
                         <MenuItem value="excel">Excel</MenuItem>
                         <MenuItem value="manual">Manual</MenuItem>

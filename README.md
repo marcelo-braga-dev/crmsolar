@@ -70,7 +70,7 @@ npm run build                   # produção
 - **Usuários** — gestão de admins e consultores
 - **Financeiro** — comissões e faturamento
 - **Fornecedores** — cadastro de fornecedores
-- **Integrações** — sincronização de catálogo Aldo e Edeltec, histórico de execuções
+- **Integrações** — sincronização de catálogo Edeltec, histórico de execuções
 - **Configurações** — bancos, concessionárias, parâmetros de dimensionamento, sistema
 
 ### Área Consultor
@@ -135,7 +135,6 @@ database/
 ## Limitações conhecidas
 
 - **Cadastro de usuários** — não há cadastro público; admins e consultores são criados em Admin → Usuários
-- **Integração Aldo** — indisponível até a especificação do feed do distribuidor (a tela informa isso)
 
 ## Testes
 

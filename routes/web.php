@@ -9,7 +9,6 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Financeiro\ComissoesController;
 use App\Http\Controllers\Admin\Financeiro\FaturamentoController;
 use App\Http\Controllers\Admin\FornecedoresController;
-use App\Http\Controllers\Admin\Integracoes\AldoController;
 use App\Http\Controllers\Admin\Integracoes\EdeltecController;
 use App\Http\Controllers\Admin\Integracoes\HistoricoController;
 use App\Http\Controllers\Admin\LeadsController;
@@ -105,8 +104,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->parameters(['fornecedores' => 'fornecedor']);
 
     Route::prefix('integracoes')->name('integracoes.')->group(function () {
-        Route::get('aldo', [AldoController::class, 'index'])->name('aldo');
-        Route::post('aldo/integrar', [AldoController::class, 'integrar'])->name('aldo.integrar');
         Route::get('edeltec', [EdeltecController::class, 'index'])->name('edeltec');
         Route::post('edeltec/integrar', [EdeltecController::class, 'integrar'])->name('edeltec.integrar');
         Route::get('historico', [HistoricoController::class, 'index'])->name('historico');

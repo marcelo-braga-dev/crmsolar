@@ -26,7 +26,7 @@ class ControleDeAcessoTest extends TestCase
             'admin.produtos.paineis.index', 'admin.produtos.paineis.create', 'admin.produtos.trafos.index', 'admin.produtos.trafos.create', 'admin.usuarios.consultores.index', 'admin.usuarios.consultores.create',
             'admin.usuarios.admins.index', 'admin.usuarios.admins.create', 'admin.financeiro.comissoes.index',
             'admin.financeiro.faturamento', 'admin.precificacao.index', 'admin.fornecedores.index',
-            'admin.fornecedores.create', 'admin.integracoes.aldo', 'admin.integracoes.edeltec',
+            'admin.fornecedores.create', 'admin.integracoes.edeltec',
             'admin.integracoes.historico', 'admin.configuracoes.bancos.index',
             'admin.configuracoes.concessionarias.index', 'admin.configuracoes.dimensionamento',
             'admin.configuracoes.sistema', 'admin.perfil.edit', 'admin.perfil.senha',

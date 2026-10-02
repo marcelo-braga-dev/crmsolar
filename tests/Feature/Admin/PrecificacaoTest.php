@@ -15,7 +15,7 @@ class PrecificacaoTest extends TestCase
 
     public function test_index_lista_os_27_estados_e_fornecedores_com_margem(): void
     {
-        $fornecedor = $this->fornecedor(['nome' => 'Aldo']);
+        $fornecedor = $this->fornecedor(['nome' => 'Edeltec']);
         MargemFornecedor::create(['fornecedor_id' => $fornecedor->id, 'margem' => 3]);
         MargemEstado::create(['estado' => 'CE', 'nome_estado' => 'Ceará', 'margem' => 2.5]);
 

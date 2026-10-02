@@ -41,7 +41,6 @@ class DadosTesteSeeder extends Seeder
 
         // ─── Fornecedores ─────────────────────────────────────────────
         $fornecedoresData = [
-            ['nome' => 'Aldo Solar', 'cnpj' => '07.032.722/0001-77', 'email' => 'comercial@aldo.com.br', 'ativo' => true],
             ['nome' => 'Edeltec', 'cnpj' => '10.543.185/0001-95', 'email' => 'vendas@edeltec.com.br', 'ativo' => true],
             ['nome' => 'Solar Conecta', 'cnpj' => '28.182.545/0001-01', 'email' => 'contato@solarconecta.com.br', 'ativo' => true],
             ['nome' => 'Renovigi', 'cnpj' => '24.879.032/0001-44', 'email' => 'comercial@renovigi.com.br', 'ativo' => true],
@@ -51,29 +50,20 @@ class DadosTesteSeeder extends Seeder
         }
         $this->command->info('Fornecedores: OK');
 
-        $aldoId = Fornecedor::where('nome', 'like', '%Aldo%')->value('id');
         $edeltecId = Fornecedor::where('nome', 'like', '%Edeltec%')->value('id');
         $canadianId = Marca::where('nome', 'like', '%Canadian%')->value('id');
         $jaId = Marca::where('nome', 'like', '%JA%')->value('id');
         $deyeId = Marca::where('nome', 'like', '%Deye%')->value('id');
         $growattId = Marca::where('nome', 'like', '%Growatt%')->value('id');
         $wegId = Marca::where('nome', 'like', '%WEG%')->value('id');
-        $bydId = Marca::where('nome', 'like', '%BYD%')->value('id');
 
         $painelCat = CategoriaProduto::where('slug', 'painel-solar')->value('id');
         $inversorCat = CategoriaProduto::where('slug', 'inversor-solar')->value('id');
-        $bateriasCat = CategoriaProduto::where('slug', 'bateria-armazenamento')->value('id');
         $bombaCat = CategoriaProduto::where('slug', 'bomba-solar')->value('id');
 
         // ─── Produtos ─────────────────────────────────────────────────
         $produtos = [
             // Painéis
-            ['nome' => 'Canadian Solar CS6R-410MS', 'categoria_id' => $painelCat, 'marca_id' => $canadianId, 'fornecedor_id' => $aldoId,
-                'modelo' => 'CS6R-410MS', 'sku' => 'PNL-CS-410', 'potencia' => 410, 'unidade_potencia' => 'Wp',
-                'preco_custo' => 580.00, 'unidade' => 'un', 'garantia' => '12 anos produto / 25 anos desempenho', 'ativo' => true, 'ativo_fornecedor' => true],
-            ['nome' => 'Canadian Solar CS6R-460MS', 'categoria_id' => $painelCat, 'marca_id' => $canadianId, 'fornecedor_id' => $aldoId,
-                'modelo' => 'CS6R-460MS', 'sku' => 'PNL-CS-460', 'potencia' => 460, 'unidade_potencia' => 'Wp',
-                'preco_custo' => 650.00, 'unidade' => 'un', 'garantia' => '12 anos produto / 25 anos desempenho', 'ativo' => true, 'ativo_fornecedor' => true],
             ['nome' => 'JA Solar JAM54S30-415', 'categoria_id' => $painelCat, 'marca_id' => $jaId, 'fornecedor_id' => $edeltecId,
                 'modelo' => 'JAM54S30-415', 'sku' => 'PNL-JA-415', 'potencia' => 415, 'unidade_potencia' => 'Wp',
                 'preco_custo' => 590.00, 'unidade' => 'un', 'garantia' => '12 anos produto / 25 anos desempenho', 'ativo' => true, 'ativo_fornecedor' => true],
@@ -81,25 +71,12 @@ class DadosTesteSeeder extends Seeder
                 'modelo' => 'JAM72S30-540', 'sku' => 'PNL-JA-540', 'potencia' => 540, 'unidade_potencia' => 'Wp',
                 'preco_custo' => 780.00, 'unidade' => 'un', 'garantia' => '12 anos produto / 25 anos desempenho', 'ativo' => true, 'ativo_fornecedor' => true],
             // Inversores
-            ['nome' => 'Deye SUN-5K-G05', 'categoria_id' => $inversorCat, 'marca_id' => $deyeId, 'fornecedor_id' => $aldoId,
-                'modelo' => 'SUN-5K-G05', 'sku' => 'INV-DY-5K', 'potencia' => 5, 'unidade_potencia' => 'kW',
-                'tensao' => 220, 'preco_custo' => 2850.00, 'unidade' => 'un', 'garantia' => '5 anos', 'ativo' => true, 'ativo_fornecedor' => true],
-            ['nome' => 'Deye SUN-8K-SG03LP1', 'categoria_id' => $inversorCat, 'marca_id' => $deyeId, 'fornecedor_id' => $aldoId,
-                'modelo' => 'SUN-8K-SG03LP1', 'sku' => 'INV-DY-8K', 'potencia' => 8, 'unidade_potencia' => 'kW',
-                'tensao' => 220, 'preco_custo' => 4200.00, 'unidade' => 'un', 'garantia' => '5 anos', 'ativo' => true, 'ativo_fornecedor' => true],
             ['nome' => 'Growatt MIN 4200TL-XH', 'categoria_id' => $inversorCat, 'marca_id' => $growattId, 'fornecedor_id' => $edeltecId,
                 'modelo' => 'MIN 4200TL-XH', 'sku' => 'INV-GR-4K2', 'potencia' => 4.2, 'unidade_potencia' => 'kW',
                 'tensao' => 220, 'preco_custo' => 2400.00, 'unidade' => 'un', 'garantia' => '5 anos', 'ativo' => true, 'ativo_fornecedor' => true],
             ['nome' => 'WEG SIW300H010', 'categoria_id' => $inversorCat, 'marca_id' => $wegId, 'fornecedor_id' => $edeltecId,
                 'modelo' => 'SIW300H010', 'sku' => 'INV-WEG-10K', 'potencia' => 10, 'unidade_potencia' => 'kW',
                 'tensao' => 220, 'preco_custo' => 6800.00, 'unidade' => 'un', 'garantia' => '5 anos', 'ativo' => true, 'ativo_fornecedor' => true],
-            // Baterias
-            ['nome' => 'BYD Battery-Box Premium HVS 5.1', 'categoria_id' => $bateriasCat, 'marca_id' => $bydId, 'fornecedor_id' => $aldoId,
-                'modelo' => 'HVS 5.1', 'sku' => 'BAT-BYD-5K', 'potencia' => 5.1, 'unidade_potencia' => 'kWh',
-                'preco_custo' => 14500.00, 'unidade' => 'un', 'garantia' => '10 anos', 'ativo' => true, 'ativo_fornecedor' => true],
-            ['nome' => 'BYD Battery-Box Premium HVS 10.2', 'categoria_id' => $bateriasCat, 'marca_id' => $bydId, 'fornecedor_id' => $aldoId,
-                'modelo' => 'HVS 10.2', 'sku' => 'BAT-BYD-10K', 'potencia' => 10.2, 'unidade_potencia' => 'kWh',
-                'preco_custo' => 28000.00, 'unidade' => 'un', 'garantia' => '10 anos', 'ativo' => true, 'ativo_fornecedor' => true],
         ];
 
         foreach ($produtos as $p) {
@@ -166,7 +143,6 @@ class DadosTesteSeeder extends Seeder
         $this->command->info('Precificação: OK');
 
         // ─── Kits ─────────────────────────────────────────────────────
-        $aldo = Fornecedor::where('nome', 'like', '%Aldo%')->first();
         $edeltec = Fornecedor::where('nome', 'like', '%Edeltec%')->first();
         $eixo_laje = Estrutura::where('nome', 'like', '%Laje%')->orWhere('nome', 'like', '%Cerâmico%')->first();
         $eixo_fibro = Estrutura::where('nome', 'like', '%Fibro%')->first();
@@ -183,16 +159,9 @@ class DadosTesteSeeder extends Seeder
         }
 
         $kitsData = [
-            ['nome' => 'Kit 2,05 kWp - Canadian 410W + Growatt 4,2k', 'potencia_kwp' => 2.050, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 5400.00],
-            ['nome' => 'Kit 2,46 kWp - Canadian 410W + Growatt 4,2k', 'potencia_kwp' => 2.460, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 6200.00],
-            ['nome' => 'Kit 3,28 kWp - Canadian 410W + Deye 5k', 'potencia_kwp' => 3.280, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 7800.00],
-            ['nome' => 'Kit 4,10 kWp - Canadian 410W + Deye 5k', 'potencia_kwp' => 4.100, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 9200.00],
             ['nome' => 'Kit 5,12 kWp - JA 415W + Deye 5k', 'potencia_kwp' => 5.120, 'estrutura_id' => $eixo_fibro?->id, 'fornecedor_id' => $edeltec?->id, 'tensao' => 220, 'preco_custo' => 11500.00],
             ['nome' => 'Kit 6,21 kWp - JA 415W + Deye 8k', 'potencia_kwp' => 6.210, 'estrutura_id' => $eixo_fibro?->id, 'fornecedor_id' => $edeltec?->id, 'tensao' => 220, 'preco_custo' => 14200.00],
             ['nome' => 'Kit 8,28 kWp - JA 415W + Deye 8k', 'potencia_kwp' => 8.280, 'estrutura_id' => $eixo_fibro?->id, 'fornecedor_id' => $edeltec?->id, 'tensao' => 220, 'preco_custo' => 18500.00],
-            ['nome' => 'Kit 10,35 kWp - Canadian 460W + WEG 10k', 'potencia_kwp' => 10.350, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 23800.00],
-            ['nome' => 'Kit 13,80 kWp - Canadian 460W + WEG 10k', 'potencia_kwp' => 13.800, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 31500.00],
-            ['nome' => 'Kit 18,40 kWp - Canadian 460W + WEG 20k', 'potencia_kwp' => 18.400, 'estrutura_id' => $eixo_laje?->id, 'fornecedor_id' => $aldo?->id, 'tensao' => 220, 'preco_custo' => 42000.00],
             ['nome' => 'Kit 24,84 kWp - JA 540W + WEG 25k', 'potencia_kwp' => 24.840, 'estrutura_id' => $eixo_solo?->id, 'fornecedor_id' => $edeltec?->id, 'tensao' => 380, 'preco_custo' => 58000.00],
             ['nome' => 'Kit 37,80 kWp - JA 540W + WEG 40k', 'potencia_kwp' => 37.800, 'estrutura_id' => $eixo_solo?->id, 'fornecedor_id' => $edeltec?->id, 'tensao' => 380, 'preco_custo' => 88000.00],
             ['nome' => 'Kit 54,00 kWp - JA 540W + WEG 60k', 'potencia_kwp' => 54.000, 'estrutura_id' => $eixo_solo?->id, 'fornecedor_id' => $edeltec?->id, 'tensao' => 380, 'preco_custo' => 128000.00],

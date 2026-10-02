@@ -117,7 +117,6 @@ app/Http/Controllers/
       DimensionamentoController      — parâmetros do motor de cálculo
       SistemaController              — configurações gerais
     Integracoes/
-      AldoController                 — integração Aldo (catálogo ZIP/XML)
       EdeltecController              — integração Edeltec
       HistoricoController            — log de sincronizações
 
@@ -216,7 +215,6 @@ resources/js/Pages/
       Dimensionamento/Index.tsx      — parâmetros do motor de cálculo
       Sistema/Index.tsx
     Integracoes/
-      Aldo/Index.tsx
       Edeltec/Index.tsx
       Historico/Index.tsx
 
@@ -356,7 +354,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 ### Resolvido na segunda rodada
 - **Inversores, Painéis e Transformadores** — rotas, menu e `ProdutosPorCategoriaController` (base comum). Usam as categorias do seeder (`inversor-solar`, `painel-solar`, `transformador`) e só editam produtos da própria categoria
 - **Endereço do cliente** — componente `Components/UI/EnderecoFields.tsx` (CEP → endereço, estado → cidade) nos formulários do Admin e do Consultor. O form do Admin não tinha cidade (cliente não podia ser dimensionado); a edição agora recebe `cidade.sigla`
-- **Integração Aldo** — tela mostra que está indisponível e o botão fica desabilitado (`AldoController::DISPONIVEL`)
+- **Integração Aldo removida** (descontinuada): controller, página, rotas, menu, testes, fornecedor e seus kits/produtos de teste, tabela `integracao_aldo_mapeamentos` e o tipo `aldo` do histórico (migration `2026_10_02_000000_remove_integracao_aldo`). **Só a Edeltec é integrada**
 - **Fluxos Convencional/Demanda** — exigem e gravam `grupo_tarifario` (B1/B2/B3 ou A4–A1)
 - **Transições de status** — `Orcamento::TRANSICOES` + `podeIrPara()`; Admin só vê/aplica destinos permitidos; Consultor só envia para aprovação a partir de `novo`/`aprovacao_reprovada`
 - **Validação dos fluxos de orçamento** — FormRequests em `app/Http/Requests/Consultor/Dimensionamento/` (base `DimensionamentoRequest`: a mesma classe valida cálculo e `*.store`, que acrescenta `kit_id`/anotações). THS Azul agora é exigido também ao salvar
@@ -365,7 +363,6 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 - **Exclusões com vínculo** — fornecedor com histórico de integração é bloqueado; erro de FK em qualquer DELETE vira aviso em vez de 500 (`bootstrap/app.php`)
 
 ### Pendências conhecidas (funcionalidade)
-- **Integração Aldo** — falta a especificação do feed (URL, credenciais, formato ZIP/XML) para implementar o importador
 - **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
 
 ### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live
@@ -375,7 +372,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 
 #### 🔵 Melhorias recomendadas
 - Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.
-- Sincronizações Edeltec/Aldo via fila (`QUEUE_CONNECTION=database` já configurado).
+- Sincronização Edeltec via fila (`QUEUE_CONNECTION=database` já configurado).
 - Ativar Sentry (`SENTRY_LARAVEL_DSN`), `SESSION_ENCRYPT=true`, Larastan + Pint no CI (Pint hoje acusa ~40 arquivos fora do padrão).
 
 **Prioridade:** qualidade → melhorias.
