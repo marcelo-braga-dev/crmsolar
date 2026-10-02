@@ -3,17 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrcamentoPublicoResource;
 use App\Models\Orcamento;
-use Illuminate\Http\JsonResponse;
 
 class OrcamentosController extends Controller
 {
-    public function show(string $token): JsonResponse
+    public function show(string $token): OrcamentoPublicoResource
     {
         $orcamento = Orcamento::where('token', $token)
-            ->with(['cliente', 'consultor', 'itens', 'info'])
+            ->with([
+                'cliente:id,tipo_pessoa,nome,razao_social',
+                'cidade:id,cidade,estado',
+                'consultor:id,name,email,celular',
+                'itens',
+                'info.estrutura:id,nome',
+            ])
             ->firstOrFail();
 
-        return response()->json($orcamento);
+        return new OrcamentoPublicoResource($orcamento);
     }
 }

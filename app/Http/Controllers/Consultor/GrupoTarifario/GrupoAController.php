@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Consultor\GrupoTarifario;
 
 use App\Models\Cliente;
-use App\Models\Concessionaria;
+use App\Services\GrupoTarifarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Validation\Rule;
 use Inertia\Response;
 
 /**
@@ -26,7 +27,7 @@ class GrupoAController extends BaseGrupoController
 {
     public function create(string $grupo): Response
     {
-        $grupos = \App\Services\GrupoTarifarioService::grupos();
+        $grupos = GrupoTarifarioService::grupos();
         abort_unless(array_key_exists($grupo, $grupos) && $grupos[$grupo]['tensao'] !== 'BT', 404);
 
         return Inertia::render('Consultor/Orcamentos/GrupoA', array_merge(
@@ -37,33 +38,33 @@ class GrupoAController extends BaseGrupoController
 
     public function calcular(Request $request): JsonResponse
     {
-        $grupos = \App\Services\GrupoTarifarioService::grupos();
+        $grupos = GrupoTarifarioService::grupos();
 
         $data = $request->validate([
-            'cliente_id'             => 'required|exists:clientes,id',
-            'estrutura_id'           => 'required|exists:estruturas,id',
-            'tensao'                 => 'required|integer|in:220,380',
-            'qtd_kits'               => 'required|integer|min:1|max:30',
-            'orientacao'             => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'grupo_tarifario'        => ['required', 'string', function ($attr, $val, $fail) use ($grupos) {
-                if (!array_key_exists($val, $grupos) || $grupos[$val]['tensao'] === 'BT') {
+            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
+            'estrutura_id' => 'required|exists:estruturas,id',
+            'tensao' => 'required|integer|in:220,380',
+            'qtd_kits' => 'required|integer|min:1|max:30',
+            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
+            'grupo_tarifario' => ['required', 'string', function ($attr, $val, $fail) use ($grupos) {
+                if (! array_key_exists($val, $grupos) || $grupos[$val]['tensao'] === 'BT') {
                     $fail('Grupo tarifário inválido para Grupo A.');
                 }
             }],
-            'modalidade_tarifaria'   => 'required|in:THS_VERDE,THS_AZUL',
-            'consumo_ponta'          => 'required|numeric|min:1',
-            'consumo_fora_ponta'     => 'required|numeric|min:1',
-            'tarifa_kwh_ponta'       => 'required|numeric|min:0.01',
-            'tarifa_kwh_fp'          => 'required|numeric|min:0.01',
-            'demanda_ponta_kw'       => 'required|numeric|min:1',
-            'demanda_fora_ponta_kw'  => 'nullable|numeric|min:1',  // obrigatório no THS Azul
-            'tarifa_demanda_ponta'   => 'required|numeric|min:0',
-            'tarifa_demanda_fp'      => 'nullable|numeric|min:0',   // obrigatório no THS Azul
-            'valor_conta_mensal'     => 'nullable|numeric|min:0',
+            'modalidade_tarifaria' => 'required|in:THS_VERDE,THS_AZUL',
+            'consumo_ponta' => 'required|numeric|min:1',
+            'consumo_fora_ponta' => 'required|numeric|min:1',
+            'tarifa_kwh_ponta' => 'required|numeric|min:0.01',
+            'tarifa_kwh_fp' => 'required|numeric|min:0.01',
+            'demanda_ponta_kw' => 'required|numeric|min:1',
+            'demanda_fora_ponta_kw' => 'nullable|numeric|min:1',  // obrigatório no THS Azul
+            'tarifa_demanda_ponta' => 'required|numeric|min:0',
+            'tarifa_demanda_fp' => 'nullable|numeric|min:0',   // obrigatório no THS Azul
+            'valor_conta_mensal' => 'nullable|numeric|min:0',
             'percentual_autoconsumo' => 'required|integer|min:10|max:100',
-            'subgrupo_tensao'        => 'nullable|string|max:20',
-            'categorias'             => 'nullable|array',
-            'categorias.*'           => 'in:ongrid,offgrid,hibrido,bomba,microinversor',
+            'subgrupo_tensao' => 'nullable|string|max:20',
+            'categorias' => 'nullable|array',
+            'categorias.*' => 'in:ongrid,offgrid,hibrido,bomba,microinversor',
         ]);
 
         // Validação adicional para THS Azul (exige demanda e tarifa de FP separadas)
@@ -77,12 +78,12 @@ class GrupoAController extends BaseGrupoController
         }
 
         $cliente = Cliente::with('cidade')->findOrFail($data['cliente_id']);
-        if (!$cliente->cidade_id) {
+        if (! $cliente->cidade_id) {
             return response()->json(['error' => 'Cliente sem cidade cadastrada.'], 422);
         }
 
-        $params     = $this->dimensionamento->getParams();
-        $hsp        = $this->dimensionamento->getIrradiacao($cliente->cidade_id);
+        $params = $this->dimensionamento->getParams();
+        $hsp = $this->dimensionamento->getIrradiacao($cliente->cidade_id);
         $orientacao = $data['orientacao'];
 
         // Dimensionamento por demanda (usa fator de custo entre tarifas)
@@ -95,17 +96,17 @@ class GrupoAController extends BaseGrupoController
         );
 
         $categorias = $data['categorias'] ?? [];
-        $kits       = $this->dimensionamento->buscarKits($potencia, (int) $data['estrutura_id'], (int) $data['tensao'], (int) $data['qtd_kits'], $categorias);
-        $estado     = $cliente->cidade->sigla ?? $cliente->cidade->estado;
-        $qtd        = (int) $data['qtd_kits'];
-        $pr         = $this->dimensionamento->detalhamentoPR($params, $orientacao);
+        $kits = $this->dimensionamento->buscarKits($potencia, (int) $data['estrutura_id'], (int) $data['tensao'], (int) $data['qtd_kits'], $categorias);
+        $estado = $cliente->cidade->sigla ?? $cliente->cidade->estado;
+        $qtd = (int) $data['qtd_kits'];
+        $pr = $this->dimensionamento->detalhamentoPR($params, $orientacao);
         $autoconsumo = (int) $data['percentual_autoconsumo'];
 
         if ($kits->isEmpty()) {
             return response()->json(['error' => 'Nenhum kit encontrado. Ajuste estrutura, tensão ou consumo.'], 404);
         }
 
-        $kitsResult = $this->mapearKits($kits, $qtd, $hsp, $params, $orientacao, $estado, (int) $data['estrutura_id']);
+        $kitsResult = $this->mapearKits($kits, $qtd, $hsp, $params, $orientacao, $estado);
 
         $kitsResult = $kitsResult->map(function ($kit) use ($data, $autoconsumo) {
             $economia = $this->grupoService->economiaGrupoA(
@@ -131,20 +132,20 @@ class GrupoAController extends BaseGrupoController
             $analise = $this->grupoService->analiseCompleta($kit['preco_venda'], $economiaMensalTotal);
 
             return array_merge($kit, [
-                'economia'              => $economia,
-                'reducao_demanda'       => $reducaoDemanda,
-                'economia_demanda_mes'  => round($economiaDemanda, 2),
-                'economia_total_mes'    => round($economiaMensalTotal, 2),
-                'payback_simples'       => $analise['payback_simples'],
-                'payback_descontado'    => $analise['payback_descontado'],
-                'vpl_25a'               => $analise['vpl_25a'],
-                'tir_25a'               => $analise['tir_25a'],
-                'economia_total_25a'    => $analise['economia_total_25a'],
-                'roi_percentual'        => $analise['roi_percentual'],
+                'economia' => $economia,
+                'reducao_demanda' => $reducaoDemanda,
+                'economia_demanda_mes' => round($economiaDemanda, 2),
+                'economia_total_mes' => round($economiaMensalTotal, 2),
+                'payback_simples' => $analise['payback_simples'],
+                'payback_descontado' => $analise['payback_descontado'],
+                'vpl_25a' => $analise['vpl_25a'],
+                'tir_25a' => $analise['tir_25a'],
+                'economia_total_25a' => $analise['economia_total_25a'],
+                'roi_percentual' => $analise['roi_percentual'],
             ]);
         });
 
-        $consumoTotal  = (float) $data['consumo_ponta'] + (float) $data['consumo_fora_ponta'];
+        $consumoTotal = (float) $data['consumo_ponta'] + (float) $data['consumo_fora_ponta'];
         $analiseMensal = $this->dimensionamento->analiseMensal(
             $cliente->cidade_id,
             (float) $kits->first()->potencia_kwp * $qtd,
@@ -153,40 +154,41 @@ class GrupoAController extends BaseGrupoController
 
         return response()->json([
             'potencia_calculada' => $potencia,
-            'hsp'                => $hsp,
-            'pr'                 => $pr,
-            'kits'               => $kitsResult,
-            'analise_mensal'     => $analiseMensal,
+            'hsp' => $hsp,
+            'pr' => $pr,
+            'kits' => $kitsResult,
+            'analise_mensal' => $analiseMensal,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'cliente_id'             => 'required|exists:clientes,id',
-            'estrutura_id'           => 'required|exists:estruturas,id',
-            'tensao'                 => 'required|integer|in:220,380',
-            'qtd_kits'               => 'required|integer|min:1|max:30',
-            'orientacao'             => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'grupo_tarifario'        => 'required|in:A4,A3a,A3,A2,A1',
-            'modalidade_tarifaria'   => 'required|in:THS_VERDE,THS_AZUL',
-            'consumo_ponta'          => 'required|numeric|min:1',
-            'consumo_fora_ponta'     => 'required|numeric|min:1',
-            'tarifa_kwh_ponta'       => 'required|numeric|min:0.01',
-            'tarifa_kwh_fp'          => 'required|numeric|min:0.01',
-            'demanda_ponta_kw'       => 'required|numeric|min:1',
-            'demanda_fora_ponta_kw'  => 'nullable|numeric|min:1',
-            'tarifa_demanda_ponta'   => 'required|numeric|min:0',
-            'tarifa_demanda_fp'      => 'nullable|numeric|min:0',
-            'valor_conta_mensal'     => 'nullable|numeric|min:0',
+            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
+            'estrutura_id' => 'required|exists:estruturas,id',
+            'tensao' => 'required|integer|in:220,380',
+            'qtd_kits' => 'required|integer|min:1|max:30',
+            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
+            'grupo_tarifario' => 'required|in:A4,A3a,A3,A2,A1',
+            'modalidade_tarifaria' => 'required|in:THS_VERDE,THS_AZUL',
+            'consumo_ponta' => 'required|numeric|min:1',
+            'consumo_fora_ponta' => 'required|numeric|min:1',
+            'tarifa_kwh_ponta' => 'required|numeric|min:0.01',
+            'tarifa_kwh_fp' => 'required|numeric|min:0.01',
+            'demanda_ponta_kw' => 'required|numeric|min:1',
+            'demanda_fora_ponta_kw' => 'nullable|numeric|min:1',
+            'tarifa_demanda_ponta' => 'required|numeric|min:0',
+            'tarifa_demanda_fp' => 'nullable|numeric|min:0',
+            'valor_conta_mensal' => 'nullable|numeric|min:0',
             'percentual_autoconsumo' => 'required|integer|min:10|max:100',
-            'subgrupo_tensao'        => 'nullable|string|max:20',
-            'kit_id'                 => 'required|exists:kits,id',
-            'anotacoes'              => 'nullable|string|max:3000',
-            'anotacoes_tecnicas'     => 'nullable|string|max:3000',
+            'subgrupo_tensao' => 'nullable|string|max:20',
+            'kit_id' => 'required|exists:kits,id',
+            'anotacoes' => 'nullable|string|max:3000',
+            'anotacoes_tecnicas' => 'nullable|string|max:3000',
         ]);
 
-        $geracao = (int) $request->input('geracao_estimada', 0);
+        $selecao = $this->kitSelecionado($data);
+        $geracao = $selecao['geracao'];
         $economia = $this->grupoService->economiaGrupoA(
             $geracao,
             (float) $data['consumo_ponta'],
@@ -196,22 +198,22 @@ class GrupoAController extends BaseGrupoController
             (int) $data['percentual_autoconsumo'],
             $data['modalidade_tarifaria'],
         );
-        $analise = $this->grupoService->analiseCompleta((float) $request->input('preco_venda', 0), $economia['economia_mensal']);
+        $analise = $this->grupoService->analiseCompleta($selecao['preco']['preco_venda'], $economia['economia_mensal']);
 
         $infoExtra = [
-            'tipo_dimensionamento'   => 'demanda',
-            'consumo_ponta'          => $data['consumo_ponta'],
-            'consumo_fora_ponta'     => $data['consumo_fora_ponta'],
-            'demanda_contratada'     => $data['demanda_ponta_kw'],
-            'demanda_ponta_kw'       => $data['demanda_ponta_kw'],
-            'demanda_fora_ponta_kw'  => $data['demanda_fora_ponta_kw'] ?? null,
-            'tarifa_kwh_ponta'       => $data['tarifa_kwh_ponta'],
-            'tarifa_kwh_fp'          => $data['tarifa_kwh_fp'],
-            'tarifa_demanda_ponta'   => $data['tarifa_demanda_ponta'],
-            'tarifa_demanda_fp'      => $data['tarifa_demanda_fp'] ?? null,
-            'valor_conta_mensal'     => $data['valor_conta_mensal'] ?? null,
+            'tipo_dimensionamento' => 'demanda',
+            'consumo_ponta' => $data['consumo_ponta'],
+            'consumo_fora_ponta' => $data['consumo_fora_ponta'],
+            'demanda_contratada' => $data['demanda_ponta_kw'],
+            'demanda_ponta_kw' => $data['demanda_ponta_kw'],
+            'demanda_fora_ponta_kw' => $data['demanda_fora_ponta_kw'] ?? null,
+            'tarifa_kwh_ponta' => $data['tarifa_kwh_ponta'],
+            'tarifa_kwh_fp' => $data['tarifa_kwh_fp'],
+            'tarifa_demanda_ponta' => $data['tarifa_demanda_ponta'],
+            'tarifa_demanda_fp' => $data['tarifa_demanda_fp'] ?? null,
+            'valor_conta_mensal' => $data['valor_conta_mensal'] ?? null,
             'percentual_autoconsumo' => (int) $data['percentual_autoconsumo'],
-            'subgrupo_tensao'        => $data['subgrupo_tensao'] ?? null,
+            'subgrupo_tensao' => $data['subgrupo_tensao'] ?? null,
         ];
 
         $id = $this->salvarOrcamento(

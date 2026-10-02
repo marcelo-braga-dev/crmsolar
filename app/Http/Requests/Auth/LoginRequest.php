@@ -50,6 +50,14 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (! Auth::user()->status) {
+            Auth::guard('web')->logout();
+
+            throw ValidationException::withMessages([
+                'email' => 'Usuário inativo. Entre em contato com o administrador.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

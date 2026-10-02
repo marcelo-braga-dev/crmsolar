@@ -30,6 +30,11 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    // Espelha o default da coluna — sem isso, um User recém-criado tem status null até ser recarregado.
+    protected $attributes = [
+        'status' => true,
+    ];
+
     protected function casts(): array
     {
         return [
