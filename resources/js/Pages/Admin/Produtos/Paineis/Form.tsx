@@ -139,7 +139,7 @@ export default function PaineisForm({ painel, marcas, fornecedores }: Props) {
                                         </TextField>
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
-                                        <TextField label="Tensão" fullWidth value={data.tensao} onChange={(e) => setData('tensao', e.target.value)} placeholder="Ex: 24V / 48V" />
+                                        <TextField label="Tensão (V)" type="number" fullWidth inputProps={{ min: '0' }} value={data.tensao} onChange={(e) => setData('tensao', e.target.value)} placeholder="Ex: 48" error={!!errors.tensao} helperText={errors.tensao} />
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
                                         <TextField label="Preço de Custo (R$)" type="number" fullWidth inputProps={{ step: '0.01', min: '0' }} value={data.preco_custo} onChange={(e) => setData('preco_custo', e.target.value)} />

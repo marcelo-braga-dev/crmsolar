@@ -18,8 +18,11 @@ use App\Http\Controllers\Admin\PerfilController;
 use App\Http\Controllers\Admin\Precificacao\PrecificacaoController;
 use App\Http\Controllers\Admin\Produtos\CatalogoController;
 use App\Http\Controllers\Admin\Produtos\CategoriasController;
+use App\Http\Controllers\Admin\Produtos\InversoresController;
 use App\Http\Controllers\Admin\Produtos\KitsController;
 use App\Http\Controllers\Admin\Produtos\MarcasController;
+use App\Http\Controllers\Admin\Produtos\PaineisController;
+use App\Http\Controllers\Admin\Produtos\TrafosController;
 use App\Http\Controllers\Admin\Usuarios\AdminsController;
 use App\Http\Controllers\Admin\Usuarios\ConsultoresController;
 use App\Http\Controllers\Api\GeografiaController;
@@ -61,6 +64,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::prefix('produtos')->name('produtos.')->group(function () {
         Route::resource('kits', KitsController::class);
+        Route::resource('inversores', InversoresController::class)
+            ->parameters(['inversores' => 'produto'])->except(['show']);
+        Route::resource('paineis', PaineisController::class)
+            ->parameters(['paineis' => 'produto'])->except(['show']);
+        Route::resource('trafos', TrafosController::class)
+            ->parameters(['trafos' => 'produto'])->except(['show']);
         Route::resource('catalogo', CatalogoController::class);
         Route::resource('categorias', CategoriasController::class)
             ->only(['index', 'store', 'update', 'destroy']);

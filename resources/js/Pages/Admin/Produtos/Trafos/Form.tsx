@@ -131,7 +131,7 @@ export default function TrafosForm({ trafo, marcas, fornecedores }: Props) {
                                         <TextField label="Potência (kVA)" type="number" fullWidth inputProps={{ step: '0.1', min: '0' }} value={data.potencia} onChange={(e) => setData('potencia', e.target.value)} error={!!errors.potencia} helperText={errors.potencia} />
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
-                                        <TextField label="Tensão" fullWidth value={data.tensao} onChange={(e) => setData('tensao', e.target.value)} placeholder="Ex: 220V / 380V" />
+                                        <TextField label="Tensão (V)" type="number" fullWidth inputProps={{ min: '0' }} value={data.tensao} onChange={(e) => setData('tensao', e.target.value)} placeholder="Ex: 380" error={!!errors.tensao} helperText={errors.tensao} />
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
                                         <TextField label="Preço de Custo (R$)" type="number" fullWidth inputProps={{ step: '0.01', min: '0' }} value={data.preco_custo} onChange={(e) => setData('preco_custo', e.target.value)} />
