@@ -4,7 +4,6 @@ namespace App\Services\Integracoes\Edeltec;
 
 use App\Models\Estrutura;
 use App\Models\Marca;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -17,23 +16,24 @@ class EdeltecMapeamentos
 {
     // Mapeamento explícito: nome Edeltec → nome local (estruturas)
     private const ESTRUTURAS_MAP = [
-        'cerâmica'       => ['Telha Colonial (Cerâmico)', 'Telha Ondulada'],
-        'ceramica'       => ['Telha Colonial (Cerâmico)', 'Telha Ondulada'],
-        'colonial'       => ['Telha Colonial (Cerâmico)'],
-        'fibrocimento'   => ['Telha Ondulada'],
-        'fibro'          => ['Telha Ondulada'],
-        'metálica'       => ['Telha Metálica Perfil 55cm', 'Telha Metálica Zipada'],
-        'metalica'       => ['Telha Metálica Perfil 55cm', 'Telha Metálica Zipada'],
-        'zipada'         => ['Telha Metálica Zipada'],
-        'laje'           => ['Laje'],
-        'solo'           => ['Solo'],
-        'madeira'        => ['Parafuso Estrutura Madeira'],
-        'metálico'       => ['Parafuso Estrutura Metálica'],
-        'sem estrutura'  => ['Sem Estrutura'],
+        'cerâmica' => ['Telha Colonial (Cerâmico)', 'Telha Ondulada'],
+        'ceramica' => ['Telha Colonial (Cerâmico)', 'Telha Ondulada'],
+        'colonial' => ['Telha Colonial (Cerâmico)'],
+        'fibrocimento' => ['Telha Ondulada'],
+        'fibro' => ['Telha Ondulada'],
+        'metálica' => ['Telha Metálica Perfil 55cm', 'Telha Metálica Zipada'],
+        'metalica' => ['Telha Metálica Perfil 55cm', 'Telha Metálica Zipada'],
+        'zipada' => ['Telha Metálica Zipada'],
+        'laje' => ['Laje'],
+        'solo' => ['Solo'],
+        'madeira' => ['Parafuso Estrutura Madeira'],
+        'metálico' => ['Parafuso Estrutura Metálica'],
+        'sem estrutura' => ['Sem Estrutura'],
     ];
 
     /** @var array<string, int> Marca nome (lower) → id */
     private array $marcasIdx;
+
     /** @var array<string, int> Estrutura key → id */
     private array $estruturasIdx;
 
@@ -53,7 +53,7 @@ class EdeltecMapeamentos
     {
         $chave = mb_strtolower(trim($nome));
 
-        if (!isset($this->marcasIdx[$chave])) {
+        if (! isset($this->marcasIdx[$chave])) {
             $marca = Marca::firstOrCreate(['nome' => trim($nome)], ['ativo' => true]);
             $this->marcasIdx[$chave] = $marca->id;
             Log::info("Edeltec: marca criada automaticamente: {$nome} (id={$marca->id})");
@@ -97,6 +97,7 @@ class EdeltecMapeamentos
         }
 
         Log::warning("Edeltec: estrutura não mapeada: \"{$nome}\" — kit importado sem estrutura.");
+
         return null;
     }
 
@@ -106,6 +107,7 @@ class EdeltecMapeamentos
     public function parsePotenciaKwp(string|float $valor): float
     {
         $n = (float) str_replace(',', '.', (string) $valor);
+
         // Heurística: se valor > 100, provavelmente está em Wp → converte para kWp
         return $n > 100 ? round($n / 1000, 3) : round($n, 3);
     }
@@ -125,6 +127,7 @@ class EdeltecMapeamentos
             $clean = str_replace('.', '', $clean);
             $clean = str_replace(',', '.', $clean);
         }
+
         return (float) $clean;
     }
 
@@ -133,14 +136,14 @@ class EdeltecMapeamentos
     private function carregarMarcas(): void
     {
         $this->marcasIdx = Marca::all(['id', 'nome'])
-            ->mapWithKeys(fn($m) => [mb_strtolower($m->nome) => $m->id])
+            ->mapWithKeys(fn ($m) => [mb_strtolower($m->nome) => $m->id])
             ->toArray();
     }
 
     private function carregarEstruturas(): void
     {
         $this->estruturasIdx = Estrutura::all(['id', 'nome'])
-            ->mapWithKeys(fn($e) => [mb_strtolower($e->nome) => $e->id])
+            ->mapWithKeys(fn ($e) => [mb_strtolower($e->nome) => $e->id])
             ->toArray();
     }
 

@@ -39,7 +39,7 @@ class IrradiacaoSolarSeeder extends Seeder
             ['Vitória',               'ES', [5.25, 5.10, 4.90, 4.80, 4.70, 4.55, 4.75, 5.10, 5.20, 5.30, 5.25, 5.20]],
             ['Vila Velha',            'ES', [5.22, 5.08, 4.88, 4.78, 4.68, 4.52, 4.72, 5.08, 5.18, 5.28, 5.22, 5.18]],
             ['Serra',                 'ES', [5.20, 5.05, 4.85, 4.75, 4.65, 4.50, 4.70, 5.05, 5.15, 5.25, 5.20, 5.15]],
-            ['Cachoeiro de Itapemirim','ES',[5.15, 5.00, 4.80, 4.70, 4.60, 4.45, 4.65, 5.00, 5.10, 5.20, 5.15, 5.10]],
+            ['Cachoeiro de Itapemirim', 'ES', [5.15, 5.00, 4.80, 4.70, 4.60, 4.45, 4.65, 5.00, 5.10, 5.20, 5.15, 5.10]],
             ['Goiânia',               'GO', [5.60, 5.45, 5.30, 5.40, 5.60, 5.65, 5.90, 6.20, 5.85, 5.55, 5.30, 5.45]],
             ['Aparecida de Goiânia',  'GO', [5.58, 5.42, 5.28, 5.38, 5.58, 5.62, 5.88, 6.18, 5.82, 5.52, 5.28, 5.42]],
             ['Anápolis',              'GO', [5.55, 5.40, 5.25, 5.35, 5.55, 5.60, 5.85, 6.15, 5.80, 5.50, 5.25, 5.40]],
@@ -129,14 +129,16 @@ class IrradiacaoSolarSeeder extends Seeder
                 ->where('sigla', $sigla)
                 ->value('id');
 
-            if (!$cidadeId) continue;
+            if (! $cidadeId) {
+                continue;
+            }
 
             [$jan, $fev, $mar, $abr, $mai, $jun, $jul, $ago, $set, $out, $nov, $dez] = $meses;
             $media = round(array_sum($meses) / 12, 3);
 
             DB::table('irradiacao_solar')->insert([
                 'cidade_id' => $cidadeId,
-                'media'     => $media,
+                'media' => $media,
                 'jan' => $jan, 'fev' => $fev, 'mar' => $mar, 'abr' => $abr,
                 'mai' => $mai, 'jun' => $jun, 'jul' => $jul, 'ago' => $ago,
                 'set' => $set, 'out' => $out, 'nov' => $nov, 'dez' => $dez,

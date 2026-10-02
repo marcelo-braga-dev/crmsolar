@@ -21,11 +21,11 @@ class BancosController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'nome'         => 'required|string|max:255',
+            'nome' => 'required|string|max:255',
             'juros_mensal' => 'required|numeric|min:0|max:100',
             'qtd_parcelas' => 'required|integer|min:1|max:360',
-            'carencia'     => 'nullable|integer|min:0|max:12',
-            'ativo'        => 'required|boolean',
+            'carencia' => 'nullable|integer|min:0|max:12',
+            'ativo' => 'required|boolean',
         ]);
 
         Banco::create($data);
@@ -36,11 +36,11 @@ class BancosController extends Controller
     public function update(Request $request, Banco $banco): RedirectResponse
     {
         $data = $request->validate([
-            'nome'         => 'required|string|max:255',
+            'nome' => 'required|string|max:255',
             'juros_mensal' => 'required|numeric|min:0|max:100',
             'qtd_parcelas' => 'required|integer|min:1|max:360',
-            'carencia'     => 'nullable|integer|min:0|max:12',
-            'ativo'        => 'required|boolean',
+            'carencia' => 'nullable|integer|min:0|max:12',
+            'ativo' => 'required|boolean',
         ]);
 
         $banco->update($data);

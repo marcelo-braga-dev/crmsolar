@@ -21,7 +21,7 @@ class HistoricoController extends Controller
 
         return Inertia::render('Admin/Integracoes/Historico/Index', [
             'historicos' => $historicos,
-            'filters'    => $request->only(['tipo', 'status']),
+            'filters' => $request->only(['tipo', 'status']),
         ]);
     }
 }

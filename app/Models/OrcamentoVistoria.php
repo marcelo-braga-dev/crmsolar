@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrcamentoVistoria extends Model
 {
@@ -21,7 +22,7 @@ class OrcamentoVistoria extends Model
         'altura_telhado' => 'decimal:2',
     ];
 
-    public function orcamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }

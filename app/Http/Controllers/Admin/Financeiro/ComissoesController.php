@@ -26,9 +26,9 @@ class ComissoesController extends Controller
             ->withQueryString();
 
         return Inertia::render('Admin/Financeiro/Comissoes/Index', [
-            'comissoes'  => $comissoes,
+            'comissoes' => $comissoes,
             'vendedores' => $vendedores,
-            'filters'    => $request->only(['consultor_id']),
+            'filters' => $request->only(['consultor_id']),
         ]);
     }
 }

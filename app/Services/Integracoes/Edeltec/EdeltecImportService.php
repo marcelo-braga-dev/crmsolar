@@ -5,7 +5,6 @@ namespace App\Services\Integracoes\Edeltec;
 use App\Models\Fornecedor;
 use App\Models\IntegracaoHistorico;
 use App\Models\Kit;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -23,20 +22,25 @@ class EdeltecImportService
 {
     private const BATCH_SIZE = 200; // kits por upsert
 
-    private EdeltecApiClient  $api;
+    private EdeltecApiClient $api;
+
     private EdeltecMapeamentos $map;
+
     private int $fornecedorId;
 
     /** Acumuladores para o histórico */
-    private array $skusImportados  = [];
-    private array $alertas         = [];
-    private int   $qtdImportados   = 0;
-    private int   $qtdAtualizados  = 0;
+    private array $skusImportados = [];
+
+    private array $alertas = [];
+
+    private int $qtdImportados = 0;
+
+    private int $qtdAtualizados = 0;
 
     public function __construct()
     {
-        $this->api = new EdeltecApiClient();
-        $this->map = new EdeltecMapeamentos();
+        $this->api = new EdeltecApiClient;
+        $this->map = new EdeltecMapeamentos;
     }
 
     // ── Entrada pública ───────────────────────────────────────────────────
@@ -54,9 +58,9 @@ class EdeltecImportService
 
         $historico = IntegracaoHistorico::create([
             'fornecedor_id' => $this->fornecedorId,
-            'tipo'          => 'edeltec',
-            'status'        => 'iniciado',
-            'iniciado_em'   => now(),
+            'tipo' => 'edeltec',
+            'status' => 'iniciado',
+            'iniciado_em' => now(),
         ]);
 
         try {
@@ -65,15 +69,15 @@ class EdeltecImportService
             $qtdDesativados = $this->desativarSKUsRemovidos();
 
             $historico->update([
-                'status'           => 'concluido',
-                'finalizado_em'    => now(),
+                'status' => 'concluido',
+                'finalizado_em' => now(),
                 'itens_importados' => $this->qtdImportados,
-                'itens_atualizados'=> $this->qtdAtualizados,
-                'itens_desativados'=> $qtdDesativados,
-                'alertas'          => empty($this->alertas) ? null : implode(PHP_EOL, $this->alertas),
-                'detalhes'         => [
-                    'skus_importados'  => $this->skusImportados,
-                    'total_paginas'    => $this->qtdImportados > 0
+                'itens_atualizados' => $this->qtdAtualizados,
+                'itens_desativados' => $qtdDesativados,
+                'alertas' => empty($this->alertas) ? null : implode(PHP_EOL, $this->alertas),
+                'detalhes' => [
+                    'skus_importados' => $this->skusImportados,
+                    'total_paginas' => $this->qtdImportados > 0
                         ? (int) ceil($this->qtdImportados / 1000)
                         : 0,
                 ],
@@ -83,9 +87,9 @@ class EdeltecImportService
             Log::error('Edeltec: falha crítica na integração', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
             $historico->update([
-                'status'        => 'erro',
+                'status' => 'erro',
                 'finalizado_em' => now(),
-                'alertas'       => 'ERRO CRÍTICO: ' . $e->getMessage(),
+                'alertas' => 'ERRO CRÍTICO: '.$e->getMessage(),
             ]);
 
             throw $e;
@@ -102,11 +106,15 @@ class EdeltecImportService
 
         foreach ($this->api->produtos() as $produto) {
             $sku = trim($produto['codProd'] ?? '');
-            if (!$sku) continue;
+            if (! $sku) {
+                continue;
+            }
 
             try {
                 $row = $this->mapearProduto($produto);
-                if ($row === null) continue; // skip inválido
+                if ($row === null) {
+                    continue;
+                } // skip inválido
 
                 $batch[] = $row;
                 $this->skusImportados[] = $sku;
@@ -116,14 +124,14 @@ class EdeltecImportService
                     $batch = [];
                 }
             } catch (\Throwable $e) {
-                $msg = "SKU {$sku}: " . $e->getMessage();
+                $msg = "SKU {$sku}: ".$e->getMessage();
                 $this->alertas[] = $msg;
                 Log::warning('Edeltec: produto ignorado', ['sku' => $sku, 'erro' => $e->getMessage()]);
             }
         }
 
         // Flush do batch restante
-        if (!empty($batch)) {
+        if (! empty($batch)) {
             $this->upsertBatch($batch);
         }
     }
@@ -134,36 +142,37 @@ class EdeltecImportService
      */
     private function mapearProduto(array $p): ?array
     {
-        $sku       = trim($p['codProd'] ?? '');
+        $sku = trim($p['codProd'] ?? '');
         $potenciaRaw = $p['potenciaGerador'] ?? $p['potencia'] ?? '0';
-        $potencia  = $this->map->parsePotenciaKwp($potenciaRaw);
+        $potencia = $this->map->parsePotenciaKwp($potenciaRaw);
 
         if ($potencia <= 0) {
             $this->alertas[] = "SKU {$sku}: potência inválida ({$potenciaRaw}) — ignorado.";
+
             return null;
         }
 
-        $preco     = $this->map->parsePreco((string) ($p['precoDoIntegrador'] ?? '0'));
-        $tensao    = $this->map->parseTensao((string) ($p['tensaoSaida'] ?? '220'));
+        $preco = $this->map->parsePreco((string) ($p['precoDoIntegrador'] ?? '0'));
+        $tensao = $this->map->parseTensao((string) ($p['tensaoSaida'] ?? '220'));
         $estrutura = isset($p['estrutura']) ? $this->map->resolveEstrutura($p['estrutura']) : null;
 
         // Nome: remove sufixo " edeltec" que a API inclui
         $nome = preg_replace('/\s+edeltec\s*$/i', '', trim($p['titulo'] ?? $sku));
 
         return [
-            'fornecedor_id'   => $this->fornecedorId,
-            'estrutura_id'    => $estrutura,
-            'nome'            => $nome,
-            'modelo'          => $nome,
-            'sku'             => $sku,
-            'categoria'       => $this->resolverCategoria($p),
-            'potencia_kwp'    => $potencia,
-            'tensao'          => in_array($tensao, [127, 220, 380]) ? $tensao : 220,
-            'preco_custo'     => $preco,
-            'ativo'           => true,
-            'ativo_fornecedor'=> true,
-            'observacoes'     => $p['componentes'] ?? null,
-            'updated_at'      => now(),
+            'fornecedor_id' => $this->fornecedorId,
+            'estrutura_id' => $estrutura,
+            'nome' => $nome,
+            'modelo' => $nome,
+            'sku' => $sku,
+            'categoria' => $this->resolverCategoria($p),
+            'potencia_kwp' => $potencia,
+            'tensao' => in_array($tensao, [127, 220, 380]) ? $tensao : 220,
+            'preco_custo' => $preco,
+            'ativo' => true,
+            'ativo_fornecedor' => true,
+            'observacoes' => $p['componentes'] ?? null,
+            'updated_at' => now(),
         ];
     }
 
@@ -174,17 +183,17 @@ class EdeltecImportService
      */
     private function resolverCategoria(array $p): string
     {
-        $tipo   = mb_strtolower(trim($p['tipo'] ?? $p['categoria'] ?? ''));
+        $tipo = mb_strtolower(trim($p['tipo'] ?? $p['categoria'] ?? ''));
         $titulo = mb_strtolower(trim($p['titulo'] ?? $p['nome'] ?? ''));
-        $texto  = $tipo . ' ' . $titulo;
+        $texto = $tipo.' '.$titulo;
 
         return match (true) {
-            str_contains($texto, 'off') || str_contains($texto, 'off-grid')          => 'offgrid',
+            str_contains($texto, 'off') || str_contains($texto, 'off-grid') => 'offgrid',
             str_contains($texto, 'hibrido') || str_contains($texto, 'híbrido')
-                || str_contains($texto, 'hybrid')                                     => 'hibrido',
-            str_contains($texto, 'microinversor') || str_contains($texto, 'micro')   => 'microinversor',
-            str_contains($texto, 'bomba') || str_contains($texto, 'pump')            => 'bomba',
-            default                                                                    => 'ongrid',
+                || str_contains($texto, 'hybrid') => 'hibrido',
+            str_contains($texto, 'microinversor') || str_contains($texto, 'micro') => 'microinversor',
+            str_contains($texto, 'bomba') || str_contains($texto, 'pump') => 'bomba',
+            default => 'ongrid',
         };
     }
 
@@ -194,7 +203,9 @@ class EdeltecImportService
      */
     private function upsertBatch(array $rows): void
     {
-        if (empty($rows)) return;
+        if (empty($rows)) {
+            return;
+        }
 
         $skus = array_column($rows, 'sku');
 
@@ -206,7 +217,7 @@ class EdeltecImportService
             ->toArray();
 
         foreach ($rows as $row) {
-            if (!isset($row['created_at'])) {
+            if (! isset($row['created_at'])) {
                 $row['created_at'] = isset($existentes[$row['sku']]) ? null : now();
             }
         }
@@ -222,13 +233,13 @@ class EdeltecImportService
             ]
         );
 
-        $novos        = count($rows) - count($existentes);
-        $atualizados  = count($existentes);
+        $novos = count($rows) - count($existentes);
+        $atualizados = count($existentes);
 
-        $this->qtdImportados  += $novos;
+        $this->qtdImportados += $novos;
         $this->qtdAtualizados += $atualizados;
 
-        Log::debug("Edeltec: batch de " . count($rows) . " — {$novos} novos, {$atualizados} atualizados.");
+        Log::debug('Edeltec: batch de '.count($rows)." — {$novos} novos, {$atualizados} atualizados.");
     }
 
     /**
@@ -246,7 +257,7 @@ class EdeltecImportService
             ->whereNotIn('sku', $this->skusImportados)
             ->update([
                 'ativo_fornecedor' => false,
-                'updated_at'       => now(),
+                'updated_at' => now(),
             ]);
     }
 }

@@ -15,10 +15,8 @@ class MarcasController extends Controller
     {
         $marcas = Marca::query()
             ->withCount('produtos')
-            ->when($request->search, fn ($q, $s) =>
-                $q->where('nome', 'like', "%{$s}%"))
-            ->when($request->filled('ativo'), fn ($q) =>
-                $q->where('ativo', $request->boolean('ativo')))
+            ->when($request->search, fn ($q, $s) => $q->where('nome', 'like', "%{$s}%"))
+            ->when($request->filled('ativo'), fn ($q) => $q->where('ativo', $request->boolean('ativo')))
             ->orderBy('nome')
             ->paginate(20)
             ->withQueryString();

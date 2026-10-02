@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -38,9 +39,9 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'   => 'datetime',
-            'password'            => 'hashed',
-            'status'              => 'boolean',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'status' => 'boolean',
             'comissao_percentual' => 'decimal:2',
         ];
     }
@@ -55,12 +56,12 @@ class User extends Authenticatable
         return $this->tipo === 'consultor';
     }
 
-    public function clientes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function clientes(): HasMany
     {
         return $this->hasMany(Cliente::class, 'consultor_id');
     }
 
-    public function orcamentos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function orcamentos(): HasMany
     {
         return $this->hasMany(Orcamento::class, 'consultor_id');
     }

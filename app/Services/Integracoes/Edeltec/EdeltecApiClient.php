@@ -4,6 +4,7 @@ namespace App\Services\Integracoes\Edeltec;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -17,16 +18,21 @@ use Illuminate\Support\Facades\Log;
 class EdeltecApiClient
 {
     private const TOKEN_CACHE_KEY = 'edeltec_api_token';
-    private const TOKEN_TTL_MIN   = 55;   // minutos (token dura ~60 min — renovamos 5 min antes)
-    private const PAGE_LIMIT      = 1000;
-    private const TIPOS_PRODUTO   = 'GERADOR FOTOVOLTAICO,GERADOR MICROINVERSOR';
-    private const MAX_RETRIES     = 3;
-    private const RETRY_DELAY_MS  = 800;  // ms entre tentativas
+
+    private const TOKEN_TTL_MIN = 55;   // minutos (token dura ~60 min — renovamos 5 min antes)
+
+    private const PAGE_LIMIT = 1000;
+
+    private const TIPOS_PRODUTO = 'GERADOR FOTOVOLTAICO,GERADOR MICROINVERSOR';
+
+    private const MAX_RETRIES = 3;
+
+    private const RETRY_DELAY_MS = 800;  // ms entre tentativas
 
     public function __construct(
-        private readonly string $apiUrl    = '',
-        private readonly string $apiKey    = '',
-        private readonly string $secret    = '',
+        private readonly string $apiUrl = '',
+        private readonly string $apiKey = '',
+        private readonly string $secret = '',
     ) {
         $this->apiUrl = $apiUrl ?: rtrim((string) config('services.edeltec.url', 'https://api.edeltecsolar.com.br'), '/');
         $this->apiKey = $apiKey ?: (string) config('services.edeltec.api_key');
@@ -51,6 +57,7 @@ class EdeltecApiClient
     public function renovarToken(): string
     {
         Cache::forget(self::TOKEN_CACHE_KEY);
+
         return $this->token();
     }
 
@@ -75,7 +82,7 @@ class EdeltecApiClient
             ?? (is_string($body) ? $body : null)
             ?? $response->body();
 
-        if (empty($token) || !is_string($token)) {
+        if (empty($token) || ! is_string($token)) {
             throw new \RuntimeException('Edeltec: falha na autenticação — token não encontrado na resposta.');
         }
 
@@ -89,13 +96,14 @@ class EdeltecApiClient
      * Retorna um Generator para evitar carregar tudo em memória de uma vez.
      *
      * @return iterable<array> cada item é um produto (array associativo)
+     *
      * @throws \RuntimeException em caso de falha de autenticação ou API
      */
     public function produtos(): iterable
     {
-        $token   = $this->token();
-        $page    = 1;
-        $total   = null;
+        $token = $this->token();
+        $page = 1;
+        $total = null;
 
         do {
             $resposta = $this->tentarComRetry(function () use ($token, $page) {
@@ -105,21 +113,21 @@ class EdeltecApiClient
                     ->acceptJson()
                     ->get('/produtos/integration', [
                         'limit' => self::PAGE_LIMIT,
-                        'page'  => $page,
-                        'tipo'  => self::TIPOS_PRODUTO,
+                        'page' => $page,
+                        'tipo' => self::TIPOS_PRODUTO,
                     ]);
             }, onUnauthorized: function () use (&$token) {
                 // Token expirou no meio da execução — renova e tenta de novo
                 $token = $this->renovarToken();
             });
 
-            $items      = $resposta->json('items', []);
-            $meta       = $resposta->json('meta', []);
+            $items = $resposta->json('items', []);
+            $meta = $resposta->json('meta', []);
             $totalPages = (int) ($meta['totalPages'] ?? 0);
 
-            if (!empty($items)) {
+            if (! empty($items)) {
                 foreach ($items as $item) {
-                    if (!empty($item['codProd'])) {
+                    if (! empty($item['codProd'])) {
                         yield $item;
                     }
                 }
@@ -142,6 +150,7 @@ class EdeltecApiClient
         if ($totalPages > 0) {
             return ($proximaPagina - 1) < $totalPages;
         }
+
         return true; // sem metadados: continua enquanto vier item
     }
 
@@ -151,7 +160,7 @@ class EdeltecApiClient
      * Executa a closure com retry exponencial para erros de rede e 5xx.
      * Em 401/403, chama o callback $onUnauthorized (se fornecido) e retenta uma vez.
      */
-    private function tentarComRetry(callable $request, ?callable $onUnauthorized = null): \Illuminate\Http\Client\Response
+    private function tentarComRetry(callable $request, ?callable $onUnauthorized = null): Response
     {
         $tentativa = 0;
 
@@ -163,17 +172,19 @@ class EdeltecApiClient
                 if ($response->status() === 401 || $response->status() === 403) {
                     if ($onUnauthorized && $tentativa === 1) {
                         $onUnauthorized();
+
                         continue; // tenta mais uma vez com novo token
                     }
                     throw new \RuntimeException("Edeltec: acesso negado (HTTP {$response->status()}).");
                 }
 
                 $response->throw(); // lança RequestException para 4xx/5xx
+
                 return $response;
 
             } catch (ConnectionException $e) {
                 if ($tentativa >= self::MAX_RETRIES) {
-                    throw new \RuntimeException("Edeltec: falha de conexão após {$tentativa} tentativas: " . $e->getMessage(), 0, $e);
+                    throw new \RuntimeException("Edeltec: falha de conexão após {$tentativa} tentativas: ".$e->getMessage(), 0, $e);
                 }
                 Log::warning("Edeltec: tentativa {$tentativa} falhou (conexão). Retentando...");
                 usleep(self::RETRY_DELAY_MS * 1000 * $tentativa);
@@ -184,9 +195,10 @@ class EdeltecApiClient
                 if ($status >= 500 && $tentativa < self::MAX_RETRIES) {
                     Log::warning("Edeltec: HTTP {$status} na tentativa {$tentativa}. Retentando...");
                     usleep(self::RETRY_DELAY_MS * 1000 * $tentativa);
+
                     continue;
                 }
-                throw new \RuntimeException("Edeltec: erro HTTP {$status}: " . $e->getMessage(), 0, $e);
+                throw new \RuntimeException("Edeltec: erro HTTP {$status}: ".$e->getMessage(), 0, $e);
             }
         }
     }

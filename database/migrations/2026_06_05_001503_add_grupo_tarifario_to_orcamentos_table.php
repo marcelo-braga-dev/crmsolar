@@ -34,7 +34,7 @@ return new class extends Migration
                 // Grupo A — Média Tensão
                 'A4', 'A3a', 'A3', 'A2', 'A1',
             ])->nullable()->after('status')
-              ->comment('Grupo tarifário ANEEL do cliente');
+                ->comment('Grupo tarifário ANEEL do cliente');
 
             $table->enum('modalidade_tarifaria', [
                 'convencional',   // Grupo B ou Grupo A com tarifa única

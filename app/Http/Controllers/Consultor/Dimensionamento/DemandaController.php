@@ -18,8 +18,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class DemandaController extends Controller
@@ -90,7 +90,7 @@ class DemandaController extends Controller
 
         $consumoTotal = (float) $data['consumo_ponta'] + (float) $data['consumo_fora_ponta'];
 
-        $kitsResult = $kits->map(function (Kit $kit) use ($qtd, $estado, $data, $hsp, $params, $orientacao) {
+        $kitsResult = $kits->map(function (Kit $kit) use ($qtd, $estado, $hsp, $params, $orientacao) {
             $potenciaTotal = (float) $kit->potencia_kwp * $qtd;
             $preco = $this->precificacao->calcular($kit, $qtd, $estado);
             $geracao = $this->dimensionamento->calcularGeracao($hsp, $potenciaTotal, $params, $orientacao);

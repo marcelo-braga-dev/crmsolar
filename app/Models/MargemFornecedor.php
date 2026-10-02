@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MargemFornecedor extends Model
 {
@@ -12,7 +13,7 @@ class MargemFornecedor extends Model
 
     protected $casts = ['margem' => 'decimal:3'];
 
-    public function fornecedor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);
     }

@@ -89,6 +89,6 @@ class ConcessionariasSeeder extends Seeder
         }
 
         DB::table('concessionarias')->insert($concessionarias);
-        $this->command->info('Concessionárias inseridas: ' . count($concessionarias));
+        $this->command->info('Concessionárias inseridas: '.count($concessionarias));
     }
 }

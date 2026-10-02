@@ -15,22 +15,22 @@ class DashboardController extends Controller
 {
     public function index(): Response
     {
-        $mesAtual    = now()->startOfMonth();
+        $mesAtual = now()->startOfMonth();
         $mesAnterior = now()->subMonth()->startOfMonth();
 
         // KPIs principais
         $stats = [
-            'orcamentos_mes'       => Orcamento::where('created_at', '>=', $mesAtual)->count(),
-            'orcamentos_mes_ant'   => Orcamento::whereBetween('created_at', [$mesAnterior, $mesAtual])->count(),
-            'clientes_total'       => Cliente::count(),
-            'leads_abertos'        => Lead::whereIn('status', ['novo', 'contatado', 'encaminhado'])->count(),
-            'valor_aprovado_mes'   => (float) Orcamento::where('created_at', '>=', $mesAtual)
+            'orcamentos_mes' => Orcamento::where('created_at', '>=', $mesAtual)->count(),
+            'orcamentos_mes_ant' => Orcamento::whereBetween('created_at', [$mesAnterior, $mesAtual])->count(),
+            'clientes_total' => Cliente::count(),
+            'leads_abertos' => Lead::whereIn('status', ['novo', 'contatado', 'encaminhado'])->count(),
+            'valor_aprovado_mes' => (float) Orcamento::where('created_at', '>=', $mesAtual)
                 ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
                 ->sum('preco_total'),
             'valor_aprovado_total' => (float) Orcamento::whereIn('status', ['aprovado', 'instalando', 'finalizado'])
                 ->sum('preco_total'),
-            'consultores_ativos'   => User::where('tipo', 'consultor')->where('status', true)->count(),
-            'em_instalacao'        => Orcamento::where('status', 'instalando')->count(),
+            'consultores_ativos' => User::where('tipo', 'consultor')->where('status', true)->count(),
+            'em_instalacao' => Orcamento::where('status', 'instalando')->count(),
         ];
 
         // Orçamentos por status
@@ -43,11 +43,11 @@ class DashboardController extends Controller
         // Últimos 6 meses — orçamentos e valor
         $evolucao = collect(range(5, 0))->map(function ($mesesAtras) {
             $inicio = now()->subMonths($mesesAtras)->startOfMonth();
-            $fim    = now()->subMonths($mesesAtras)->endOfMonth();
+            $fim = now()->subMonths($mesesAtras)->endOfMonth();
 
             return [
-                'mes'   => $inicio->format('M/y'),
-                'qtd'   => Orcamento::whereBetween('created_at', [$inicio, $fim])->count(),
+                'mes' => $inicio->format('M/y'),
+                'qtd' => Orcamento::whereBetween('created_at', [$inicio, $fim])->count(),
                 'valor' => (float) Orcamento::whereBetween('created_at', [$inicio, $fim])
                     ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
                     ->sum('preco_total'),
@@ -58,7 +58,7 @@ class DashboardController extends Controller
         $topConsultores = User::where('tipo', 'consultor')
             ->withSum(['orcamentos as valor_mes' => fn ($q) => $q
                 ->where('created_at', '>=', $mesAtual)
-                ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
+                ->whereIn('status', ['aprovado', 'instalando', 'finalizado']),
             ], 'preco_total')
             ->withCount(['orcamentos as qtd_mes' => fn ($q) => $q->where('created_at', '>=', $mesAtual)])
             ->orderByDesc('valor_mes')
@@ -72,11 +72,11 @@ class DashboardController extends Controller
             ->get(['id', 'consultor_id', 'cliente_id', 'status', 'preco_total', 'created_at']);
 
         return Inertia::render('Admin/Dashboard', [
-            'stats'          => $stats,
-            'porStatus'      => $porStatus,
-            'evolucao'       => $evolucao,
+            'stats' => $stats,
+            'porStatus' => $porStatus,
+            'evolucao' => $evolucao,
             'topConsultores' => $topConsultores,
-            'recentes'       => $recentes,
+            'recentes' => $recentes,
         ]);
     }
 }

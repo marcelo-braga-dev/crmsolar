@@ -27,7 +27,7 @@ class SistemaController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'configs'         => 'required|array',
+            'configs' => 'required|array',
             'configs.*.chave' => 'required|string|max:100',
             'configs.*.valor' => 'nullable|string|max:1000',
             'configs.*.grupo' => 'required|string|max:50',

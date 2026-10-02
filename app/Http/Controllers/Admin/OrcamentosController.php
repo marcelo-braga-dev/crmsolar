@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Orcamento;
 use App\Models\OrcamentoHistorico;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -21,12 +22,11 @@ class OrcamentosController extends Controller
                 'cliente:id,nome,razao_social,tipo_pessoa',
                 'cidade:id,cidade,estado',
             ])
-            ->when($request->search, fn ($q, $s) =>
-                $q->where(fn ($q) => $q
-                    ->where('id', 'like', "%{$s}%")
-                    ->orWhereHas('cliente', fn ($q) => $q
-                        ->where('nome', 'like', "%{$s}%")
-                        ->orWhere('razao_social', 'like', "%{$s}%"))))
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('id', 'like', "%{$s}%")
+                ->orWhereHas('cliente', fn ($q) => $q
+                    ->where('nome', 'like', "%{$s}%")
+                    ->orWhere('razao_social', 'like', "%{$s}%"))))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->consultor_id, fn ($q, $id) => $q->where('consultor_id', $id))
             ->latest()
@@ -66,7 +66,7 @@ class OrcamentosController extends Controller
         ]);
     }
 
-    public function update(Request $request, Orcamento $orcamento): \Illuminate\Http\RedirectResponse
+    public function update(Request $request, Orcamento $orcamento): RedirectResponse
     {
         $data = $request->validate([
             'status' => 'required|in:novo,aprovando,aprovado,aprovacao_reprovada,instalando,finalizado',

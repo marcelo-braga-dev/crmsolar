@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class IntegracaoEdeltecCommand extends Command
 {
-    protected $signature   = 'app:integracao-edeltec {--force : Força execução mesmo fora do horário agendado}';
+    protected $signature = 'app:integracao-edeltec {--force : Força execução mesmo fora do horário agendado}';
+
     protected $description = 'Sincroniza o catálogo de kits com a Edeltec Solar (roda diariamente às 04h)';
 
     public function handle(): int
@@ -17,7 +18,7 @@ class IntegracaoEdeltecCommand extends Command
         $inicio = microtime(true);
 
         try {
-            $historico = (new EdeltecImportService())->importar();
+            $historico = (new EdeltecImportService)->importar();
 
             $duracao = round(microtime(true) - $inicio, 1);
 
@@ -29,7 +30,7 @@ class IntegracaoEdeltecCommand extends Command
                     ['Importados',   $historico->itens_importados],
                     ['Atualizados',  $historico->itens_atualizados],
                     ['Desativados',  $historico->itens_desativados],
-                    ['Alertas',      $historico->alertas ? substr($historico->alertas, 0, 200) . '...' : 'Nenhum'],
+                    ['Alertas',      $historico->alertas ? substr($historico->alertas, 0, 200).'...' : 'Nenhum'],
                     ['Duração',      "{$duracao}s"],
                 ]
             );
@@ -41,8 +42,9 @@ class IntegracaoEdeltecCommand extends Command
             return Command::SUCCESS;
 
         } catch (\Throwable $e) {
-            $this->error('[Edeltec] FALHA CRÍTICA: ' . $e->getMessage());
+            $this->error('[Edeltec] FALHA CRÍTICA: '.$e->getMessage());
             Log::error('Edeltec Command: falha', ['error' => $e->getMessage()]);
+
             return Command::FAILURE;
         }
     }

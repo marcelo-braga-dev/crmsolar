@@ -25,11 +25,11 @@ class PerfilController extends Controller
         $user = Auth::user();
 
         $data = $request->validate([
-            'name'    => 'required|string|max:255',
-            'email'   => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'cpf'     => 'nullable|string|max:14',
-            'rg'      => 'nullable|string|max:20',
-            'cnpj'    => 'nullable|string|max:18',
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'cpf' => 'nullable|string|max:14',
+            'rg' => 'nullable|string|max:20',
+            'cnpj' => 'nullable|string|max:18',
             'celular' => 'nullable|string|max:20',
         ]);
 
@@ -47,12 +47,12 @@ class PerfilController extends Controller
     {
         $request->validate([
             'senha_atual' => 'required|string',
-            'password'    => 'required|string|min:8|confirmed',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $user = Auth::user();
 
-        if (!Hash::check($request->senha_atual, $user->password)) {
+        if (! Hash::check($request->senha_atual, $user->password)) {
             return back()->withErrors(['senha_atual' => 'Senha atual incorreta.']);
         }
 

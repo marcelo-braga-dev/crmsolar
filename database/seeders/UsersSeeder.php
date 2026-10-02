@@ -13,22 +13,22 @@ class UsersSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@teste.com'],
             [
-                'name'     => 'Admin Sistema',
+                'name' => 'Admin Sistema',
                 'password' => Hash::make('1020'),
-                'tipo'     => 'admin',
-                'status'   => true,
+                'tipo' => 'admin',
+                'status' => true,
             ]
         );
 
         User::firstOrCreate(
             ['email' => 'consultor@teste.com'],
             [
-                'name'                 => 'Consultor Teste',
-                'password'             => Hash::make('1020'),
-                'tipo'                 => 'consultor',
-                'status'               => true,
-                'comissao_percentual'  => 5.00,
-                'celular'              => '(11) 99999-0001',
+                'name' => 'Consultor Teste',
+                'password' => Hash::make('1020'),
+                'tipo' => 'consultor',
+                'status' => true,
+                'comissao_percentual' => 5.00,
+                'celular' => '(11) 99999-0001',
             ]
         );
     }

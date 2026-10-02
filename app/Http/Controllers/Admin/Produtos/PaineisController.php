@@ -29,11 +29,10 @@ class PaineisController extends Controller
         $paineis = Produto::query()
             ->where('categoria_id', $catId)
             ->with(['marca:id,nome', 'fornecedor:id,nome'])
-            ->when($request->search, fn ($q, $s) =>
-                $q->where(fn ($q) => $q
-                    ->where('nome', 'like', "%{$s}%")
-                    ->orWhere('modelo', 'like', "%{$s}%")
-                    ->orWhere('sku', 'like', "%{$s}%")))
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('nome', 'like', "%{$s}%")
+                ->orWhere('modelo', 'like', "%{$s}%")
+                ->orWhere('sku', 'like', "%{$s}%")))
             ->when($request->marca_id, fn ($q, $id) => $q->where('marca_id', $id))
             ->when($request->fornecedor_id, fn ($q, $id) => $q->where('fornecedor_id', $id))
             ->when($request->filled('ativo'), fn ($q) => $q->where('ativo', $request->boolean('ativo')))

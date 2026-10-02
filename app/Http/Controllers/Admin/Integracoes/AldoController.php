@@ -21,7 +21,7 @@ class AldoController extends Controller
             ->first();
 
         return Inertia::render('Admin/Integracoes/Aldo/Index', [
-            'fornecedor'        => $fornecedor,
+            'fornecedor' => $fornecedor,
             'ultima_integracao' => $ultimaIntegracao,
         ]);
     }

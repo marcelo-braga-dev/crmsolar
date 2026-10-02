@@ -24,19 +24,19 @@ class CatalogoController extends Controller
             ->orderBy('nome');
 
         return Inertia::render('Admin/Produtos/Catalogo/Index', [
-            'produtos'    => $query->paginate(30)->withQueryString(),
-            'categorias'  => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia']),
-            'marcas'      => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'produtos' => $query->paginate(30)->withQueryString(),
+            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia']),
+            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
             'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-            'filters'     => $request->only(['search', 'categoria_id', 'fornecedor_id', 'ativo']),
+            'filters' => $request->only(['search', 'categoria_id', 'fornecedor_id', 'ativo']),
         ]);
     }
 
     public function create(): Response
     {
         return Inertia::render('Admin/Produtos/Catalogo/Form', [
-            'categorias'  => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
-            'marcas'      => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
+            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
             'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
         ]);
     }
@@ -44,23 +44,23 @@ class CatalogoController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'categoria_id'      => 'required|exists:categorias_produtos,id',
-            'marca_id'          => 'nullable|exists:marcas,id',
-            'fornecedor_id'     => 'nullable|exists:fornecedores,id',
-            'nome'              => 'required|string|max:200',
-            'modelo'            => 'nullable|string|max:100',
-            'sku'               => 'nullable|string|max:60|unique:produtos,sku',
-            'descricao'         => 'nullable|string',
-            'potencia'          => 'nullable|numeric|min:0',
-            'unidade_potencia'  => 'nullable|string|max:10',
-            'tensao'            => 'nullable|integer',
-            'unidade'           => 'nullable|string|max:20',
-            'preco_custo'       => 'required|numeric|min:0',
-            'garantia'          => 'nullable|string|max:100',
-            'imagem_url'        => 'nullable|url|max:500',
+            'categoria_id' => 'required|exists:categorias_produtos,id',
+            'marca_id' => 'nullable|exists:marcas,id',
+            'fornecedor_id' => 'nullable|exists:fornecedores,id',
+            'nome' => 'required|string|max:200',
+            'modelo' => 'nullable|string|max:100',
+            'sku' => 'nullable|string|max:60|unique:produtos,sku',
+            'descricao' => 'nullable|string',
+            'potencia' => 'nullable|numeric|min:0',
+            'unidade_potencia' => 'nullable|string|max:10',
+            'tensao' => 'nullable|integer',
+            'unidade' => 'nullable|string|max:20',
+            'preco_custo' => 'required|numeric|min:0',
+            'garantia' => 'nullable|string|max:100',
+            'imagem_url' => 'nullable|url|max:500',
             'ficha_tecnica_url' => 'nullable|url|max:500',
-            'atributos'         => 'nullable|array',
-            'ativo'             => 'boolean',
+            'atributos' => 'nullable|array',
+            'ativo' => 'boolean',
         ]);
 
         $produto = Produto::create($validated);
@@ -79,9 +79,9 @@ class CatalogoController extends Controller
     public function edit(Produto $catalogo): Response
     {
         return Inertia::render('Admin/Produtos/Catalogo/Form', [
-            'produto'     => $catalogo,
-            'categorias'  => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
-            'marcas'      => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'produto' => $catalogo,
+            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
+            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
             'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
         ]);
     }
@@ -89,23 +89,23 @@ class CatalogoController extends Controller
     public function update(Request $request, Produto $catalogo): RedirectResponse
     {
         $validated = $request->validate([
-            'categoria_id'      => 'required|exists:categorias_produtos,id',
-            'marca_id'          => 'nullable|exists:marcas,id',
-            'fornecedor_id'     => 'nullable|exists:fornecedores,id',
-            'nome'              => 'required|string|max:200',
-            'modelo'            => 'nullable|string|max:100',
-            'sku'               => 'nullable|string|max:60|unique:produtos,sku,' . $catalogo->id,
-            'descricao'         => 'nullable|string',
-            'potencia'          => 'nullable|numeric|min:0',
-            'unidade_potencia'  => 'nullable|string|max:10',
-            'tensao'            => 'nullable|integer',
-            'unidade'           => 'nullable|string|max:20',
-            'preco_custo'       => 'required|numeric|min:0',
-            'garantia'          => 'nullable|string|max:100',
-            'imagem_url'        => 'nullable|url|max:500',
+            'categoria_id' => 'required|exists:categorias_produtos,id',
+            'marca_id' => 'nullable|exists:marcas,id',
+            'fornecedor_id' => 'nullable|exists:fornecedores,id',
+            'nome' => 'required|string|max:200',
+            'modelo' => 'nullable|string|max:100',
+            'sku' => 'nullable|string|max:60|unique:produtos,sku,'.$catalogo->id,
+            'descricao' => 'nullable|string',
+            'potencia' => 'nullable|numeric|min:0',
+            'unidade_potencia' => 'nullable|string|max:10',
+            'tensao' => 'nullable|integer',
+            'unidade' => 'nullable|string|max:20',
+            'preco_custo' => 'required|numeric|min:0',
+            'garantia' => 'nullable|string|max:100',
+            'imagem_url' => 'nullable|url|max:500',
             'ficha_tecnica_url' => 'nullable|url|max:500',
-            'atributos'         => 'nullable|array',
-            'ativo'             => 'boolean',
+            'atributos' => 'nullable|array',
+            'ativo' => 'boolean',
         ]);
 
         $catalogo->update($validated);

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrcamentoAprovacao extends Model
 {
@@ -17,7 +18,7 @@ class OrcamentoAprovacao extends Model
         'assinado_em' => 'datetime',
     ];
 
-    public function orcamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }

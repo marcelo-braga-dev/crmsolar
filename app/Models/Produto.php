@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Produto extends Model
 {
@@ -22,22 +24,22 @@ class Produto extends Model
         'potencia' => 'decimal:3',
     ];
 
-    public function categoria(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function categoria(): BelongsTo
     {
         return $this->belongsTo(CategoriaProduto::class, 'categoria_id');
     }
 
-    public function marca(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function marca(): BelongsTo
     {
         return $this->belongsTo(Marca::class);
     }
 
-    public function fornecedor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);
     }
 
-    public function kits(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function kits(): BelongsToMany
     {
         return $this->belongsToMany(Kit::class, 'kit_componentes')
             ->withPivot('quantidade', 'observacao');

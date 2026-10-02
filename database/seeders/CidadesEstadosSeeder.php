@@ -5594,6 +5594,6 @@ class CidadesEstadosSeeder extends Seeder
             DB::table('cidades_estados')->insert($batch);
         }
 
-        $this->command->info('Cidades e estados inseridos: ' . count($cidades));
+        $this->command->info('Cidades e estados inseridos: '.count($cidades));
     }
 }

@@ -25,8 +25,8 @@ class FaturamentoController extends Controller
 
         return Inertia::render('Admin/Financeiro/Faturamento/Index', [
             'orcamentos' => $orcamentos,
-            'total'      => $total,
-            'filters'    => $request->only(['mes', 'ano']),
+            'total' => $total,
+            'filters' => $request->only(['mes', 'ano']),
         ]);
     }
 }

@@ -19,8 +19,8 @@ class ConsultoresController extends Controller
             ->where('tipo', 'consultor')
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('cpf', 'like', "%{$s}%");
+                    ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('cpf', 'like', "%{$s}%");
             }))
             ->when($request->has('status') && $request->status !== '', fn ($q) => $q->where('status', (bool) $request->status))
             ->withCount(['clientes', 'orcamentos'])
@@ -30,7 +30,7 @@ class ConsultoresController extends Controller
 
         return Inertia::render('Admin/Usuarios/Consultores/Index', [
             'consultores' => $consultores,
-            'filters'    => $request->only(['search', 'status']),
+            'filters' => $request->only(['search', 'status']),
         ]);
     }
 
@@ -42,14 +42,14 @@ class ConsultoresController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'                => 'required|string|max:255',
-            'email'               => 'required|email|max:255|unique:users,email',
-            'password'            => 'required|string|min:8|confirmed',
-            'cpf'                 => 'nullable|string|max:14',
-            'rg'                  => 'nullable|string|max:20',
-            'celular'             => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'cpf' => 'nullable|string|max:14',
+            'rg' => 'nullable|string|max:20',
+            'celular' => 'nullable|string|max:20',
             'comissao_percentual' => 'nullable|numeric|min:0|max:100',
-            'status'              => 'required|boolean',
+            'status' => 'required|boolean',
         ]);
 
         $data['password'] = Hash::make($data['password']);
@@ -76,14 +76,14 @@ class ConsultoresController extends Controller
         abort_unless($consultor->isConsultor(), 404);
 
         $data = $request->validate([
-            'name'                => 'required|string|max:255',
-            'email'               => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($consultor->id)],
-            'password'            => 'nullable|string|min:8|confirmed',
-            'cpf'                 => 'nullable|string|max:14',
-            'rg'                  => 'nullable|string|max:20',
-            'celular'             => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($consultor->id)],
+            'password' => 'nullable|string|min:8|confirmed',
+            'cpf' => 'nullable|string|max:14',
+            'rg' => 'nullable|string|max:20',
+            'celular' => 'nullable|string|max:20',
             'comissao_percentual' => 'nullable|numeric|min:0|max:100',
-            'status'              => 'required|boolean',
+            'status' => 'required|boolean',
         ]);
 
         $data['comissao_percentual'] ??= 0;

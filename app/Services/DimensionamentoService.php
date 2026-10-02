@@ -34,14 +34,15 @@ use Illuminate\Database\Eloquent\Collection;
 class DimensionamentoService
 {
     private const HSP_FALLBACK = 4.5;   // kWh/m²/dia (valor conservador médio BR)
-    private const PR_FALLBACK  = 0.80;  // Performance Ratio padrão (20% perdas)
+
+    private const PR_FALLBACK = 0.80;  // Performance Ratio padrão (20% perdas)
 
     private const ORIENTACAO_FATOR = [
-        'norte'               => 1.00,
-        'nordeste_noroeste'   => 0.95,
-        'leste_oeste'         => 0.88,
-        'sudeste_sudoeste'    => 0.82,
-        'sul'                 => 0.75,
+        'norte' => 1.00,
+        'nordeste_noroeste' => 0.95,
+        'leste_oeste' => 0.88,
+        'sudeste_sudoeste' => 0.82,
+        'sul' => 0.75,
     ];
 
     // ── Parâmetros do banco ───────────────────────────────────────────────
@@ -52,17 +53,17 @@ class DimensionamentoService
 
         return [
             // PR do sistema (inverso do fator_perda): 20% perda → PR = 0.80
-            'pr_sistema'    => 1 - ((float) ($rows['fator_perda_sistema']?->valor ?? 20)) / 100,
-            'fator_perda'   => (float) ($rows['fator_perda_sistema']?->valor ?? 20),
+            'pr_sistema' => 1 - ((float) ($rows['fator_perda_sistema']?->valor ?? 20)) / 100,
+            'fator_perda' => (float) ($rows['fator_perda_sistema']?->valor ?? 20),
             // Margem de segurança adicional aplicada sobre a potência calculada
-            'margem'        => (float) ($rows['margem_seguranca']?->valor ?? 5),
+            'margem' => (float) ($rows['margem_seguranca']?->valor ?? 5),
             // Perdas por orientação (em %)
-            'perda_orient'  => [
-                'norte'             => (float) ($rows['perda_norte']?->valor             ?? 0),
-                'nordeste_noroeste' => (float) ($rows['perda_nordeste_noroeste']?->valor  ?? 5),
-                'leste_oeste'       => (float) ($rows['perda_leste_oeste']?->valor        ?? 12),
-                'sudeste_sudoeste'  => (float) ($rows['perda_sudeste_sudoeste']?->valor   ?? 18),
-                'sul'               => (float) ($rows['perda_sul']?->valor                ?? 25),
+            'perda_orient' => [
+                'norte' => (float) ($rows['perda_norte']?->valor ?? 0),
+                'nordeste_noroeste' => (float) ($rows['perda_nordeste_noroeste']?->valor ?? 5),
+                'leste_oeste' => (float) ($rows['perda_leste_oeste']?->valor ?? 12),
+                'sudeste_sudoeste' => (float) ($rows['perda_sudeste_sudoeste']?->valor ?? 18),
+                'sul' => (float) ($rows['perda_sul']?->valor ?? 25),
             ],
         ];
     }
@@ -78,8 +79,8 @@ class DimensionamentoService
     public function getIrradiacaoMensal(int $cidadeId): array
     {
         $row = IrradiacaoSolar::where('cidade_id', $cidadeId)->first();
-        if (!$row) {
-            return array_fill_keys(['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'], self::HSP_FALLBACK);
+        if (! $row) {
+            return array_fill_keys(['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'], self::HSP_FALLBACK);
         }
 
         return [
@@ -96,6 +97,7 @@ class DimensionamentoService
     {
         if ($params) {
             $perda = $params['perda_orient'][$orientacao] ?? 0;
+
             return 1 - ($perda / 100);
         }
 
@@ -119,9 +121,9 @@ class DimensionamentoService
         array $params,
         string $orientacao = 'norte',
     ): float {
-        $fOrient  = $this->fatorOrientacao($orientacao, $params);
-        $prTotal  = $params['pr_sistema'] * $fOrient;
-        $fMargem  = 1 + ($params['margem'] / 100);   // ex.: 5% → fator 1.05
+        $fOrient = $this->fatorOrientacao($orientacao, $params);
+        $prTotal = $params['pr_sistema'] * $fOrient;
+        $fMargem = 1 + ($params['margem'] / 100);   // ex.: 5% → fator 1.05
 
         $potencia = ($consumo / 30) / ($hsp * $prTotal);
 
@@ -149,14 +151,14 @@ class DimensionamentoService
         array $params,
         string $orientacao = 'norte',
     ): float {
-        $fc          = $tarifaPonta / max($tarifaForaPonta, 0.0001);
-        $eEquiv      = $consumoForaPonta + ($fc * $consumoPonta);
+        $fc = $tarifaPonta / max($tarifaForaPonta, 0.0001);
+        $eEquiv = $consumoForaPonta + ($fc * $consumoPonta);
 
-        $fOrient     = $this->fatorOrientacao($orientacao, $params);
-        $prTotal     = $params['pr_sistema'] * $fOrient;
-        $fMargem     = 1 + ($params['margem'] / 100);
+        $fOrient = $this->fatorOrientacao($orientacao, $params);
+        $prTotal = $params['pr_sistema'] * $fOrient;
+        $fMargem = 1 + ($params['margem'] / 100);
 
-        $potencia    = ($eEquiv / 30) / ($hsp * $prTotal);
+        $potencia = ($eEquiv / 30) / ($hsp * $prTotal);
 
         return round($potencia * $fMargem, 3);
     }
@@ -208,38 +210,38 @@ class DimensionamentoService
         string $orientacao = 'norte',
     ): array {
         $irradMensal = $this->getIrradiacaoMensal($cidadeId);
-        $fOrient     = $this->fatorOrientacao($orientacao, $params);
-        $prTotal     = $params['pr_sistema'] * $fOrient;
+        $fOrient = $this->fatorOrientacao($orientacao, $params);
+        $prTotal = $params['pr_sistema'] * $fOrient;
 
-        $diasMes = ['jan'=>31,'fev'=>28,'mar'=>31,'abr'=>30,'mai'=>31,'jun'=>30,'jul'=>31,'ago'=>31,'set'=>30,'out'=>31,'nov'=>30,'dez'=>31];
+        $diasMes = ['jan' => 31, 'fev' => 28, 'mar' => 31, 'abr' => 30, 'mai' => 31, 'jun' => 30, 'jul' => 31, 'ago' => 31, 'set' => 30, 'out' => 31, 'nov' => 30, 'dez' => 31];
 
         $meses = [];
         foreach ($diasMes as $mes => $dias) {
-            $hsp     = $irradMensal[$mes] ?? self::HSP_FALLBACK;
+            $hsp = $irradMensal[$mes] ?? self::HSP_FALLBACK;
             $geracao = round($potenciaTotal * $hsp * $dias * $prTotal);
             $cobertura = $consumoMensal > 0 ? round(($geracao / $consumoMensal) * 100, 1) : 0;
 
             $meses[$mes] = [
-                'hsp'       => $hsp,
-                'geracao'   => $geracao,
-                'consumo'   => $consumoMensal,
+                'hsp' => $hsp,
+                'geracao' => $geracao,
+                'consumo' => $consumoMensal,
                 'cobertura' => $cobertura,
             ];
         }
 
-        $coberturas   = array_column($meses, 'cobertura');
-        $mesNomes     = array_keys($meses);
-        $idxPior      = array_search(min($coberturas), $coberturas);
-        $idxMelhor    = array_search(max($coberturas), $coberturas);
+        $coberturas = array_column($meses, 'cobertura');
+        $mesNomes = array_keys($meses);
+        $idxPior = array_search(min($coberturas), $coberturas);
+        $idxMelhor = array_search(max($coberturas), $coberturas);
 
         return [
-            'meses'           => $meses,
-            'pior_mes'        => $mesNomes[$idxPior],
-            'pior_cobertura'  => min($coberturas),
-            'melhor_mes'      => $mesNomes[$idxMelhor],
-            'melhor_cobertura'=> max($coberturas),
-            'geracao_anual'   => array_sum(array_column($meses, 'geracao')),
-            'consumo_anual'   => $consumoMensal * 12,
+            'meses' => $meses,
+            'pior_mes' => $mesNomes[$idxPior],
+            'pior_cobertura' => min($coberturas),
+            'melhor_mes' => $mesNomes[$idxMelhor],
+            'melhor_cobertura' => max($coberturas),
+            'geracao_anual' => array_sum(array_column($meses, 'geracao')),
+            'consumo_anual' => $consumoMensal * 12,
         ];
     }
 
@@ -250,17 +252,17 @@ class DimensionamentoService
      * Com qtdKits > 1 divide a potência por kit e busca cada faixa individualmente.
      */
     /**
-     * @param array<string> $categorias filtro de categorias — ex: ['ongrid','hibrido']. Vazio = todas.
+     * @param  array<string>  $categorias  filtro de categorias — ex: ['ongrid','hibrido']. Vazio = todas.
      */
     public function buscarKits(
         float $potenciaKwp,
-        int   $estruturaId,
-        int   $tensao,
-        int   $qtdKits = 1,
+        int $estruturaId,
+        int $tensao,
+        int $qtdKits = 1,
         array $categorias = [],
     ): Collection {
         $potenciaPorKit = $potenciaKwp / max($qtdKits, 1);
-        [$min, $max]    = $this->tolerancia($potenciaPorKit);
+        [$min, $max] = $this->tolerancia($potenciaPorKit);
 
         return Kit::query()
             ->where('estrutura_id', $estruturaId)
@@ -268,7 +270,7 @@ class DimensionamentoService
             ->whereBetween('potencia_kwp', [$min, $max])
             ->where('ativo', true)
             ->where('ativo_fornecedor', true)
-            ->when(!empty($categorias), fn($q) => $q->whereIn('categoria', $categorias))
+            ->when(! empty($categorias), fn ($q) => $q->whereIn('categoria', $categorias))
             ->with('fornecedor:id,nome')
             ->orderBy('preco_custo')
             ->get();
@@ -281,19 +283,19 @@ class DimensionamentoService
      */
     public function detalhamentoPR(array $params, string $orientacao): array
     {
-        $fOrient  = $this->fatorOrientacao($orientacao, $params);
-        $prSist   = $params['pr_sistema'];
-        $prTotal  = $prSist * $fOrient;
-        $margem   = $params['margem'];
+        $fOrient = $this->fatorOrientacao($orientacao, $params);
+        $prSist = $params['pr_sistema'];
+        $prTotal = $prSist * $fOrient;
+        $margem = $params['margem'];
 
         return [
-            'pr_sistema'          => round($prSist * 100, 1),
-            'fator_orientacao'    => round($fOrient * 100, 1),
-            'pr_total'            => round($prTotal * 100, 1),
-            'margem_seguranca'    => $margem,
-            'perdas_sistema'      => round((1 - $prSist) * 100, 1),
-            'perdas_orientacao'   => round((1 - $fOrient) * 100, 1),
-            'perdas_totais'       => round((1 - $prTotal) * 100, 1),
+            'pr_sistema' => round($prSist * 100, 1),
+            'fator_orientacao' => round($fOrient * 100, 1),
+            'pr_total' => round($prTotal * 100, 1),
+            'margem_seguranca' => $margem,
+            'perdas_sistema' => round((1 - $prSist) * 100, 1),
+            'perdas_orientacao' => round((1 - $fOrient) * 100, 1),
+            'perdas_totais' => round((1 - $prTotal) * 100, 1),
         ];
     }
 
@@ -309,9 +311,9 @@ class DimensionamentoService
             $potencia > 50 => 2,
             $potencia > 20 => 3,
             $potencia > 10 => 5,
-            $potencia > 3  => 8,
-            $potencia > 1  => 10,
-            default        => 15,
+            $potencia > 3 => 8,
+            $potencia > 1 => 10,
+            default => 15,
         };
 
         return [

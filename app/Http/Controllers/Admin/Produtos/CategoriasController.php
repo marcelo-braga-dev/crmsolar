@@ -21,13 +21,13 @@ class CategoriasController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'nome'              => 'required|string|max:100',
-            'slug'              => 'required|string|max:60|unique:categorias_produtos,slug',
-            'descricao'         => 'nullable|string|max:200',
-            'icone'             => 'nullable|string|max:80',
+            'nome' => 'required|string|max:100',
+            'slug' => 'required|string|max:60|unique:categorias_produtos,slug',
+            'descricao' => 'nullable|string|max:200',
+            'icone' => 'nullable|string|max:80',
             'eh_componente_kit' => 'boolean',
-            'exige_potencia'    => 'boolean',
-            'ordem'             => 'integer|min:0',
+            'exige_potencia' => 'boolean',
+            'ordem' => 'integer|min:0',
         ]);
 
         CategoriaProduto::create(array_merge($validated, ['ativo' => true]));
@@ -38,13 +38,13 @@ class CategoriasController extends Controller
     public function update(Request $request, CategoriaProduto $categoria): RedirectResponse
     {
         $validated = $request->validate([
-            'nome'              => 'required|string|max:100',
-            'descricao'         => 'nullable|string|max:200',
-            'icone'             => 'nullable|string|max:80',
+            'nome' => 'required|string|max:100',
+            'descricao' => 'nullable|string|max:200',
+            'icone' => 'nullable|string|max:80',
             'eh_componente_kit' => 'boolean',
-            'exige_potencia'    => 'boolean',
-            'ativo'             => 'boolean',
-            'ordem'             => 'integer|min:0',
+            'exige_potencia' => 'boolean',
+            'ativo' => 'boolean',
+            'ordem' => 'integer|min:0',
         ]);
 
         $categoria->update($validated);

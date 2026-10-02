@@ -19,8 +19,8 @@ class LeadsController extends Controller
             ->with('consultor:id,name')
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('nome', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('telefone', 'like', "%{$s}%");
+                    ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('telefone', 'like', "%{$s}%");
             }))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->consultor_id, fn ($q, $id) => $q->where('consultor_id', $id))

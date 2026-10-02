@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Marca extends Model
 {
@@ -10,7 +11,7 @@ class Marca extends Model
 
     protected $casts = ['ativo' => 'boolean'];
 
-    public function produtos(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function produtos(): HasMany
     {
         return $this->hasMany(Produto::class);
     }

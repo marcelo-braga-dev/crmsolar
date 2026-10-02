@@ -50,20 +50,20 @@ class IrradiacaoSolarTodosSeeder extends Seeder
     // Valores médios mensais por macrorregião (fallback se capital não tiver dados)
     // Fonte: Atlas Solarimétrico INPE — média por região climática
     private const FALLBACK_REGIONAL = [
-        'Norte'         => ['media'=>5.05,'jan'=>4.85,'fev'=>4.60,'mar'=>4.45,'abr'=>4.55,'mai'=>4.75,'jun'=>5.00,'jul'=>5.35,'ago'=>5.60,'set'=>5.50,'out'=>5.20,'nov'=>4.90,'dez'=>4.85],
-        'Nordeste'      => ['media'=>5.75,'jan'=>5.90,'fev'=>5.70,'mar'=>5.45,'abr'=>5.25,'mai'=>5.20,'jun'=>5.10,'jul'=>5.35,'ago'=>5.80,'set'=>6.10,'out'=>6.25,'nov'=>6.15,'dez'=>5.90],
-        'Centro-Oeste'  => ['media'=>5.50,'jan'=>5.55,'fev'=>5.40,'mar'=>5.25,'abr'=>5.35,'mai'=>5.55,'jun'=>5.60,'jul'=>5.85,'ago'=>6.15,'set'=>5.80,'out'=>5.50,'nov'=>5.28,'dez'=>5.42],
-        'Sudeste'       => ['media'=>5.10,'jan'=>5.20,'fev'=>5.00,'mar'=>4.78,'abr'=>4.75,'mai'=>4.68,'jun'=>4.52,'jul'=>4.75,'ago'=>5.15,'set'=>4.95,'out'=>4.90,'nov'=>4.95,'dez'=>5.10],
-        'Sul'           => ['media'=>4.85,'jan'=>5.10,'fev'=>4.90,'mar'=>4.65,'abr'=>4.50,'mai'=>4.35,'jun'=>4.18,'jul'=>4.42,'ago'=>4.85,'set'=>4.72,'out'=>4.75,'nov'=>4.88,'dez'=>5.05],
+        'Norte' => ['media' => 5.05, 'jan' => 4.85, 'fev' => 4.60, 'mar' => 4.45, 'abr' => 4.55, 'mai' => 4.75, 'jun' => 5.00, 'jul' => 5.35, 'ago' => 5.60, 'set' => 5.50, 'out' => 5.20, 'nov' => 4.90, 'dez' => 4.85],
+        'Nordeste' => ['media' => 5.75, 'jan' => 5.90, 'fev' => 5.70, 'mar' => 5.45, 'abr' => 5.25, 'mai' => 5.20, 'jun' => 5.10, 'jul' => 5.35, 'ago' => 5.80, 'set' => 6.10, 'out' => 6.25, 'nov' => 6.15, 'dez' => 5.90],
+        'Centro-Oeste' => ['media' => 5.50, 'jan' => 5.55, 'fev' => 5.40, 'mar' => 5.25, 'abr' => 5.35, 'mai' => 5.55, 'jun' => 5.60, 'jul' => 5.85, 'ago' => 6.15, 'set' => 5.80, 'out' => 5.50, 'nov' => 5.28, 'dez' => 5.42],
+        'Sudeste' => ['media' => 5.10, 'jan' => 5.20, 'fev' => 5.00, 'mar' => 4.78, 'abr' => 4.75, 'mai' => 4.68, 'jun' => 4.52, 'jul' => 4.75, 'ago' => 5.15, 'set' => 4.95, 'out' => 4.90, 'nov' => 4.95, 'dez' => 5.10],
+        'Sul' => ['media' => 4.85, 'jan' => 5.10, 'fev' => 4.90, 'mar' => 4.65, 'abr' => 4.50, 'mai' => 4.35, 'jun' => 4.18, 'jul' => 4.42, 'ago' => 4.85, 'set' => 4.72, 'out' => 4.75, 'nov' => 4.88, 'dez' => 5.05],
     ];
 
     private const SIGLA_REGIAO = [
-        'AC'=>'Norte','AM'=>'Norte','AP'=>'Norte','PA'=>'Norte','RO'=>'Norte','RR'=>'Norte','TO'=>'Norte',
-        'AL'=>'Nordeste','BA'=>'Nordeste','CE'=>'Nordeste','MA'=>'Nordeste','PB'=>'Nordeste',
-        'PE'=>'Nordeste','PI'=>'Nordeste','RN'=>'Nordeste','SE'=>'Nordeste',
-        'DF'=>'Centro-Oeste','GO'=>'Centro-Oeste','MS'=>'Centro-Oeste','MT'=>'Centro-Oeste',
-        'ES'=>'Sudeste','MG'=>'Sudeste','RJ'=>'Sudeste','SP'=>'Sudeste',
-        'PR'=>'Sul','RS'=>'Sul','SC'=>'Sul',
+        'AC' => 'Norte', 'AM' => 'Norte', 'AP' => 'Norte', 'PA' => 'Norte', 'RO' => 'Norte', 'RR' => 'Norte', 'TO' => 'Norte',
+        'AL' => 'Nordeste', 'BA' => 'Nordeste', 'CE' => 'Nordeste', 'MA' => 'Nordeste', 'PB' => 'Nordeste',
+        'PE' => 'Nordeste', 'PI' => 'Nordeste', 'RN' => 'Nordeste', 'SE' => 'Nordeste',
+        'DF' => 'Centro-Oeste', 'GO' => 'Centro-Oeste', 'MS' => 'Centro-Oeste', 'MT' => 'Centro-Oeste',
+        'ES' => 'Sudeste', 'MG' => 'Sudeste', 'RJ' => 'Sudeste', 'SP' => 'Sudeste',
+        'PR' => 'Sul', 'RS' => 'Sul', 'SC' => 'Sul',
     ];
 
     public function run(): void
@@ -76,6 +76,7 @@ class IrradiacaoSolarTodosSeeder extends Seeder
 
         if ($semIrradiacao->isEmpty()) {
             $this->command->info('Todas as cidades já têm irradiação solar. Nada a fazer.');
+
             return;
         }
 
@@ -84,14 +85,14 @@ class IrradiacaoSolarTodosSeeder extends Seeder
         // Constrói cache de referências por estado
         $cache = $this->construirCacheEstados();
 
-        $batch   = [];
-        $ok      = 0;
+        $batch = [];
+        $ok = 0;
         $fallback = 0;
 
         foreach ($semIrradiacao as $cidade) {
             $ref = $cache[$cidade->sigla] ?? null;
 
-            if (!$ref) {
+            if (! $ref) {
                 $fallback++;
                 $regiao = self::SIGLA_REGIAO[$cidade->sigla] ?? 'Sudeste';
                 $f = self::FALLBACK_REGIONAL[$regiao];
@@ -115,7 +116,7 @@ class IrradiacaoSolarTodosSeeder extends Seeder
             }
         }
 
-        if (!empty($batch)) {
+        if (! empty($batch)) {
             DB::table('irradiacao_solar')->insert($batch);
         }
 
@@ -144,6 +145,7 @@ class IrradiacaoSolarTodosSeeder extends Seeder
                 $irr = DB::table('irradiacao_solar')->where('cidade_id', $cidadeId)->first();
                 if ($irr) {
                     $cache[$sigla] = $irr;
+
                     continue;
                 }
             }

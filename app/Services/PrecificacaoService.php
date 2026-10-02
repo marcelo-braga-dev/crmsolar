@@ -20,21 +20,21 @@ class PrecificacaoService
     {
         $potenciaTotal = (float) $kit->potencia_kwp * $qtdKits;
 
-        $mp  = $this->margemPrincipal($potenciaTotal);
+        $mp = $this->margemPrincipal($potenciaTotal);
         $mes = $this->margemEstado($estado);
-        $mf  = $this->margemFornecedor($kit->fornecedor_id);
+        $mf = $this->margemFornecedor($kit->fornecedor_id);
 
         $margemTotal = $mp + $mes + $mf;
-        $precoCusto  = (float) $kit->preco_custo * $qtdKits;
-        $precoVenda  = round($precoCusto * (1 + $margemTotal / 100), 2);
+        $precoCusto = (float) $kit->preco_custo * $qtdKits;
+        $precoVenda = round($precoCusto * (1 + $margemTotal / 100), 2);
 
         return [
-            'margem_principal'  => $mp,
-            'margem_estado'     => $mes,
+            'margem_principal' => $mp,
+            'margem_estado' => $mes,
             'margem_fornecedor' => $mf,
-            'margem_total'      => $margemTotal,
-            'preco_custo'       => $precoCusto,
-            'preco_venda'       => $precoVenda,
+            'margem_total' => $margemTotal,
+            'preco_custo' => $precoCusto,
+            'preco_venda' => $precoVenda,
         ];
     }
 

@@ -21,9 +21,9 @@ class DimensionamentoController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'params'          => 'required|array',
-            'params.*.id'     => 'required|exists:params_dimensionamento,id',
-            'params.*.valor'  => 'required|string|max:255',
+            'params' => 'required|array',
+            'params.*.id' => 'required|exists:params_dimensionamento,id',
+            'params.*.valor' => 'required|string|max:255',
         ]);
 
         foreach ($data['params'] as $item) {

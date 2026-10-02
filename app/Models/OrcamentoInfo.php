@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrcamentoInfo extends Model
 {
@@ -31,36 +32,36 @@ class OrcamentoInfo extends Model
     ];
 
     protected $casts = [
-        'consumo'             => 'decimal:2',
-        'consumo_ponta'       => 'decimal:2',
-        'consumo_fora_ponta'  => 'decimal:2',
-        'demanda_contratada'  => 'decimal:2',
-        'demanda_ponta_kw'    => 'decimal:2',
+        'consumo' => 'decimal:2',
+        'consumo_ponta' => 'decimal:2',
+        'consumo_fora_ponta' => 'decimal:2',
+        'demanda_contratada' => 'decimal:2',
+        'demanda_ponta_kw' => 'decimal:2',
         'demanda_fora_ponta_kw' => 'decimal:2',
-        'tarifa_kwh'          => 'decimal:5',
-        'tarifa_kwh_ponta'    => 'decimal:5',
-        'tarifa_kwh_fp'       => 'decimal:5',
-        'tarifa_demanda_ponta'=> 'decimal:2',
-        'tarifa_demanda_fp'   => 'decimal:2',
-        'valor_conta_mensal'  => 'decimal:2',
+        'tarifa_kwh' => 'decimal:5',
+        'tarifa_kwh_ponta' => 'decimal:5',
+        'tarifa_kwh_fp' => 'decimal:5',
+        'tarifa_demanda_ponta' => 'decimal:2',
+        'tarifa_demanda_fp' => 'decimal:2',
+        'valor_conta_mensal' => 'decimal:2',
         'consumo_bombeamento' => 'decimal:2',
-        'possui_bombeamento'  => 'boolean',
-        'bloquear_edicao'     => 'boolean',
-        'analise_economica'   => 'array',
-        'metadados'           => 'array',
+        'possui_bombeamento' => 'boolean',
+        'bloquear_edicao' => 'boolean',
+        'analise_economica' => 'array',
+        'metadados' => 'array',
     ];
 
-    public function orcamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
-    public function estrutura(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function estrutura(): BelongsTo
     {
         return $this->belongsTo(Estrutura::class);
     }
 
-    public function concessionaria(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function concessionaria(): BelongsTo
     {
         return $this->belongsTo(Concessionaria::class);
     }

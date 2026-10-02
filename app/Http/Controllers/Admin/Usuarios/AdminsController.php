@@ -20,16 +20,16 @@ class AdminsController extends Controller
             ->where('tipo', 'admin')
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%");
+                    ->orWhere('email', 'like', "%{$s}%");
             }))
             ->latest()
             ->paginate(20)
             ->withQueryString();
 
         return Inertia::render('Admin/Usuarios/Admins/Index', [
-            'admins'        => $admins,
-            'filters'       => $request->only(['search']),
-            'current_id'    => Auth::id(),
+            'admins' => $admins,
+            'filters' => $request->only(['search']),
+            'current_id' => Auth::id(),
         ]);
     }
 
@@ -41,15 +41,15 @@ class AdminsController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|max:255|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'cpf'      => 'nullable|string|max:14',
-            'celular'  => 'nullable|string|max:20',
-            'status'   => 'required|boolean',
+            'cpf' => 'nullable|string|max:14',
+            'celular' => 'nullable|string|max:20',
+            'status' => 'required|boolean',
         ]);
 
-        $data['tipo']     = 'admin';
+        $data['tipo'] = 'admin';
         $data['password'] = Hash::make($data['password']);
 
         User::create($data);
@@ -72,12 +72,12 @@ class AdminsController extends Controller
         abort_unless($admin->isAdmin(), 404);
 
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($admin->id)],
+            'name' => 'required|string|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($admin->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'cpf'      => 'nullable|string|max:14',
-            'celular'  => 'nullable|string|max:20',
-            'status'   => 'required|boolean',
+            'cpf' => 'nullable|string|max:14',
+            'celular' => 'nullable|string|max:20',
+            'status' => 'required|boolean',
         ]);
 
         if ($admin->id === Auth::id() && ! $data['status']) {

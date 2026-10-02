@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\CidadeEstado;
 use App\Models\Cliente;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -20,10 +19,10 @@ class ClientesController extends Controller
             ->with(['consultor:id,name', 'cidade:id,cidade,estado'])
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('nome', 'like', "%{$s}%")
-                  ->orWhere('razao_social', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('cpf', 'like', "%{$s}%")
-                  ->orWhere('cnpj', 'like', "%{$s}%");
+                    ->orWhere('razao_social', 'like', "%{$s}%")
+                    ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('cpf', 'like', "%{$s}%")
+                    ->orWhere('cnpj', 'like', "%{$s}%");
             }))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->when($request->consultor_id, fn ($q, $id) => $q->where('consultor_id', $id))

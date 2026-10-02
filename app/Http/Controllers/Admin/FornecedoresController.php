@@ -16,8 +16,8 @@ class FornecedoresController extends Controller
         $fornecedores = Fornecedor::query()
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('nome', 'like', "%{$s}%")
-                  ->orWhere('cnpj', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%");
+                    ->orWhere('cnpj', 'like', "%{$s}%")
+                    ->orWhere('email', 'like', "%{$s}%");
             }))
             ->withCount('kits')
             ->latest()
@@ -26,7 +26,7 @@ class FornecedoresController extends Controller
 
         return Inertia::render('Admin/Fornecedores/Index', [
             'fornecedores' => $fornecedores,
-            'filters'      => $request->only(['search']),
+            'filters' => $request->only(['search']),
         ]);
     }
 
@@ -39,6 +39,7 @@ class FornecedoresController extends Controller
     {
         $data = $request->validate($this->rules());
         Fornecedor::create($data);
+
         return redirect()->route('admin.fornecedores.index')
             ->with('success', 'Fornecedor criado com sucesso.');
     }
@@ -63,6 +64,7 @@ class FornecedoresController extends Controller
     {
         $data = $request->validate($this->rules());
         $fornecedor->update($data);
+
         return redirect()->route('admin.fornecedores.index')
             ->with('success', 'Fornecedor atualizado com sucesso.');
     }
@@ -74,6 +76,7 @@ class FornecedoresController extends Controller
         }
 
         $fornecedor->delete();
+
         return redirect()->route('admin.fornecedores.index')
             ->with('success', 'Fornecedor removido.');
     }
@@ -81,16 +84,16 @@ class FornecedoresController extends Controller
     private function rules(): array
     {
         return [
-            'nome'          => 'required|string|max:255',
-            'cnpj'          => 'nullable|string|max:18',
-            'email'         => 'nullable|email|max:255',
-            'telefone'      => 'nullable|string|max:20',
-            'celular'       => 'nullable|string|max:20',
+            'nome' => 'required|string|max:255',
+            'cnpj' => 'nullable|string|max:18',
+            'email' => 'nullable|email|max:255',
+            'telefone' => 'nullable|string|max:20',
+            'celular' => 'nullable|string|max:20',
             'representante' => 'nullable|string|max:255',
-            'site'          => 'nullable|url|max:255',
+            'site' => 'nullable|url|max:255',
             'margem_padrao' => 'nullable|numeric|min:0|max:100',
-            'anotacoes'     => 'nullable|string',
-            'ativo'         => 'required|boolean',
+            'anotacoes' => 'nullable|string',
+            'ativo' => 'required|boolean',
         ];
     }
 }

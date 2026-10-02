@@ -44,31 +44,32 @@ class GeografiaController extends Controller
         $dados = Cache::remember("cep_{$cep}", 86400, function () use ($cep) {
             try {
                 $res = Http::timeout(5)->get("https://viacep.com.br/ws/{$cep}/json/");
-                if ($res->ok() && !isset($res->json()['erro'])) {
+                if ($res->ok() && ! isset($res->json()['erro'])) {
                     return $res->json();
                 }
             } catch (ConnectionException) {
                 // fallback to null
             }
+
             return null;
         });
 
-        if (!$dados) {
+        if (! $dados) {
             return response()->json(['error' => 'CEP não encontrado.'], 404);
         }
 
         $cidade = CidadeEstado::where('sigla', strtoupper($dados['uf'] ?? ''))
-            ->whereRaw('LOWER(cidade) LIKE ?', ['%' . strtolower(str_replace(["'", '-'], ['', ''], $dados['localidade'])) . '%'])
+            ->whereRaw('LOWER(cidade) LIKE ?', ['%'.strtolower(str_replace(["'", '-'], ['', ''], $dados['localidade'])).'%'])
             ->first(['id', 'cidade', 'estado', 'sigla']);
 
         return response()->json([
-            'cep'        => $cep,
+            'cep' => $cep,
             'logradouro' => $dados['logradouro'] ?? '',
-            'bairro'     => $dados['bairro'] ?? '',
-            'cidade'     => $dados['localidade'] ?? '',
-            'sigla'      => strtoupper($dados['uf'] ?? ''),
-            'estado'     => $cidade?->estado ?? '',
-            'cidade_id'  => $cidade?->id,
+            'bairro' => $dados['bairro'] ?? '',
+            'cidade' => $dados['localidade'] ?? '',
+            'sigla' => strtoupper($dados['uf'] ?? ''),
+            'estado' => $cidade?->estado ?? '',
+            'cidade_id' => $cidade?->id,
             'cidade_obj' => $cidade,
         ]);
     }

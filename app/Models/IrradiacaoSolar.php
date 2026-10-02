@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class IrradiacaoSolar extends Model
 {
@@ -24,7 +25,7 @@ class IrradiacaoSolar extends Model
         'out' => 'decimal:3', 'nov' => 'decimal:3', 'dez' => 'decimal:3',
     ];
 
-    public function cidade(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function cidade(): BelongsTo
     {
         return $this->belongsTo(CidadeEstado::class, 'cidade_id');
     }

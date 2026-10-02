@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class IntegracaoHistorico extends Model
 {
@@ -15,12 +16,12 @@ class IntegracaoHistorico extends Model
     ];
 
     protected $casts = [
-        'detalhes'      => 'array',
-        'iniciado_em'   => 'datetime',
+        'detalhes' => 'array',
+        'iniciado_em' => 'datetime',
         'finalizado_em' => 'datetime',
     ];
 
-    public function fornecedor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);
     }

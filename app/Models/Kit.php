@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Kit extends Model
 {
@@ -23,17 +25,17 @@ class Kit extends Model
         'potencia_kwp' => 'decimal:3',
     ];
 
-    public function fornecedor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);
     }
 
-    public function estrutura(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function estrutura(): BelongsTo
     {
         return $this->belongsTo(Estrutura::class);
     }
 
-    public function componentes(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    public function componentes(): BelongsToMany
     {
         return $this->belongsToMany(Produto::class, 'kit_componentes')
             ->withPivot('quantidade', 'observacao');

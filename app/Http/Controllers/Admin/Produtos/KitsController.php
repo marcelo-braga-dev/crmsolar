@@ -17,11 +17,10 @@ class KitsController extends Controller
     {
         $kits = Kit::query()
             ->with(['fornecedor:id,nome', 'estrutura:id,nome'])
-            ->when($request->search, fn ($q, $s) =>
-                $q->where(fn ($q) => $q
-                    ->where('nome', 'like', "%{$s}%")
-                    ->orWhere('modelo', 'like', "%{$s}%")
-                    ->orWhere('sku', 'like', "%{$s}%")))
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q
+                ->where('nome', 'like', "%{$s}%")
+                ->orWhere('modelo', 'like', "%{$s}%")
+                ->orWhere('sku', 'like', "%{$s}%")))
             ->when($request->fornecedor_id, fn ($q, $id) => $q->where('fornecedor_id', $id))
             ->when($request->estrutura_id, fn ($q, $id) => $q->where('estrutura_id', $id))
             ->when($request->potencia_min, fn ($q, $v) => $q->where('potencia_kwp', '>=', $v))

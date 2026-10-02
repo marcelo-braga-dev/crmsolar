@@ -36,9 +36,9 @@ return [
     ],
 
     'edeltec' => [
-        'url'     => env('EDELTEC_API_URL', 'https://api.edeltecsolar.com.br'),
+        'url' => env('EDELTEC_API_URL', 'https://api.edeltecsolar.com.br'),
         'api_key' => env('EDELTEC_API_KEY'),
-        'secret'  => env('EDELTEC_SECRET'),
+        'secret' => env('EDELTEC_SECRET'),
     ],
 
 ];

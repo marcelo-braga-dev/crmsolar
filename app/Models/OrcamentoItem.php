@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrcamentoItem extends Model
 {
@@ -25,17 +26,17 @@ class OrcamentoItem extends Model
         'comissao_percentual' => 'decimal:3',
     ];
 
-    public function orcamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
-    public function kit(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function kit(): BelongsTo
     {
         return $this->belongsTo(Kit::class);
     }
 
-    public function produto(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function produto(): BelongsTo
     {
         return $this->belongsTo(Produto::class);
     }

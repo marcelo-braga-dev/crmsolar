@@ -33,10 +33,10 @@ class PrecificacaoController extends Controller
             $row = $dbMargensEstado->get($uf);
 
             return [
-                'id'          => $row?->id,
-                'estado'      => $uf,
+                'id' => $row?->id,
+                'estado' => $uf,
                 'nome_estado' => $nome,
-                'margem'      => $row ? (float) $row->margem : 0.0,
+                'margem' => $row ? (float) $row->margem : 0.0,
             ];
         })->values();
 
@@ -44,15 +44,15 @@ class PrecificacaoController extends Controller
             ->orderBy('nome')
             ->get()
             ->map(fn ($f) => [
-                'id'     => $f->id,
-                'nome'   => $f->nome,
-                'ativo'  => $f->ativo,
+                'id' => $f->id,
+                'nome' => $f->nome,
+                'ativo' => $f->ativo,
                 'margem' => $f->margemPrecificacao ? (float) $f->margemPrecificacao->margem : 0.0,
             ]);
 
         return Inertia::render('Admin/Precificacao/Index', [
-            'faixas'       => $faixas,
-            'estados'      => $estados,
+            'faixas' => $faixas,
+            'estados' => $estados,
             'fornecedores' => $fornecedores,
         ]);
     }
@@ -60,11 +60,11 @@ class PrecificacaoController extends Controller
     public function storeFaixa(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'nome'         => 'required|string|max:255',
+            'nome' => 'required|string|max:255',
             'potencia_min' => 'required|numeric|min:0',
             'potencia_max' => 'nullable|numeric|gt:potencia_min',
-            'margem'       => 'required|numeric|min:0|max:100',
-            'ordem'        => 'required|integer|min:0',
+            'margem' => 'required|numeric|min:0|max:100',
+            'ordem' => 'required|integer|min:0',
         ]);
 
         MargemPrincipal::create($data);
@@ -75,11 +75,11 @@ class PrecificacaoController extends Controller
     public function updateFaixa(Request $request, MargemPrincipal $faixa): RedirectResponse
     {
         $data = $request->validate([
-            'nome'         => 'required|string|max:255',
+            'nome' => 'required|string|max:255',
             'potencia_min' => 'required|numeric|min:0',
             'potencia_max' => 'nullable|numeric|gt:potencia_min',
-            'margem'       => 'required|numeric|min:0|max:100',
-            'ordem'        => 'required|integer|min:0',
+            'margem' => 'required|numeric|min:0|max:100',
+            'ordem' => 'required|integer|min:0',
         ]);
 
         $faixa->update($data);
@@ -97,7 +97,7 @@ class PrecificacaoController extends Controller
     public function updateEstado(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'estado' => ['required', 'string', 'size:2', 'in:' . implode(',', array_keys(self::ESTADOS_BR))],
+            'estado' => ['required', 'string', 'size:2', 'in:'.implode(',', array_keys(self::ESTADOS_BR))],
             'margem' => 'required|numeric|min:0|max:100',
         ]);
 
@@ -105,7 +105,7 @@ class PrecificacaoController extends Controller
             ['estado' => $data['estado']],
             [
                 'nome_estado' => self::ESTADOS_BR[$data['estado']],
-                'margem'      => $data['margem'],
+                'margem' => $data['margem'],
             ]
         );
 
@@ -116,7 +116,7 @@ class PrecificacaoController extends Controller
     {
         $data = $request->validate([
             'fornecedor_id' => 'required|integer|exists:fornecedores,id',
-            'margem'        => 'required|numeric|min:0|max:100',
+            'margem' => 'required|numeric|min:0|max:100',
         ]);
 
         MargemFornecedor::updateOrCreate(
