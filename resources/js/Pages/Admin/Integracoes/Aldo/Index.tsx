@@ -39,9 +39,10 @@ interface UltimaIntegracao {
 interface Props extends PageProps {
     fornecedor?: Fornecedor;
     ultima_integracao?: UltimaIntegracao;
+    disponivel: boolean;
 }
 
-export default function AldoIndex({ fornecedor, ultima_integracao }: Props) {
+export default function AldoIndex({ fornecedor, ultima_integracao, disponivel }: Props) {
     const [loading, setLoading] = React.useState(false);
 
     function handleIntegrar() {
@@ -64,17 +65,24 @@ export default function AldoIndex({ fornecedor, ultima_integracao }: Props) {
                         variant="contained"
                         startIcon={<SyncRoundedIcon />}
                         onClick={handleIntegrar}
-                        disabled={loading}
+                        disabled={loading || !disponivel}
                     >
                         {loading ? 'Processando...' : 'Executar integração'}
                     </Button>
                 }
             />
 
-            <Alert severity="info" sx={{ mb: 3 }}>
-                A integração Aldo sincroniza o catálogo de produtos via download de arquivo ZIP/XML do distribuidor.
-                Os produtos são inseridos ou atualizados conforme os mapeamentos configurados.
-            </Alert>
+            {disponivel ? (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                    A integração Aldo sincroniza o catálogo de produtos via download de arquivo ZIP/XML do distribuidor.
+                    Os produtos são inseridos ou atualizados conforme os mapeamentos configurados.
+                </Alert>
+            ) : (
+                <Alert severity="warning" sx={{ mb: 3 }}>
+                    Integração ainda não disponível: aguardando a especificação do feed da Aldo
+                    (URL, credenciais e formato do arquivo ZIP/XML). Cadastre os produtos pelo Catálogo enquanto isso.
+                </Alert>
+            )}
 
             <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 4 }}>
