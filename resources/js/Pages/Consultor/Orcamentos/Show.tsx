@@ -13,6 +13,7 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
+import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
@@ -43,6 +44,7 @@ interface OrcamentoFull {
     info?: { tipo_dimensionamento?: string; consumo?: number; tensao?: number; orientacao?: string; anotacoes_tecnicas?: string; estrutura?: { id: number; nome: string } };
     itens: OrcamentoItem[];
     historicos: Historico[];
+    contrato?: { id: number; status: string } | null;
 }
 
 interface Props extends PageProps { orcamento: OrcamentoFull }
@@ -246,7 +248,15 @@ export default function OrcamentosShow({ orcamento, flash }: Props) {
                                 Editar
                             </Button>
                         )}
-                        <Button startIcon={<PictureAsPdfRoundedIcon />} variant="outlined" color="error">
+                        <Button
+                            component="a"
+                            href={route('consultor.orcamentos.pdf', orcamento.id)}
+                            target="_blank"
+                            rel="noopener"
+                            startIcon={<PictureAsPdfRoundedIcon />}
+                            variant="outlined"
+                            color="error"
+                        >
                             PDF
                         </Button>
                     </Box>
@@ -460,6 +470,36 @@ export default function OrcamentosShow({ orcamento, flash }: Props) {
                                 >
                                     Excluir Orçamento
                                 </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {orcamento.status === 'aprovado' && (
+                        <Card variant="outlined" sx={{ mb: 2, borderRadius: 2 }}>
+                            <CardHeader title="Contrato" titleTypographyProps={{ variant: 'subtitle1', fontWeight: 600 }} />
+                            <Divider />
+                            <CardContent>
+                                {orcamento.contrato ? (
+                                    <Button
+                                        component={Link}
+                                        href={route('consultor.contratos.show', orcamento.contrato.id)}
+                                        startIcon={<ArticleRoundedIcon />}
+                                        variant="outlined"
+                                        fullWidth
+                                    >
+                                        Ver Contrato #{orcamento.contrato.id}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        component={Link}
+                                        href={route('consultor.contratos.create', orcamento.id)}
+                                        startIcon={<ArticleRoundedIcon />}
+                                        variant="contained"
+                                        fullWidth
+                                    >
+                                        Gerar Contrato
+                                    </Button>
+                                )}
                             </CardContent>
                         </Card>
                     )}

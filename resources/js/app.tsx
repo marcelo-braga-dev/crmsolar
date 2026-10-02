@@ -9,7 +9,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import NProgress from 'nprogress';
 import { theme } from './theme';
 
-const appName = import.meta.env.VITE_APP_NAME || 'AppSolar';
+const appName = import.meta.env.VITE_APP_NAME || 'CRM Solar';
 
 // NProgress configuration
 NProgress.configure({ showSpinner: false, trickleSpeed: 200 });

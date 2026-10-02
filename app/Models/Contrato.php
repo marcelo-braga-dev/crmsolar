@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Contrato extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'orcamento_id', 'consultor_id',
         'nome_cliente', 'documento_cliente', 'endereco_instalacao',
@@ -22,13 +27,18 @@ class Contrato extends Model
         'potencia_kwp' => 'decimal:3',
     ];
 
-    public function orcamento(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
-    public function consultor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty();
     }
 }

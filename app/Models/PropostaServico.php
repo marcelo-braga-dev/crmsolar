@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class PropostaServico extends Model
 {
+    use LogsActivity, SoftDeletes;
+
     protected $table = 'proposta_servicos';
 
     protected $fillable = [
@@ -24,8 +30,8 @@ class PropostaServico extends Model
     ];
 
     protected $casts = [
-        'valor'       => 'decimal:2',
-        'validade'    => 'date',
+        'valor' => 'decimal:2',
+        'validade' => 'date',
         'prazo_final' => 'date',
     ];
 
@@ -40,13 +46,18 @@ class PropostaServico extends Model
         });
     }
 
-    public function consultor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');
     }
 
-    public function cliente(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty();
     }
 }

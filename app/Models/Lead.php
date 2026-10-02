@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Lead extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'consultor_id', 'nome', 'email', 'telefone',
         'cidade', 'estado', 'consumo_mensal',
@@ -17,8 +22,13 @@ class Lead extends Model
         'consumo_mensal' => 'decimal:2',
     ];
 
-    public function consultor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty();
     }
 }

@@ -72,13 +72,7 @@ export const adminNav: NavSection[] = [
             {
                 title: 'Precificação',
                 icon: <PriceChangeRoundedIcon />,
-                children: [
-                    { title: 'Margem Principal', href: '/admin/precificacao/margem-principal' },
-                    { title: 'Por Estado', href: '/admin/precificacao/estados' },
-                    { title: 'Por Consultor', href: '/admin/precificacao/consultores' },
-                    { title: 'Por Estrutura', href: '/admin/precificacao/estruturas' },
-                    { title: 'Por Fornecedor', href: '/admin/precificacao/fornecedores' },
-                ],
+                href: '/admin/precificacao',
             },
         ],
     },

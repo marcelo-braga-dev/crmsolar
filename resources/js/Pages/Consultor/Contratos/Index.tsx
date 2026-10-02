@@ -25,7 +25,7 @@ interface Props extends PageProps {
 }
 
 const STATUS_COLORS: Record<string, 'default' | 'warning' | 'success' | 'error' | 'info'> = {
-    pendente: 'warning',
+    gerado: 'warning',
     assinado: 'success',
     cancelado: 'error',
 };
@@ -46,7 +46,7 @@ export default function ContratosIndex({ contratos, filters }: Props) {
                 sx={{ mb: 2, minWidth: 160 }}
             >
                 <MenuItem value="">Todos</MenuItem>
-                <MenuItem value="pendente">Pendente</MenuItem>
+                <MenuItem value="gerado">Gerado</MenuItem>
                 <MenuItem value="assinado">Assinado</MenuItem>
                 <MenuItem value="cancelado">Cancelado</MenuItem>
             </TextField>

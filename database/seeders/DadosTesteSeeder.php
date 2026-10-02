@@ -11,7 +11,6 @@ use App\Models\KitComponente;
 use App\Models\Lead;
 use App\Models\Marca;
 use App\Models\MargemEstado;
-use App\Models\MargemEstrutura;
 use App\Models\MargemFornecedor;
 use App\Models\MargemPrincipal;
 use App\Models\Produto;
@@ -106,20 +105,6 @@ class DadosTesteSeeder extends Seeder
             }
         }
         $this->command->info('Produtos: OK');
-
-        // ─── Estruturas (adicionar margens) ───────────────────────────
-        $estruturas = Estrutura::all();
-        foreach ($estruturas as $e) {
-            MargemEstrutura::firstOrCreate(
-                ['estrutura_id' => $e->id],
-                ['margem' => match (true) {
-                    str_contains(strtolower($e->nome), 'solo') => 3.5,
-                    str_contains(strtolower($e->nome), 'fibro') => 2.0,
-                    str_contains(strtolower($e->nome), 'laje') => 1.5,
-                    default => 2.5,
-                }]
-            );
-        }
 
         // ─── Margens por fornecedor ───────────────────────────────────
         foreach (Fornecedor::all() as $f) {

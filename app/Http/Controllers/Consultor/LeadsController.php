@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Consultor;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Consultor\LeadUpdateRequest;
 use App\Models\Lead;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -18,8 +19,8 @@ class LeadsController extends Controller
             ->where('consultor_id', Auth::id())
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('nome', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('telefone', 'like', "%{$s}%");
+                    ->orWhere('email', 'like', "%{$s}%")
+                    ->orWhere('telefone', 'like', "%{$s}%");
             }))
             ->when($request->status, fn ($q, $s) => $q->where('status', $s))
             ->latest()
@@ -34,25 +35,16 @@ class LeadsController extends Controller
 
     public function show(Lead $lead): Response
     {
-        if ($lead->consultor_id !== Auth::id()) {
-            abort(403);
-        }
+        $this->authorize('view', $lead);
 
         return Inertia::render('Consultor/Leads/Show', [
             'lead' => $lead,
         ]);
     }
 
-    public function update(Request $request, Lead $lead): RedirectResponse
+    public function update(LeadUpdateRequest $request, Lead $lead): RedirectResponse
     {
-        if ($lead->consultor_id !== Auth::id()) {
-            abort(403);
-        }
-
-        $lead->update($request->validate([
-            'status' => 'required|in:novo,contatado,encaminhado,convertido,perdido',
-            'anotacoes' => 'nullable|string',
-        ]));
+        $lead->update($request->validated());
 
         return back()->with('success', 'Lead atualizado.');
     }

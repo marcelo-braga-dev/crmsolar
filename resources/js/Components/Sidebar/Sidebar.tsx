@@ -212,7 +212,7 @@ function SidebarContent({
                         variant="subtitle1"
                         sx={{ color: '#FFFFFF', fontWeight: 700, lineHeight: 1.2, fontSize: '0.95rem' }}
                     >
-                        AppSolar
+                        CRM Solar
                     </Typography>
                     <Typography
                         variant="caption"

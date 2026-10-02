@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CidadeEstado extends Model
 {
@@ -10,9 +11,9 @@ class CidadeEstado extends Model
 
     protected $table = 'cidades_estados';
 
-    protected $fillable = ['cidade', 'estado'];
+    protected $fillable = ['cidade', 'estado', 'sigla'];
 
-    public function irradiacaoSolar(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function irradiacaoSolar(): HasOne
     {
         return $this->hasOne(IrradiacaoSolar::class, 'cidade_id');
     }

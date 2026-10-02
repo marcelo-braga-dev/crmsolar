@@ -102,7 +102,7 @@ export default function FornecedoresForm({ fornecedor }: Props) {
                                     placeholder="00.000.000/0000-00" />
                             </Grid>
                             <Grid size={{ xs: 12, sm: 3 }}>
-                                <TextField fullWidth size="small" label="Margem padrão (%)"
+                                <TextField fullWidth size="small" label="Margem adicional (%)"
                                     type="number" value={data.margem_padrao}
                                     onChange={(e) => setData('margem_padrao', e.target.value)}
                                     inputProps={{ step: '0.01', min: '0', max: '100' }}

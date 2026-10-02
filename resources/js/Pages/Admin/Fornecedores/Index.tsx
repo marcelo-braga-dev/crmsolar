@@ -103,7 +103,7 @@ export default function FornecedoresIndex({ fornecedores, filters }: Props) {
                             <TableCell>Fornecedor</TableCell>
                             <TableCell>Contato</TableCell>
                             <TableCell>Representante</TableCell>
-                            <TableCell align="right">Margem Padrão</TableCell>
+                            <TableCell align="right">Margem Adicional</TableCell>
                             <TableCell align="right">Kits</TableCell>
                             <TableCell>Status</TableCell>
                             <TableCell align="right">Ações</TableCell>

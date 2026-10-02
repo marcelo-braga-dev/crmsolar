@@ -11,20 +11,20 @@ class UsersSeeder extends Seeder
     public function run(): void
     {
         User::firstOrCreate(
-            ['email' => 'admin@appsolar.com'],
+            ['email' => 'admin@teste.com'],
             [
                 'name'     => 'Admin Sistema',
-                'password' => Hash::make('10203040'),
+                'password' => Hash::make('1020'),
                 'tipo'     => 'admin',
                 'status'   => true,
             ]
         );
 
         User::firstOrCreate(
-            ['email' => 'consultor@appsolar.com'],
+            ['email' => 'consultor@teste.com'],
             [
                 'name'                 => 'Consultor Teste',
-                'password'             => Hash::make('10203040'),
+                'password'             => Hash::make('1020'),
                 'tipo'                 => 'consultor',
                 'status'               => true,
                 'comissao_percentual'  => 5.00,
