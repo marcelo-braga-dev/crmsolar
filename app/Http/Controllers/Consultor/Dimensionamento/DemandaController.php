@@ -143,6 +143,7 @@ class DemandaController extends Controller
             'consumo_fora_ponta' => 'required|numeric|min:1',
             'concessionaria_id' => 'required|exists:concessionarias,id',
             'kit_id' => 'required|exists:kits,id',
+            'grupo_tarifario' => 'required|in:A4,A3a,A3,A2,A1',
             'anotacoes' => 'nullable|string|max:2000',
             'anotacoes_tecnicas' => 'nullable|string|max:2000',
         ]);
@@ -169,6 +170,7 @@ class DemandaController extends Controller
                 'cliente_id' => $cliente->id,
                 'cidade_id' => $cliente->cidade_id,
                 'status' => 'novo',
+                'grupo_tarifario' => $data['grupo_tarifario'],
                 'preco_total' => $preco['preco_venda'],
                 'geracao_estimada' => (int) $data['geracao_estimada'],
                 'anotacoes' => $data['anotacoes'] ?? null,

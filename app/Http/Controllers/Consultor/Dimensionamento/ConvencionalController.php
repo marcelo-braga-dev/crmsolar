@@ -134,6 +134,7 @@ class ConvencionalController extends Controller
             'qtd_kits' => 'required|integer|min:1|max:10',
             'consumo' => 'required|numeric|min:1',
             'kit_id' => 'required|exists:kits,id',
+            'grupo_tarifario' => 'required|in:B1,B2,B3',
             'anotacoes' => 'nullable|string|max:2000',
             'anotacoes_tecnicas' => 'nullable|string|max:2000',
         ]);
@@ -159,6 +160,7 @@ class ConvencionalController extends Controller
                 'cliente_id' => $cliente->id,
                 'cidade_id' => $cliente->cidade_id,
                 'status' => 'novo',
+                'grupo_tarifario' => $data['grupo_tarifario'],
                 'preco_total' => $preco['preco_venda'],
                 'geracao_estimada' => (int) $data['geracao_estimada'],
                 'anotacoes' => $data['anotacoes'] ?? null,

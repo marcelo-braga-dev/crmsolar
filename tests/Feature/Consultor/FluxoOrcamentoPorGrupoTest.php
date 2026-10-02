@@ -53,7 +53,7 @@ class FluxoOrcamentoPorGrupoTest extends TestCase
         ];
     }
 
-    /** @return array<string, array{string, string, array<int, string>, array<string, mixed>, ?string}> */
+    /** @return array<string, array{string, string, array<int, string>, array<string, mixed>, string}> */
     public static function grupos(): array
     {
         $b = ['tensao' => 220, 'fases' => 'bifasico', 'consumo' => 600, 'tarifa_kwh' => 0.95, 'objetivo_percentual' => 100];
@@ -71,13 +71,12 @@ class FluxoOrcamentoPorGrupoTest extends TestCase
                 ['tensao' => 380] + $b + ['horario_funcionamento' => 10, 'percentual_autoconsumo' => 60], 'B3'],
             'A4' => ['consultor.grupo.a.calcular', 'consultor.grupo.a.store', ['A4'], $a + ['grupo_tarifario' => 'A4'], 'A4'],
             'Convencional' => ['consultor.dimensionamento.buscar_kits', 'consultor.dimensionamento.convencional.store', [],
-                // Fluxo legado não grava grupo_tarifario (pendência registrada no CLAUDE.md).
-                ['tensao' => 220, 'consumo' => 600], null],
+                ['tensao' => 220, 'consumo' => 600, 'grupo_tarifario' => 'B2'], 'B2'],
         ];
     }
 
     #[DataProvider('grupos')]
-    public function test_calcula_escolhe_kit_e_salva_orcamento(string $rotaCalculo, string $rotaStore, array $params, array $dados, ?string $grupoEsperado): void
+    public function test_calcula_escolhe_kit_e_salva_orcamento(string $rotaCalculo, string $rotaStore, array $params, array $dados, string $grupoEsperado): void
     {
         $payload = $this->base + $dados;
 
@@ -116,7 +115,7 @@ class FluxoOrcamentoPorGrupoTest extends TestCase
             'nome' => 'Enel CE', 'estado' => 'CE', 'tarifa_convencional' => 0.9,
             'tarifa_ponta' => 2.0, 'tarifa_fora_ponta' => 0.6, 'ativo' => true,
         ]);
-        $payload = $this->base + ['tensao' => 220, 'consumo_ponta' => 100, 'consumo_fora_ponta' => 500, 'concessionaria_id' => $concessionaria->id];
+        $payload = $this->base + ['tensao' => 220, 'consumo_ponta' => 100, 'consumo_fora_ponta' => 500, 'concessionaria_id' => $concessionaria->id, 'grupo_tarifario' => 'A3a'];
 
         $kits = $this->actingAs($this->consultor)
             ->postJson(route('consultor.dimensionamento.demanda.buscar_kits'), $payload)
@@ -131,6 +130,24 @@ class FluxoOrcamentoPorGrupoTest extends TestCase
         $orcamento = Orcamento::with('info')->sole();
         $this->assertSame($kits[0]['geracao'], $orcamento->geracao_estimada);
         $this->assertSame('demanda', $orcamento->info->tipo_dimensionamento);
+        $this->assertSame('A3a', $orcamento->grupo_tarifario);
+    }
+
+    public function test_fluxos_legados_exigem_grupo_tarifario_compativel(): void
+    {
+        $kit = Kit::first();
+
+        $this->actingAs($this->consultor)
+            ->post(route('consultor.dimensionamento.convencional.store'), $this->base + [
+                'tensao' => 220, 'consumo' => 600, 'kit_id' => $kit->id, 'grupo_tarifario' => 'A4',
+            ])->assertSessionHasErrors('grupo_tarifario');
+
+        $this->actingAs($this->consultor)
+            ->post(route('consultor.dimensionamento.demanda.store'), $this->base + [
+                'tensao' => 220, 'consumo_ponta' => 100, 'consumo_fora_ponta' => 500, 'kit_id' => $kit->id,
+            ])->assertSessionHasErrors('grupo_tarifario');
+
+        $this->assertSame(0, Orcamento::count());
     }
 
     public function test_calculo_sem_kit_compativel_retorna_404_com_mensagem(): void

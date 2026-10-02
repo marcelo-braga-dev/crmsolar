@@ -60,6 +60,20 @@ interface Props extends PageProps {
     concessionarias?: Concessionaria[];
 }
 
+const GRUPOS_CONVENCIONAL = [
+    { value: 'B1', label: 'B1 — Residencial' },
+    { value: 'B2', label: 'B2 — Rural' },
+    { value: 'B3', label: 'B3 — Comercial / Industrial' },
+];
+
+const GRUPOS_DEMANDA = [
+    { value: 'A4', label: 'A4 — 2,3 a 25 kV' },
+    { value: 'A3a', label: 'A3a — 30 a 44 kV' },
+    { value: 'A3', label: 'A3 — 69 kV' },
+    { value: 'A2', label: 'A2 — 88 a 138 kV' },
+    { value: 'A1', label: 'A1 — 230 kV ou mais' },
+];
+
 const MESES_LABEL: Record<string, string> = {
     jan: 'Jan', fev: 'Fev', mar: 'Mar', abr: 'Abr', mai: 'Mai', jun: 'Jun',
     jul: 'Jul', ago: 'Ago', set: 'Set', out: 'Out', nov: 'Nov', dez: 'Dez',
@@ -94,6 +108,7 @@ export default function OrcamentosCreate({ tipo, estruturas, clientes, concessio
         cliente_id: '', estrutura_id: '', tensao: '220', orientacao: 'norte', qtd_kits: '1',
         consumo: '', consumo_ponta: '', consumo_fora_ponta: '', concessionaria_id: '',
         kit_id: '', anotacoes: '', anotacoes_tecnicas: '',
+        grupo_tarifario: isDemanda ? 'A4' : 'B1',
     });
 
     const clienteSelecionado = clientes.find((c) => String(c.id) === String(data.cliente_id)) ?? null;
@@ -249,6 +264,17 @@ export default function OrcamentosCreate({ tipo, estruturas, clientes, concessio
                                                 <MenuItem value="sudeste_sudoeste">Sudeste / Sudoeste (−18%)</MenuItem>
                                                 <MenuItem value="sul">Sul (−25%)</MenuItem>
                                             </Select>
+                                        </FormControl>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                        <FormControl fullWidth size="small" error={!!errors.grupo_tarifario}>
+                                            <InputLabel>Grupo tarifário *</InputLabel>
+                                            <Select value={data.grupo_tarifario} label="Grupo tarifário *" onChange={(e) => setData({ ...data, grupo_tarifario: e.target.value })}>
+                                                {(isDemanda ? GRUPOS_DEMANDA : GRUPOS_CONVENCIONAL).map((g) => (
+                                                    <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>
+                                                ))}
+                                            </Select>
+                                            {errors.grupo_tarifario && <FormHelperText>{errors.grupo_tarifario}</FormHelperText>}
                                         </FormControl>
                                     </Grid>
                                     <Grid size={{ xs: 12, sm: 6 }}>
