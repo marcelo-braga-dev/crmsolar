@@ -13,9 +13,6 @@ class PaginasInertiaExistemTest extends TestCase
 {
     public function test_todo_componente_renderizado_tem_arquivo_tsx(): void
     {
-        // ProfileController é resto do Breeze sem rota — ignorado até ser removido.
-        $ignorar = ['Profile/Edit'];
-
         $faltando = collect(File::allFiles(app_path()))
             ->merge(File::allFiles(base_path('routes')))
             ->flatMap(fn ($arquivo) => preg_match_all(
@@ -24,7 +21,6 @@ class PaginasInertiaExistemTest extends TestCase
                 $m,
             ) ? $m[1] : [])
             ->unique()
-            ->reject(fn ($componente) => in_array($componente, $ignorar, true))
             ->reject(fn ($componente) => File::exists(resource_path("js/Pages/{$componente}.tsx")))
             ->values()
             ->all();

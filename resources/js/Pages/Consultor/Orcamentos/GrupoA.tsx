@@ -43,7 +43,7 @@ export default function GrupoA({ estruturas, clientes, concessionarias, grupo, g
 
     const { data, setData, post, processing, errors } = useForm({
         cliente_id: '', estrutura_id: '', tensao: '220', orientacao: 'norte', qtd_kits: '1',
-        kit_id: '', geracao_estimada: '0', preco_venda: '0',
+        kit_id: '',
         anotacoes: '', anotacoes_tecnicas: '',
         grupo_tarifario: grupo,
         modalidade_tarifaria: 'THS_VERDE',
@@ -112,7 +112,7 @@ export default function GrupoA({ estruturas, clientes, concessionarias, grupo, g
 
     function selKit(kit: EconomiaKit) {
         setKitSel(kit);
-        setData({ ...data, kit_id: String(kit.id), geracao_estimada: String(kit.geracao), preco_venda: String(kit.preco_venda) });
+        setData('kit_id', String(kit.id));
     }
 
     function submit(e: React.FormEvent) {

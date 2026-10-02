@@ -93,7 +93,7 @@ export default function OrcamentosCreate({ tipo, estruturas, clientes, concessio
     const { data, setData, post, processing, errors } = useForm({
         cliente_id: '', estrutura_id: '', tensao: '220', orientacao: 'norte', qtd_kits: '1',
         consumo: '', consumo_ponta: '', consumo_fora_ponta: '', concessionaria_id: '',
-        kit_id: '', geracao_estimada: '0', anotacoes: '', anotacoes_tecnicas: '',
+        kit_id: '', anotacoes: '', anotacoes_tecnicas: '',
     });
 
     const clienteSelecionado = clientes.find((c) => String(c.id) === String(data.cliente_id)) ?? null;
@@ -114,7 +114,7 @@ export default function OrcamentosCreate({ tipo, estruturas, clientes, concessio
         setCalcError(null);
         setCalcResult(null);
         setKitSelecionado(null);
-        setData({ ...data, kit_id: '', geracao_estimada: '0' });
+        setData('kit_id', '');
 
         try {
             const url = isDemanda
@@ -161,7 +161,7 @@ export default function OrcamentosCreate({ tipo, estruturas, clientes, concessio
 
     function selecionarKit(kit: KitResult) {
         setKitSelecionado(kit);
-        setData({ ...data, kit_id: String(kit.id), geracao_estimada: String(kit.geracao) });
+        setData('kit_id', String(kit.id));
     }
 
     function handleSubmit(e: React.FormEvent) {
