@@ -344,7 +344,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 
 ### Testes
 
-**261 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**309 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -353,13 +353,17 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 - Laravel desliga CSRF em testes — mudanças em rotas públicas POST precisam ser conferidas com `curl`.
 - `actingAs($user)` usa o objeto em memória: atributos com default só no banco (ex.: `comissao_percentual`) chegam `null` se não forem passados no `create`.
 
+### Resolvido na segunda rodada
+- **Inversores, Painéis e Transformadores** — rotas, menu e `ProdutosPorCategoriaController` (base comum). Usam as categorias do seeder (`inversor-solar`, `painel-solar`, `transformador`) e só editam produtos da própria categoria
+- **Endereço do cliente** — componente `Components/UI/EnderecoFields.tsx` (CEP → endereço, estado → cidade) nos formulários do Admin e do Consultor. O form do Admin não tinha cidade (cliente não podia ser dimensionado); a edição agora recebe `cidade.sigla`
+- **Integração Aldo** — tela mostra que está indisponível e o botão fica desabilitado (`AldoController::DISPONIVEL`)
+- **Fluxos Convencional/Demanda** — exigem e gravam `grupo_tarifario` (B1/B2/B3 ou A4–A1)
+- **Transições de status** — `Orcamento::TRANSICOES` + `podeIrPara()`; Admin só vê/aplica destinos permitidos; Consultor só envia para aprovação a partir de `novo`/`aprovacao_reprovada`
+- **Exclusões com vínculo** — fornecedor com histórico de integração é bloqueado; erro de FK em qualquer DELETE vira aviso em vez de 500 (`bootstrap/app.php`)
+
 ### Pendências conhecidas (funcionalidade)
-- Fluxo legado `Dimensionamento/Convencional` grava orçamento com `grupo_tarifario = null`
-- Transições de status pelo Admin não são validadas (qualquer status → qualquer status; agora ao menos ficam no histórico)
-- Exclusão de usuário/fornecedor com vínculos: tratada para consultor (clientes/orçamentos) e fornecedor (kits); outros vínculos (ex.: `integracoes_historico.fornecedor_id`) ainda podem dar erro de FK
-- `Admin/Produtos/Inversores`, `Paineis`, `Trafos` — controllers e pages prontos, mas **sem rotas no `web.php`** e **sem entrada no sidebar**
-- **Admin Clientes Form** — sem CEP lookup (o `Consultor/Clientes/Form.tsx` tem; o Admin não)
-- **Integração Aldo** — `AldoController::integrar` só retorna flash "ainda não implementada", mas aparece no menu como funcional
+- **Integração Aldo** — falta a especificação do feed (URL, credenciais, formato ZIP/XML) para implementar o importador
+- **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
 
 ### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live
 
@@ -372,8 +376,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 
 #### 🔵 Melhorias recomendadas
 - Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.
-- Máquina de estados para `orcamentos.status` (transições por role + histórico automático).
 - Sincronizações Edeltec/Aldo via fila (`QUEUE_CONNECTION=database` já configurado).
 - Ativar Sentry (`SENTRY_LARAVEL_DSN`), `SESSION_ENCRYPT=true`, Larastan + Pint no CI (Pint hoje acusa ~40 arquivos fora do padrão).
 
-**Prioridade:** pendências de funcionalidade → qualidade → melhorias.
+**Prioridade:** qualidade → melhorias.

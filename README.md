@@ -134,22 +134,13 @@ database/
 
 ## Limitações conhecidas
 
-- **Catálogo de Inversores/Painéis/Trafos (Admin)** — telas prontas, mas ainda sem rota registrada e sem entrada no menu lateral
 - **Cadastro de usuários** — não há cadastro público; admins e consultores são criados em Admin → Usuários
-- **Cadastro de Clientes (Admin)** — sem busca automática de CEP (o formulário do Consultor já tem)
-- **Integração Aldo** — botão existe, mas a sincronização ainda não está implementada
-
-## Problemas conhecidos (a corrigir antes do go-live)
-
-Detalhes técnicos em [`CLAUDE.md`](CLAUDE.md#status-atual-do-desenvolvimento).
-
-- Transições de status do orçamento pelo Admin não são validadas (ficam registradas no histórico)
-- Fluxo legado de dimensionamento convencional grava orçamento sem grupo tarifário
+- **Integração Aldo** — indisponível até a especificação do feed do distribuidor (a tela informa isso)
 
 ## Testes
 
 ```bash
-php artisan test   # 261 testes, SQLite em memória
+php artisan test   # 309 testes, SQLite em memória
 ```
 
 > ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).
