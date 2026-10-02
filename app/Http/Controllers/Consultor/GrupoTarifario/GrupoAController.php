@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Consultor\GrupoTarifario;
 
+use App\Http\Requests\Consultor\Dimensionamento\GrupoARequest;
 use App\Models\Cliente;
 use App\Services\GrupoTarifarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -36,46 +35,9 @@ class GrupoAController extends BaseGrupoController
         ));
     }
 
-    public function calcular(Request $request): JsonResponse
+    public function calcular(GrupoARequest $request): JsonResponse
     {
-        $grupos = GrupoTarifarioService::grupos();
-
-        $data = $request->validate([
-            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
-            'estrutura_id' => 'required|exists:estruturas,id',
-            'tensao' => 'required|integer|in:220,380',
-            'qtd_kits' => 'required|integer|min:1|max:30',
-            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'grupo_tarifario' => ['required', 'string', function ($attr, $val, $fail) use ($grupos) {
-                if (! array_key_exists($val, $grupos) || $grupos[$val]['tensao'] === 'BT') {
-                    $fail('Grupo tarifário inválido para Grupo A.');
-                }
-            }],
-            'modalidade_tarifaria' => 'required|in:THS_VERDE,THS_AZUL',
-            'consumo_ponta' => 'required|numeric|min:1',
-            'consumo_fora_ponta' => 'required|numeric|min:1',
-            'tarifa_kwh_ponta' => 'required|numeric|min:0.01',
-            'tarifa_kwh_fp' => 'required|numeric|min:0.01',
-            'demanda_ponta_kw' => 'required|numeric|min:1',
-            'demanda_fora_ponta_kw' => 'nullable|numeric|min:1',  // obrigatório no THS Azul
-            'tarifa_demanda_ponta' => 'required|numeric|min:0',
-            'tarifa_demanda_fp' => 'nullable|numeric|min:0',   // obrigatório no THS Azul
-            'valor_conta_mensal' => 'nullable|numeric|min:0',
-            'percentual_autoconsumo' => 'required|integer|min:10|max:100',
-            'subgrupo_tensao' => 'nullable|string|max:20',
-            'categorias' => 'nullable|array',
-            'categorias.*' => 'in:ongrid,offgrid,hibrido,bomba,microinversor',
-        ]);
-
-        // Validação adicional para THS Azul (exige demanda e tarifa de FP separadas)
-        if ($data['modalidade_tarifaria'] === 'THS_AZUL') {
-            if (empty($data['demanda_fora_ponta_kw'])) {
-                return response()->json(['error' => 'THS Azul exige a demanda fora de ponta.'], 422);
-            }
-            if (empty($data['tarifa_demanda_fp'])) {
-                return response()->json(['error' => 'THS Azul exige a tarifa de demanda fora de ponta.'], 422);
-            }
-        }
+        $data = $request->validated();
 
         $cliente = Cliente::with('cidade')->findOrFail($data['cliente_id']);
         if (! $cliente->cidade_id) {
@@ -161,31 +123,9 @@ class GrupoAController extends BaseGrupoController
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(GrupoARequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
-            'estrutura_id' => 'required|exists:estruturas,id',
-            'tensao' => 'required|integer|in:220,380',
-            'qtd_kits' => 'required|integer|min:1|max:30',
-            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'grupo_tarifario' => 'required|in:A4,A3a,A3,A2,A1',
-            'modalidade_tarifaria' => 'required|in:THS_VERDE,THS_AZUL',
-            'consumo_ponta' => 'required|numeric|min:1',
-            'consumo_fora_ponta' => 'required|numeric|min:1',
-            'tarifa_kwh_ponta' => 'required|numeric|min:0.01',
-            'tarifa_kwh_fp' => 'required|numeric|min:0.01',
-            'demanda_ponta_kw' => 'required|numeric|min:1',
-            'demanda_fora_ponta_kw' => 'nullable|numeric|min:1',
-            'tarifa_demanda_ponta' => 'required|numeric|min:0',
-            'tarifa_demanda_fp' => 'nullable|numeric|min:0',
-            'valor_conta_mensal' => 'nullable|numeric|min:0',
-            'percentual_autoconsumo' => 'required|integer|min:10|max:100',
-            'subgrupo_tensao' => 'nullable|string|max:20',
-            'kit_id' => 'required|exists:kits,id',
-            'anotacoes' => 'nullable|string|max:3000',
-            'anotacoes_tecnicas' => 'nullable|string|max:3000',
-        ]);
+        $data = $request->validated();
 
         $selecao = $this->kitSelecionado($data);
         $geracao = $selecao['geracao'];

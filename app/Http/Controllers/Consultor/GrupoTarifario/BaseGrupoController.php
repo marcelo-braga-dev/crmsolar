@@ -109,7 +109,7 @@ abstract class BaseGrupoController extends Controller
         ];
     }
 
-    protected function salvarOrcamento(array $dados, array $infoExtra, array $analiseEconomica): int
+    protected function salvarOrcamento(array $dados, array $infoExtra, ?array $analiseEconomica): int
     {
         ['cliente' => $cliente, 'kit' => $kit, 'qtd' => $qtd, 'preco' => $preco, 'hsp' => $hsp,
             'orientacao' => $orientacao, 'pr' => $pr, 'geracao' => $geracao] = $this->kitSelecionado($dados);
@@ -143,8 +143,9 @@ abstract class BaseGrupoController extends Controller
                 'orientacao' => $orientacao,
                 'anotacoes_tecnicas' => $dados['anotacoes_tecnicas'] ?? null,
                 'analise_economica' => $analiseEconomica,
-                'metadados' => ['pr' => $pr, 'hsp' => $hsp],
-            ], $infoExtra));
+                // Metadados extras do fluxo (ex.: concessionária no dimensionamento por demanda) somam aos padrões.
+                'metadados' => ['pr' => $pr, 'hsp' => $hsp] + ($infoExtra['metadados'] ?? []),
+            ], array_diff_key($infoExtra, ['metadados' => true])));
 
             OrcamentoItem::create([
                 'orcamento_id' => $orcamento->id,

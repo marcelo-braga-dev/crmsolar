@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Consultor\GrupoTarifario;
 
+use App\Http\Requests\Consultor\Dimensionamento\GrupoB1Request;
 use App\Models\Cliente;
 use App\Services\GrupoTarifarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,22 +24,9 @@ class GrupoB1Controller extends BaseGrupoController
         return Inertia::render('Consultor/Orcamentos/GrupoB1', $this->dadosComuns());
     }
 
-    public function calcular(Request $request): JsonResponse
+    public function calcular(GrupoB1Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
-            'estrutura_id' => 'required|exists:estruturas,id',
-            'tensao' => 'required|integer|in:127,220',
-            'qtd_kits' => 'required|integer|min:1|max:10',
-            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'fases' => 'required|in:monofasico,bifasico,trifasico',
-            'consumo' => 'required|numeric|min:1',
-            'tarifa_kwh' => 'required|numeric|min:0.01',
-            'valor_conta_mensal' => 'nullable|numeric|min:0',
-            'objetivo_percentual' => 'required|integer|in:50,75,100',
-            'categorias' => 'nullable|array',
-            'categorias.*' => 'in:ongrid,offgrid,hibrido,bomba,microinversor',
-        ]);
+        $data = $request->validated();
 
         $cliente = Cliente::with('cidade')->findOrFail($data['cliente_id']);
         if (! $cliente->cidade_id) {
@@ -103,23 +89,9 @@ class GrupoB1Controller extends BaseGrupoController
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(GrupoB1Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
-            'estrutura_id' => 'required|exists:estruturas,id',
-            'tensao' => 'required|integer|in:127,220',
-            'qtd_kits' => 'required|integer|min:1|max:10',
-            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'fases' => 'required|in:monofasico,bifasico,trifasico',
-            'consumo' => 'required|numeric|min:1',
-            'tarifa_kwh' => 'required|numeric|min:0.01',
-            'valor_conta_mensal' => 'nullable|numeric|min:0',
-            'objetivo_percentual' => 'required|integer|in:50,75,100',
-            'kit_id' => 'required|exists:kits,id',
-            'anotacoes' => 'nullable|string|max:3000',
-            'anotacoes_tecnicas' => 'nullable|string|max:3000',
-        ]);
+        $data = $request->validated();
 
         $consumo = (float) $data['consumo'];
         $tarifa = (float) $data['tarifa_kwh'];

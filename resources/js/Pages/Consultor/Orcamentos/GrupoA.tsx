@@ -106,7 +106,7 @@ export default function GrupoA({ estruturas, clientes, concessionarias, grupo, g
             const res = await window.axios.post(route('consultor.grupo.a.calcular', { grupo: data.grupo_tarifario }), payload);
             setCalcResult(res.data);
         } catch (e: any) {
-            setCalcError(e?.response?.data?.error ?? 'Erro ao calcular.');
+            setCalcError(e?.response?.data?.error ?? e?.response?.data?.message ?? 'Erro ao calcular.');
         } finally { setCalculando(false); }
     }
 

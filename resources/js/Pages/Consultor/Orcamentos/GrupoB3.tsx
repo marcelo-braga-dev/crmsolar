@@ -70,7 +70,7 @@ export default function GrupoB3({ estruturas, clientes, concessionarias }: Props
             });
             setCalcResult(res.data);
         } catch (e: any) {
-            setCalcError(e?.response?.data?.error ?? 'Erro ao calcular.');
+            setCalcError(e?.response?.data?.error ?? e?.response?.data?.message ?? 'Erro ao calcular.');
         } finally { setCalculando(false); }
     }
 

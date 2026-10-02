@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Consultor\GrupoTarifario;
 
+use App\Http\Requests\Consultor\Dimensionamento\GrupoB3Request;
 use App\Models\Cliente;
 use App\Services\GrupoTarifarioService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,24 +25,9 @@ class GrupoB3Controller extends BaseGrupoController
         return Inertia::render('Consultor/Orcamentos/GrupoB3', $this->dadosComuns());
     }
 
-    public function calcular(Request $request): JsonResponse
+    public function calcular(GrupoB3Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
-            'estrutura_id' => 'required|exists:estruturas,id',
-            'tensao' => 'required|integer|in:127,220,380',
-            'qtd_kits' => 'required|integer|min:1|max:20',
-            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'fases' => 'required|in:bifasico,trifasico',
-            'consumo' => 'required|numeric|min:1',
-            'tarifa_kwh' => 'required|numeric|min:0.01',
-            'valor_conta_mensal' => 'nullable|numeric|min:0',
-            'objetivo_percentual' => 'required|integer|in:50,75,100',
-            'horario_funcionamento' => 'required|integer|min:4|max:24',
-            'percentual_autoconsumo' => 'required|integer|min:10|max:100',
-            'categorias' => 'nullable|array',
-            'categorias.*' => 'in:ongrid,offgrid,hibrido,bomba,microinversor',
-        ]);
+        $data = $request->validated();
 
         $cliente = Cliente::with('cidade')->findOrFail($data['cliente_id']);
         if (! $cliente->cidade_id) {
@@ -115,25 +99,9 @@ class GrupoB3Controller extends BaseGrupoController
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(GrupoB3Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'cliente_id' => ['required', Rule::exists('clientes', 'id')->where('consultor_id', $request->user()->id)],
-            'estrutura_id' => 'required|exists:estruturas,id',
-            'tensao' => 'required|integer|in:127,220,380',
-            'qtd_kits' => 'required|integer|min:1|max:20',
-            'orientacao' => 'required|in:norte,nordeste_noroeste,leste_oeste,sudeste_sudoeste,sul',
-            'fases' => 'required|in:bifasico,trifasico',
-            'consumo' => 'required|numeric|min:1',
-            'tarifa_kwh' => 'required|numeric|min:0.01',
-            'valor_conta_mensal' => 'nullable|numeric|min:0',
-            'objetivo_percentual' => 'required|integer|in:50,75,100',
-            'horario_funcionamento' => 'required|integer|min:4|max:24',
-            'percentual_autoconsumo' => 'required|integer|min:10|max:100',
-            'kit_id' => 'required|exists:kits,id',
-            'anotacoes' => 'nullable|string|max:3000',
-            'anotacoes_tecnicas' => 'nullable|string|max:3000',
-        ]);
+        $data = $request->validated();
 
         $selecao = $this->kitSelecionado($data);
         $geracao = $selecao['geracao'];

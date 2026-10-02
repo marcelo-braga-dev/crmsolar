@@ -131,6 +131,46 @@ class FluxoOrcamentoPorGrupoTest extends TestCase
         $this->assertSame($kits[0]['geracao'], $orcamento->geracao_estimada);
         $this->assertSame('demanda', $orcamento->info->tipo_dimensionamento);
         $this->assertSame('A3a', $orcamento->grupo_tarifario);
+        $this->assertSame($concessionaria->id, $orcamento->info->concessionaria_id);
+        $this->assertEquals(600, (float) $orcamento->info->consumo);
+        $this->assertSame('Enel CE', $orcamento->info->metadados['concessionaria']);
+        $this->assertArrayHasKey('pr', $orcamento->info->metadados);
+        $this->assertArrayHasKey('hsp', $orcamento->info->metadados);
+    }
+
+    /** @return array<string, array{string}> */
+    public static function etapasGrupoA(): array
+    {
+        return ['calcular' => ['consultor.grupo.a.calcular'], 'salvar' => ['consultor.grupo.a.store']];
+    }
+
+    #[DataProvider('etapasGrupoA')]
+    public function test_ths_azul_exige_demanda_e_tarifa_fora_de_ponta_em_todas_as_etapas(string $rota): void
+    {
+        $payload = $this->base + [
+            'tensao' => 380, 'grupo_tarifario' => 'A4', 'modalidade_tarifaria' => 'THS_AZUL',
+            'consumo_ponta' => 300, 'consumo_fora_ponta' => 3000, 'tarifa_kwh_ponta' => 2.2, 'tarifa_kwh_fp' => 0.55,
+            'demanda_ponta_kw' => 80, 'tarifa_demanda_ponta' => 35, 'percentual_autoconsumo' => 70,
+            'kit_id' => Kit::first()->id,
+        ];
+
+        $this->actingAs($this->consultor)
+            ->postJson(route($rota, ['A4']), $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['demanda_fora_ponta_kw', 'tarifa_demanda_fp'])
+            ->assertJsonPath('errors.demanda_fora_ponta_kw.0', 'THS Azul exige a demanda fora de ponta.');
+
+        $this->assertSame(0, Orcamento::count());
+    }
+
+    public function test_calculo_nao_exige_kit_e_salvar_nao_aceita_sem_kit(): void
+    {
+        $payload = $this->base + ['tensao' => 220, 'fases' => 'bifasico', 'consumo' => 600, 'tarifa_kwh' => 0.95, 'objetivo_percentual' => 100];
+
+        $this->actingAs($this->consultor)->postJson(route('consultor.grupo.b1.calcular'), $payload)
+            ->assertOk();
+        $this->actingAs($this->consultor)->postJson(route('consultor.grupo.b1.store'), $payload)
+            ->assertJsonValidationErrors('kit_id');
     }
 
     public function test_fluxos_legados_exigem_grupo_tarifario_compativel(): void
