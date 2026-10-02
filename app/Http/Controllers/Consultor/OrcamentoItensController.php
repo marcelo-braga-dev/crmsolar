@@ -69,7 +69,12 @@ class OrcamentoItensController extends Controller
     // AJAX: busca produtos do catálogo para adicionar ao orçamento
     public function buscarProdutos(Request $request): JsonResponse
     {
-        $q = $request->input('q', '');
+        $q = trim((string) $request->input('q', ''));
+
+        // Mesmo mínimo do frontend: busca vazia ou de 1 letra varreria o catálogo inteiro.
+        if (mb_strlen($q) < 2) {
+            return response()->json([]);
+        }
 
         $produtos = Produto::with(['categoria:id,nome,slug', 'marca:id,nome'])
             ->where('ativo', true)

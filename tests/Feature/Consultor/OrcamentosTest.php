@@ -166,4 +166,21 @@ class OrcamentosTest extends TestCase
             ->assertJsonCount(1)
             ->assertJsonPath('0.nome', 'Cabo Solar Ativo');
     }
+
+    public function test_busca_de_produtos_exige_ao_menos_dois_caracteres(): void
+    {
+        $this->produto(['nome' => 'Cabo Solar']);
+        $consultor = $this->consultor();
+
+        foreach (['', ' ', 'C', '  C  '] as $termo) {
+            $this->actingAs($consultor)
+                ->getJson(route('consultor.orcamentos.produtos.buscar', ['q' => $termo]))
+                ->assertOk()
+                ->assertExactJson([]);
+        }
+
+        $this->actingAs($consultor)
+            ->getJson(route('consultor.orcamentos.produtos.buscar', ['q' => 'Ca']))
+            ->assertJsonCount(1);
+    }
 }
