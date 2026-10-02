@@ -139,7 +139,7 @@ database/
 ## Testes
 
 ```bash
-php artisan test   # 316 testes, SQLite em memória
+php artisan test   # 325 testes, SQLite em memória
 ```
 
 > ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).

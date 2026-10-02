@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ClientesController;
+use App\Http\Controllers\Admin\Configuracoes\AuditoriaController;
 use App\Http\Controllers\Admin\Configuracoes\BancosController;
 use App\Http\Controllers\Admin\Configuracoes\ConcessionariasController;
 use App\Http\Controllers\Admin\Configuracoes\DimensionamentoController;
@@ -116,6 +117,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
             ->only(['index', 'store', 'update', 'destroy']);
         Route::get('dimensionamento', [DimensionamentoController::class, 'index'])->name('dimensionamento');
         Route::put('dimensionamento', [DimensionamentoController::class, 'update'])->name('dimensionamento.update');
+        Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria');
         Route::get('sistema', [SistemaController::class, 'index'])->name('sistema');
         Route::put('sistema', [SistemaController::class, 'update'])->name('sistema.update');
     });

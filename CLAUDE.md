@@ -112,6 +112,7 @@ app/Http/Controllers/
       ComissoesController            — listagem/edição de comissões
       FaturamentoController          — relatório de faturamento
     Configuracoes/
+      AuditoriaController            — consulta do log de auditoria (activitylog)
       BancosController               — CRUD bancos (para contratos)
       ConcessionariasController      — CRUD concessionárias de energia
       DimensionamentoController      — parâmetros do motor de cálculo
@@ -342,12 +343,13 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 
 ### Testes
 
-**316 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**325 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
 - Fluxo completo de orçamento por grupo (B1/B2/B3/A4/Convencional/Demanda): `Consultor/FluxoOrcamentoPorGrupoTest`.
 - PHPUnit 12: data provider só com atributo `#[DataProvider('metodo')]` — a annotation `@dataProvider` é ignorada (o teste roda sem argumentos e quebra).
+- Para rodar os testes de um commit isolado (simular o CI), use `git archive HEAD` numa pasta e **copie** o `vendor` — com symlink o autoload do Composer resolve para o projeto original e testa o working tree, não o commit.
 - Laravel desliga CSRF em testes — mudanças em rotas públicas POST precisam ser conferidas com `curl`.
 - `actingAs($user)` usa o objeto em memória: atributos com default só no banco (ex.: `comissao_percentual`) chegam `null` se não forem passados no `create`.
 
@@ -360,6 +362,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 - **Validação dos fluxos de orçamento** — FormRequests em `app/Http/Requests/Consultor/Dimensionamento/` (base `DimensionamentoRequest`: a mesma classe valida cálculo e `*.store`, que acrescenta `kit_id`/anotações). THS Azul agora é exigido também ao salvar
 - **Fluxos Convencional/Demanda** estendem `BaseGrupoController` (usam `mapearKits` e `salvarOrcamento`)
 - **Precificação** carrega as margens uma vez por requisição (antes 3 queries por kit); busca de produtos exige 2+ caracteres
+- **Auditoria** — `spatie/activitylog` também em margens (3 camadas), `Kit`/`Produto` (só `updated`/`deleted` de preço e disponibilidade — a sincronização cria milhares), `OrcamentoItem`, `Concessionaria`, `ParamDimensionamento` e `User` (nome, e-mail, tipo, status, comissão; nunca senha). Tela em **Configurações → Auditoria** (`AuditoriaController`). Atualizações em massa via query builder (`Model::where()->update()`) **não disparam auditoria** — atualize pelo model
 - **Exclusões com vínculo** — fornecedor com histórico de integração é bloqueado; erro de FK em qualquer DELETE vira aviso em vez de 500 (`bootstrap/app.php`)
 
 ### Pendências conhecidas (funcionalidade)
@@ -368,7 +371,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 ### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live
 
 #### 🟡 Qualidade
-- Sem log de auditoria para mudanças de preço, margem e status.
+- Nenhum item pendente da análise.
 
 #### 🔵 Melhorias recomendadas
 - Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.

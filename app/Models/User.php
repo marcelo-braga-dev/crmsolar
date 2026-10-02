@@ -7,11 +7,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+
+    use LogsActivity;
 
     protected $fillable = [
         'name',
@@ -64,5 +68,11 @@ class User extends Authenticatable
     public function orcamentos(): HasMany
     {
         return $this->hasMany(Orcamento::class, 'consultor_id');
+    }
+
+    /** Nunca registra senha; troca só de senha não gera log. */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logOnly(['name', 'email', 'tipo', 'status', 'comissao_percentual'])->logOnlyDirty()->dontLogEmptyChanges();
     }
 }

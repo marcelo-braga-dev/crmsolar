@@ -120,6 +120,7 @@ export const adminNav: NavSection[] = [
                 title: 'Configurações',
                 icon: <SettingsRoundedIcon />,
                 children: [
+                    { title: 'Auditoria', href: '/admin/configuracoes/auditoria' },
                     { title: 'Bancos', href: '/admin/configuracoes/bancos' },
                     { title: 'Concessionárias', href: '/admin/configuracoes/concessionarias' },
                     { title: 'Dimensionamento', href: '/admin/configuracoes/dimensionamento' },

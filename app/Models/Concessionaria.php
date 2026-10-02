@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Concessionaria extends Model
 {
+    use LogsActivity;
+
     protected $table = 'concessionarias';
 
     protected $fillable = [
@@ -22,4 +26,10 @@ class Concessionaria extends Model
         'tarifa_intermediaria' => 'decimal:5',
         'tarifa_fora_ponta' => 'decimal:5',
     ];
+
+    /** Tarifas usadas na análise econômica. */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty()->dontLogEmptyChanges();
+    }
 }

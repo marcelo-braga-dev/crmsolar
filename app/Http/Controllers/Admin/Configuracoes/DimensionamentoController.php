@@ -27,7 +27,8 @@ class DimensionamentoController extends Controller
         ]);
 
         foreach ($data['params'] as $item) {
-            ParamDimensionamento::where('id', $item['id'])->update(['valor' => $item['valor']]);
+            // Update pelo model (não query builder) para disparar eventos e registrar auditoria.
+            ParamDimensionamento::find($item['id'])->update(['valor' => $item['valor']]);
         }
 
         return back()->with('success', 'Parâmetros de dimensionamento atualizados.');

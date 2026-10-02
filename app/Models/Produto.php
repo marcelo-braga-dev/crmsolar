@@ -5,9 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Produto extends Model
 {
+    use LogsActivity;
+
+    /** Só mudanças de preço/disponibilidade — a sincronização cria milhares de produtos. */
+    protected static array $recordEvents = ['updated', 'deleted'];
+
     protected $fillable = [
         'categoria_id', 'marca_id', 'fornecedor_id',
         'nome', 'modelo', 'sku', 'descricao',
@@ -43,5 +50,10 @@ class Produto extends Model
     {
         return $this->belongsToMany(Kit::class, 'kit_componentes')
             ->withPivot('quantidade', 'observacao');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logOnly(['nome', 'preco_custo', 'ativo', 'ativo_fornecedor'])->logOnlyDirty()->dontLogEmptyChanges();
     }
 }
