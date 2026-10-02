@@ -71,7 +71,7 @@ class ClientesController extends Controller
         $this->authorize('update', $cliente);
 
         return Inertia::render('Consultor/Clientes/Form', [
-            'cliente' => $cliente->load('cidade:id,cidade,estado'),
+            'cliente' => $cliente->load('cidade:id,cidade,estado,sigla'),
         ]);
     }
 

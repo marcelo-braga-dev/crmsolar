@@ -21,6 +21,7 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
+import { EnderecoFields } from '@/Components/UI/EnderecoFields';
 import { PageProps } from '@/types';
 
 interface Consultor {
@@ -49,6 +50,7 @@ interface ClienteData {
     bairro: string;
     status: string;
     anotacoes: string;
+    cidade?: { id: number; cidade: string; estado: string; sigla: string };
 }
 
 interface Props extends PageProps {
@@ -265,49 +267,12 @@ export default function ClientesForm({ cliente, consultores }: Props) {
                     <CardHeader title="Endereço" />
                     <Divider />
                     <CardContent>
-                        <Grid container spacing={3}>
-                            <Grid size={{ xs: 12, sm: 2 }}>
-                                <TextField
-                                    fullWidth size="small"
-                                    label="CEP"
-                                    value={data.cep}
-                                    onChange={(e) => setData('cep', e.target.value)}
-                                    placeholder="00000-000"
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 5 }}>
-                                <TextField
-                                    fullWidth size="small"
-                                    label="Rua"
-                                    value={data.rua}
-                                    onChange={(e) => setData('rua', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 2 }}>
-                                <TextField
-                                    fullWidth size="small"
-                                    label="Número"
-                                    value={data.numero}
-                                    onChange={(e) => setData('numero', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }}>
-                                <TextField
-                                    fullWidth size="small"
-                                    label="Complemento"
-                                    value={data.complemento}
-                                    onChange={(e) => setData('complemento', e.target.value)}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 4 }}>
-                                <TextField
-                                    fullWidth size="small"
-                                    label="Bairro"
-                                    value={data.bairro}
-                                    onChange={(e) => setData('bairro', e.target.value)}
-                                />
-                            </Grid>
-                        </Grid>
+                        <EnderecoFields
+                            data={data}
+                            setCampo={(campo, valor) => setData(campo, valor)}
+                            errors={errors}
+                            siglaInicial={cliente?.cidade?.sigla}
+                        />
                     </CardContent>
                 </Card>
 

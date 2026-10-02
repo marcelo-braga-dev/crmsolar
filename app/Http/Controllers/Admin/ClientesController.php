@@ -75,7 +75,7 @@ class ClientesController extends Controller
     public function edit(Cliente $cliente): Response
     {
         return Inertia::render('Admin/Clientes/Form', [
-            'cliente' => $cliente->load('cidade:id,cidade,estado'),
+            'cliente' => $cliente->load('cidade:id,cidade,estado,sigla'),
             'consultores' => User::where('tipo', '!=', 'admin')
                 ->orderBy('name')
                 ->get(['id', 'name']),

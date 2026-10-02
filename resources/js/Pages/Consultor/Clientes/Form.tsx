@@ -1,30 +1,16 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React from 'react';
 import {
-    Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider,
-    FormControl, FormHelperText, Grid, InputAdornment, InputLabel, MenuItem,
-    Select, TextField, ToggleButton, ToggleButtonGroup, Tooltip, Typography,
+    Box, Button, Card, CardContent, CardHeader, Divider,
+    FormControl, Grid, InputLabel, MenuItem,
+    Select, TextField, ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
-import { maskCpf, maskCnpj, maskCep, maskPhone } from '@/utils/masks';
+import { maskCpf, maskCnpj, maskPhone } from '@/utils/masks';
+import { EnderecoFields } from '@/Components/UI/EnderecoFields';
 import { PageProps } from '@/types';
-
-const ESTADOS = [
-    { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AM', nome: 'Amazonas' },
-    { sigla: 'AP', nome: 'Amapá' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
-    { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' },
-    { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' },
-    { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' },
-    { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' }, { sigla: 'PR', nome: 'Paraná' },
-    { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RO', nome: 'Rondônia' },
-    { sigla: 'RR', nome: 'Roraima' }, { sigla: 'RS', nome: 'Rio Grande do Sul' }, { sigla: 'SC', nome: 'Santa Catarina' },
-    { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'TO', nome: 'Tocantins' },
-];
-
-interface CidadeOpt { id: number; cidade: string; sigla: string; }
 
 interface ClienteData {
     id?: number; cidade_id: string; tipo_pessoa: 'pf' | 'pj';
@@ -39,10 +25,6 @@ interface Props extends PageProps { cliente?: ClienteData }
 
 export default function ClientesForm({ cliente }: Props) {
     const editing = !!cliente?.id;
-    const [buscandoCep, setBuscandoCep] = useState(false);
-    const [estadoSel, setEstadoSel] = useState(cliente?.cidade?.sigla ?? '');
-    const [cidades, setCidades] = useState<CidadeOpt[]>([]);
-    const [carregandoCidades, setCarregandoCidades] = useState(false);
 
     const { data, setData, post, put, processing, errors } = useForm({
         cidade_id: String(cliente?.cidade_id ?? ''),
@@ -64,37 +46,6 @@ export default function ClientesForm({ cliente }: Props) {
         status: cliente?.status ?? 'novo',
         anotacoes: cliente?.anotacoes ?? '',
     });
-
-    const carregarCidades = useCallback(async (sigla: string) => {
-        if (!sigla) { setCidades([]); return; }
-        setCarregandoCidades(true);
-        try {
-            const res = await fetch(route('api.cidades', sigla));
-            const json = await res.json();
-            setCidades(json);
-        } catch { setCidades([]); }
-        finally { setCarregandoCidades(false); }
-    }, []);
-
-    useEffect(() => { if (estadoSel) carregarCidades(estadoSel); }, [estadoSel]);
-
-    const buscarCep = useCallback(async (cep: string) => {
-        const raw = cep.replace(/\D/g, '');
-        if (raw.length !== 8) return;
-        setBuscandoCep(true);
-        try {
-            const res = await fetch(route('api.cep', raw));
-            if (!res.ok) return;
-            const json = await res.json();
-            setData('rua', json.logradouro ?? '');
-            setData('bairro', json.bairro ?? '');
-            if (json.cidade_id) {
-                setEstadoSel(json.sigla);
-                setData('cidade_id', String(json.cidade_id));
-                await carregarCidades(json.sigla);
-            }
-        } catch { } finally { setBuscandoCep(false); }
-    }, []);
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
@@ -192,61 +143,12 @@ export default function ClientesForm({ cliente }: Props) {
                     <CardHeader title="Endereço" titleTypographyProps={{ variant: 'subtitle1', fontWeight: 600 }} />
                     <Divider />
                     <CardContent>
-                        <Grid container spacing={3}>
-                            <Grid size={{ xs: 12, sm: 2 }}>
-                                <TextField
-                                    fullWidth size="small" label="CEP" value={data.cep} placeholder="00000-000" inputProps={{ maxLength: 9 }}
-                                    onChange={(e) => setData('cep', maskCep(e.target.value))}
-                                    onBlur={(e) => buscarCep(e.target.value)}
-                                    InputProps={{
-                                        endAdornment: buscandoCep
-                                            ? <InputAdornment position="end"><CircularProgress size={14} /></InputAdornment>
-                                            : <Tooltip title="Buscar CEP"><InputAdornment position="end" sx={{ cursor: 'pointer' }} onClick={() => buscarCep(data.cep)}><SearchRoundedIcon fontSize="small" /></InputAdornment></Tooltip>,
-                                    }}
-                                />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 5 }}>
-                                <TextField fullWidth size="small" label="Rua" value={data.rua} onChange={(e) => setData('rua', e.target.value)} />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 2 }}>
-                                <TextField fullWidth size="small" label="Número" value={data.numero} onChange={(e) => setData('numero', e.target.value)} />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }}>
-                                <TextField fullWidth size="small" label="Complemento" value={data.complemento} onChange={(e) => setData('complemento', e.target.value)} />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 4 }}>
-                                <TextField fullWidth size="small" label="Bairro" value={data.bairro} onChange={(e) => setData('bairro', e.target.value)} />
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 3 }}>
-                                <FormControl fullWidth size="small">
-                                    <InputLabel>Estado</InputLabel>
-                                    <Select
-                                        value={estadoSel}
-                                        label="Estado"
-                                        onChange={(e) => { setEstadoSel(e.target.value); setData('cidade_id', ''); }}
-                                    >
-                                        <MenuItem value="">Selecione...</MenuItem>
-                                        {ESTADOS.map((e) => <MenuItem key={e.sigla} value={e.sigla}>{e.nome}</MenuItem>)}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 5 }}>
-                                <FormControl fullWidth size="small" error={!!errors.cidade_id}>
-                                    <InputLabel>Cidade</InputLabel>
-                                    <Select
-                                        value={data.cidade_id}
-                                        label="Cidade"
-                                        onChange={(e) => setData('cidade_id', e.target.value)}
-                                        disabled={!estadoSel || carregandoCidades}
-                                        startAdornment={carregandoCidades ? <InputAdornment position="start"><CircularProgress size={14} /></InputAdornment> : undefined}
-                                    >
-                                        <MenuItem value="">Selecione...</MenuItem>
-                                        {cidades.map((c) => <MenuItem key={c.id} value={c.id}>{c.cidade}</MenuItem>)}
-                                    </Select>
-                                    {errors.cidade_id && <FormHelperText>{errors.cidade_id}</FormHelperText>}
-                                </FormControl>
-                            </Grid>
-                        </Grid>
+                        <EnderecoFields
+                            data={data}
+                            setCampo={(campo, valor) => setData(campo, valor)}
+                            errors={errors}
+                            siglaInicial={cliente?.cidade?.sigla}
+                        />
                     </CardContent>
                 </Card>
 
