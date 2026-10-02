@@ -69,6 +69,10 @@ class FornecedoresController extends Controller
 
     public function destroy(Fornecedor $fornecedor): RedirectResponse
     {
+        if ($fornecedor->kits()->exists()) {
+            return back()->with('error', 'Fornecedor possui kits vinculados. Desative-o em vez de excluir.');
+        }
+
         $fornecedor->delete();
         return redirect()->route('admin.fornecedores.index')
             ->with('success', 'Fornecedor removido.');

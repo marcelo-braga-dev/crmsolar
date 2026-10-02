@@ -167,7 +167,6 @@ export default function ConsultoresForm({ consultor }: Props) {
                                         onChange={(e) => setData('tipo', e.target.value)}
                                     >
                                         <MenuItem value="consultor">Consultor</MenuItem>
-                                        <MenuItem value="admin_consultor">Admin + Consultor</MenuItem>
                                     </Select>
                                     {errors.tipo && <FormHelperText>{errors.tipo}</FormHelperText>}
                                 </FormControl>

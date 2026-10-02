@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Orcamento;
+use App\Models\OrcamentoHistorico;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -64,15 +66,6 @@ class OrcamentosController extends Controller
         ]);
     }
 
-    public function edit(Orcamento $orcamento): Response
-    {
-        $orcamento->load(['cliente', 'cidade', 'info', 'itens']);
-
-        return Inertia::render('Admin/Orcamentos/Edit', [
-            'orcamento' => $orcamento,
-        ]);
-    }
-
     public function update(Request $request, Orcamento $orcamento): \Illuminate\Http\RedirectResponse
     {
         $data = $request->validate([
@@ -80,7 +73,18 @@ class OrcamentosController extends Controller
             'anotacoes' => 'nullable|string',
         ]);
 
+        $statusAnterior = $orcamento->status;
+
         $orcamento->update($data);
+
+        if ($data['status'] !== $statusAnterior) {
+            OrcamentoHistorico::create([
+                'orcamento_id' => $orcamento->id,
+                'usuario_id' => Auth::id(),
+                'status' => $data['status'],
+                'mensagem' => "Status alterado pelo administrador: {$statusAnterior} → {$data['status']}.",
+            ]);
+        }
 
         return back()->with('success', 'Orçamento atualizado com sucesso.');
     }

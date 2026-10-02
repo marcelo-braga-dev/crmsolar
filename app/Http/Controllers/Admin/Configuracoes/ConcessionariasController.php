@@ -55,9 +55,9 @@ class ConcessionariasController extends Controller
             'nome'                 => 'required|string|max:255',
             'estado'               => 'required|string|size:2',
             'tarifa_convencional'  => 'required|numeric|min:0',
-            'tarifa_ponta'         => 'nullable|numeric|min:0',
+            'tarifa_ponta'         => 'required|numeric|min:0',
             'tarifa_intermediaria' => 'nullable|numeric|min:0',
-            'tarifa_fora_ponta'    => 'nullable|numeric|min:0',
+            'tarifa_fora_ponta'    => 'required|numeric|min:0',
             'ativo'                => 'required|boolean',
         ];
     }

@@ -14,14 +14,14 @@ class FaturamentoController extends Controller
     {
         $orcamentos = Orcamento::query()
             ->with(['cliente', 'consultor'])
-            ->whereIn('status', ['assinado', 'instalando', 'finalizado'])
+            ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
             ->when($request->mes, fn ($q, $mes) => $q->whereMonth('created_at', $mes))
             ->when($request->ano, fn ($q, $ano) => $q->whereYear('created_at', $ano))
             ->latest()
             ->paginate(25)
             ->withQueryString();
 
-        $total = Orcamento::whereIn('status', ['assinado', 'instalando', 'finalizado'])->sum('preco_total');
+        $total = Orcamento::whereIn('status', ['aprovado', 'instalando', 'finalizado'])->sum('preco_total');
 
         return Inertia::render('Admin/Financeiro/Faturamento/Index', [
             'orcamentos' => $orcamentos,

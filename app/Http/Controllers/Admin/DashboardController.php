@@ -23,7 +23,7 @@ class DashboardController extends Controller
             'orcamentos_mes'       => Orcamento::where('created_at', '>=', $mesAtual)->count(),
             'orcamentos_mes_ant'   => Orcamento::whereBetween('created_at', [$mesAnterior, $mesAtual])->count(),
             'clientes_total'       => Cliente::count(),
-            'leads_abertos'        => Lead::whereIn('status', ['novo', 'contatado', 'em_negociacao'])->count(),
+            'leads_abertos'        => Lead::whereIn('status', ['novo', 'contatado', 'encaminhado'])->count(),
             'valor_aprovado_mes'   => (float) Orcamento::where('created_at', '>=', $mesAtual)
                 ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
                 ->sum('preco_total'),

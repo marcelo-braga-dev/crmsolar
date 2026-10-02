@@ -99,7 +99,7 @@ class KitsController extends Controller
     private function rules(?int $id = null): array
     {
         return [
-            'fornecedor_id' => 'nullable|exists:fornecedores,id',
+            'fornecedor_id' => 'required|exists:fornecedores,id',
             'estrutura_id' => 'nullable|exists:estruturas,id',
             'nome' => 'required|string|max:255',
             'modelo' => 'nullable|string|max:255',

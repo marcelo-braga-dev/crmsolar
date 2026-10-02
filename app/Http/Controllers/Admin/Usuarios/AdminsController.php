@@ -60,6 +60,8 @@ class AdminsController extends Controller
 
     public function edit(User $admin): Response
     {
+        abort_unless($admin->isAdmin(), 404);
+
         return Inertia::render('Admin/Usuarios/Admins/Form', [
             'admin' => $admin->only(['id', 'name', 'email', 'cpf', 'celular', 'status']),
         ]);
@@ -67,6 +69,8 @@ class AdminsController extends Controller
 
     public function update(Request $request, User $admin): RedirectResponse
     {
+        abort_unless($admin->isAdmin(), 404);
+
         $data = $request->validate([
             'name'     => 'required|string|max:255',
             'email'    => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($admin->id)],
@@ -75,6 +79,10 @@ class AdminsController extends Controller
             'celular'  => 'nullable|string|max:20',
             'status'   => 'required|boolean',
         ]);
+
+        if ($admin->id === Auth::id() && ! $data['status']) {
+            return back()->withErrors(['status' => 'Você não pode desativar sua própria conta.']);
+        }
 
         if (empty($data['password'])) {
             unset($data['password']);
@@ -90,6 +98,8 @@ class AdminsController extends Controller
 
     public function destroy(User $admin): RedirectResponse
     {
+        abort_unless($admin->isAdmin(), 404);
+
         if ($admin->id === Auth::id()) {
             return back()->with('error', 'Você não pode excluir sua própria conta.');
         }

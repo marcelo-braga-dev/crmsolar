@@ -16,7 +16,7 @@ class ConsultoresController extends Controller
     public function index(Request $request): Response
     {
         $consultores = User::query()
-            ->whereIn('tipo', ['consultor', 'admin_consultor'])
+            ->where('tipo', 'consultor')
             ->when($request->search, fn ($q, $s) => $q->where(function ($q) use ($s) {
                 $q->where('name', 'like', "%{$s}%")
                   ->orWhere('email', 'like', "%{$s}%")
@@ -45,7 +45,6 @@ class ConsultoresController extends Controller
             'name'                => 'required|string|max:255',
             'email'               => 'required|email|max:255|unique:users,email',
             'password'            => 'required|string|min:8|confirmed',
-            'tipo'                => 'required|in:consultor,admin_consultor',
             'cpf'                 => 'nullable|string|max:14',
             'rg'                  => 'nullable|string|max:20',
             'celular'             => 'nullable|string|max:20',
@@ -54,6 +53,8 @@ class ConsultoresController extends Controller
         ]);
 
         $data['password'] = Hash::make($data['password']);
+        $data['tipo'] = 'consultor';
+        $data['comissao_percentual'] ??= 0;
 
         User::create($data);
 
@@ -63,6 +64,8 @@ class ConsultoresController extends Controller
 
     public function edit(User $consultor): Response
     {
+        abort_unless($consultor->isConsultor(), 404);
+
         return Inertia::render('Admin/Usuarios/Consultores/Form', [
             'consultor' => $consultor->only(['id', 'name', 'email', 'tipo', 'cpf', 'rg', 'celular', 'comissao_percentual', 'status']),
         ]);
@@ -70,17 +73,20 @@ class ConsultoresController extends Controller
 
     public function update(Request $request, User $consultor): RedirectResponse
     {
+        abort_unless($consultor->isConsultor(), 404);
+
         $data = $request->validate([
             'name'                => 'required|string|max:255',
             'email'               => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($consultor->id)],
             'password'            => 'nullable|string|min:8|confirmed',
-            'tipo'                => 'required|in:consultor,admin_consultor',
             'cpf'                 => 'nullable|string|max:14',
             'rg'                  => 'nullable|string|max:20',
             'celular'             => 'nullable|string|max:20',
             'comissao_percentual' => 'nullable|numeric|min:0|max:100',
             'status'              => 'required|boolean',
         ]);
+
+        $data['comissao_percentual'] ??= 0;
 
         if (empty($data['password'])) {
             unset($data['password']);
@@ -96,6 +102,12 @@ class ConsultoresController extends Controller
 
     public function destroy(User $consultor): RedirectResponse
     {
+        abort_unless($consultor->isConsultor(), 404);
+
+        if ($consultor->clientes()->withTrashed()->exists() || $consultor->orcamentos()->withTrashed()->exists()) {
+            return back()->with('error', 'Consultor possui clientes ou orçamentos vinculados. Desative-o em vez de excluir.');
+        }
+
         $consultor->delete();
 
         return redirect()->route('admin.usuarios.consultores.index')

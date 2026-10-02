@@ -7,6 +7,7 @@ use App\Models\Lead;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -49,7 +50,7 @@ class LeadsController extends Controller
     {
         $data = $request->validate([
             'status' => 'required|in:novo,contatado,encaminhado,convertido,perdido',
-            'consultor_id' => 'nullable|exists:users,id',
+            'consultor_id' => ['nullable', Rule::exists('users', 'id')->where('tipo', 'consultor')],
             'anotacoes' => 'nullable|string',
         ]);
 

@@ -17,7 +17,7 @@ class CatalogoController extends Controller
     public function index(Request $request): Response
     {
         $query = Produto::with(['categoria', 'marca', 'fornecedor'])
-            ->when($request->search, fn ($q, $s) => $q->where('nome', 'like', "%{$s}%")->orWhere('modelo', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%"))
+            ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q->where('nome', 'like', "%{$s}%")->orWhere('modelo', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%")))
             ->when($request->categoria_id, fn ($q, $c) => $q->where('categoria_id', $c))
             ->when($request->fornecedor_id, fn ($q, $f) => $q->where('fornecedor_id', $f))
             ->when($request->ativo !== null, fn ($q) => $q->where('ativo', $request->boolean('ativo')))

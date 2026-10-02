@@ -13,13 +13,13 @@ class ComissoesController extends Controller
 {
     public function index(Request $request): Response
     {
-        $vendedores = User::whereIn('tipo', ['vendedor', 'admin_vendedor'])
+        $vendedores = User::where('tipo', 'consultor')
             ->orderBy('name')
             ->get(['id', 'name', 'comissao_percentual']);
 
         $comissoes = OrcamentoItem::query()
             ->with(['orcamento.cliente', 'orcamento.consultor'])
-            ->whereHas('orcamento', fn ($q) => $q->whereIn('status', ['assinado', 'instalando', 'finalizado']))
+            ->whereHas('orcamento', fn ($q) => $q->whereIn('status', ['aprovado', 'instalando', 'finalizado']))
             ->when($request->consultor_id, fn ($q, $id) => $q->whereHas('orcamento', fn ($q2) => $q2->where('consultor_id', $id)))
             ->latest()
             ->paginate(25)

@@ -8,6 +8,7 @@ use App\Models\Cliente;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -103,7 +104,7 @@ class ClientesController extends Controller
     private function rules(?int $id = null): array
     {
         return [
-            'consultor_id' => 'required|exists:users,id',
+            'consultor_id' => ['required', Rule::exists('users', 'id')->where('tipo', 'consultor')],
             'cidade_id' => 'nullable|exists:cidades_estados,id',
             'tipo_pessoa' => 'required|in:pf,pj',
             'nome' => 'nullable|string|max:255',

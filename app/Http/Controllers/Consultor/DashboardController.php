@@ -14,28 +14,28 @@ class DashboardController extends Controller
 {
     public function index(): Response
     {
-        $userId   = Auth::id();
+        $userId = Auth::id();
         $mesAtual = now()->startOfMonth();
 
         $stats = [
-            'clientes'           => Cliente::where('consultor_id', $userId)->count(),
-            'leads_abertos'      => Lead::where('consultor_id', $userId)->whereIn('status', ['novo', 'contatado', 'em_negociacao'])->count(),
-            'orcamentos_mes'     => Orcamento::where('consultor_id', $userId)->where('created_at', '>=', $mesAtual)->count(),
+            'clientes' => Cliente::where('consultor_id', $userId)->count(),
+            'leads_abertos' => Lead::where('consultor_id', $userId)->whereIn('status', ['novo', 'contatado', 'encaminhado'])->count(),
+            'orcamentos_mes' => Orcamento::where('consultor_id', $userId)->where('created_at', '>=', $mesAtual)->count(),
             'valor_aprovado_mes' => (float) Orcamento::where('consultor_id', $userId)
                 ->where('created_at', '>=', $mesAtual)
                 ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
                 ->sum('preco_total'),
-            'em_aprovacao'       => Orcamento::where('consultor_id', $userId)->where('status', 'aprovando')->count(),
-            'aprovados'          => Orcamento::where('consultor_id', $userId)->where('status', 'aprovado')->count(),
+            'em_aprovacao' => Orcamento::where('consultor_id', $userId)->where('status', 'aprovando')->count(),
+            'aprovados' => Orcamento::where('consultor_id', $userId)->where('status', 'aprovado')->count(),
         ];
 
         $evolucao = collect(range(5, 0))->map(function ($mesesAtras) use ($userId) {
             $inicio = now()->subMonths($mesesAtras)->startOfMonth();
-            $fim    = now()->subMonths($mesesAtras)->endOfMonth();
+            $fim = now()->subMonths($mesesAtras)->endOfMonth();
 
             return [
-                'mes'   => $inicio->format('M/y'),
-                'qtd'   => Orcamento::where('consultor_id', $userId)->whereBetween('created_at', [$inicio, $fim])->count(),
+                'mes' => $inicio->format('M/y'),
+                'qtd' => Orcamento::where('consultor_id', $userId)->whereBetween('created_at', [$inicio, $fim])->count(),
                 'valor' => (float) Orcamento::where('consultor_id', $userId)
                     ->whereBetween('created_at', [$inicio, $fim])
                     ->whereIn('status', ['aprovado', 'instalando', 'finalizado'])
@@ -56,9 +56,9 @@ class DashboardController extends Controller
             ->get(['id', 'nome', 'razao_social', 'tipo_pessoa', 'status', 'cidade_id', 'created_at']);
 
         return Inertia::render('Consultor/Dashboard', [
-            'stats'            => $stats,
-            'evolucao'         => $evolucao,
-            'recentes'         => $recentes,
+            'stats' => $stats,
+            'evolucao' => $evolucao,
+            'recentes' => $recentes,
             'clientesRecentes' => $clientesRecentes,
         ]);
     }
