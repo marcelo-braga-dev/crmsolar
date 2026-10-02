@@ -10,6 +10,7 @@ use App\Models\MargemFornecedor;
 use App\Models\MargemPrincipal;
 use App\Services\PrecificacaoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class PrecificacaoServiceTest extends TestCase
@@ -81,5 +82,48 @@ class PrecificacaoServiceTest extends TestCase
         $preco = $this->service->calcular($kit, qtdKits: 1, estado: 'MG');
 
         $this->assertEquals(15.0, $preco['margem_total']);
+    }
+
+    private function kitSimples(Fornecedor $fornecedor, float $kwp = 5): Kit
+    {
+        return Kit::create([
+            'fornecedor_id' => $fornecedor->id, 'estrutura_id' => Estrutura::firstOrCreate(['nome' => 'Solo'], ['ativo' => true])->id,
+            'nome' => "Kit {$kwp}kWp", 'potencia_kwp' => $kwp, 'tensao' => 220,
+            'preco_custo' => 10000, 'ativo' => true, 'ativo_fornecedor' => true,
+        ]);
+    }
+
+    public function test_potencia_acima_de_todas_as_faixas_usa_a_faixa_mais_alta(): void
+    {
+        MargemPrincipal::create(['nome' => 'Até 10', 'potencia_min' => 0, 'potencia_max' => 10, 'margem' => 30, 'ordem' => 1]);
+        MargemPrincipal::create(['nome' => '10 a 50', 'potencia_min' => 10, 'potencia_max' => 50, 'margem' => 18, 'ordem' => 2]);
+        $kit = $this->kitSimples(Fornecedor::create(['nome' => 'F', 'ativo' => true]), 80);
+
+        $this->assertEquals(18.0, $this->service->calcular($kit, 1, 'SP')['margem_principal']);
+    }
+
+    public function test_sem_nenhuma_margem_cadastrada_vende_pelo_custo(): void
+    {
+        $kit = $this->kitSimples(Fornecedor::create(['nome' => 'F', 'ativo' => true]));
+
+        $preco = $this->service->calcular($kit, 2, 'SP');
+
+        $this->assertEquals(0.0, $preco['margem_total']);
+        $this->assertEquals(20000.0, $preco['preco_venda']);
+    }
+
+    public function test_margens_sao_consultadas_uma_vez_independente_do_numero_de_kits(): void
+    {
+        $fornecedor = Fornecedor::create(['nome' => 'F', 'ativo' => true]);
+        MargemPrincipal::create(['nome' => 'Padrão', 'potencia_min' => 0, 'potencia_max' => null, 'margem' => 20, 'ordem' => 1]);
+        MargemEstado::create(['estado' => 'SP', 'nome_estado' => 'São Paulo', 'margem' => 2]);
+        MargemFornecedor::create(['fornecedor_id' => $fornecedor->id, 'margem' => 1]);
+        $kits = collect(range(1, 15))->map(fn ($kwp) => $this->kitSimples($fornecedor, $kwp));
+
+        DB::enableQueryLog();
+        $precos = $kits->map(fn ($kit) => $this->service->calcular($kit, 1, 'SP'));
+
+        $this->assertCount(3, DB::getQueryLog());
+        $this->assertTrue($precos->every(fn ($p) => $p['margem_total'] === 23.0));
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Kit;
 use App\Models\MargemEstado;
 use App\Models\MargemFornecedor;
 use App\Models\MargemPrincipal;
+use Illuminate\Support\Collection;
 
 class PrecificacaoService
 {
@@ -38,30 +39,36 @@ class PrecificacaoService
         ];
     }
 
+    /** Margens carregadas uma vez por instância (uma requisição) — antes eram 3 queries por kit. */
+    private ?Collection $faixas = null;
+
+    private ?Collection $margensEstado = null;
+
+    private ?Collection $margensFornecedor = null;
+
     private function margemPrincipal(float $potenciaTotal): float
     {
-        // Primeira faixa onde potencia_min ≤ total ≤ potencia_max (null = sem limite superior)
-        $margem = MargemPrincipal::query()
-            ->orderBy('potencia_min')
-            ->where('potencia_min', '<=', $potenciaTotal)
-            ->where(fn ($q) => $q->whereNull('potencia_max')->orWhere('potencia_max', '>=', $potenciaTotal))
-            ->value('margem');
+        $this->faixas ??= MargemPrincipal::orderBy('potencia_min')->get(['potencia_min', 'potencia_max', 'margem']);
 
-        if ($margem !== null) {
-            return (float) $margem;
-        }
+        // Primeira faixa onde potencia_min ≤ total ≤ potencia_max (null = sem limite superior)
+        $faixa = $this->faixas->first(fn ($f) => (float) $f->potencia_min <= $potenciaTotal
+            && ($f->potencia_max === null || (float) $f->potencia_max >= $potenciaTotal));
 
         // Fallback: faixa mais alta cadastrada
-        return (float) (MargemPrincipal::orderByDesc('potencia_min')->value('margem') ?? 0);
+        return (float) (($faixa ?? $this->faixas->last())?->margem ?? 0);
     }
 
     private function margemEstado(string $estado): float
     {
-        return (float) (MargemEstado::where('estado', $estado)->value('margem') ?? 0);
+        $this->margensEstado ??= MargemEstado::pluck('margem', 'estado');
+
+        return (float) ($this->margensEstado[$estado] ?? 0);
     }
 
     private function margemFornecedor(int $fornecedorId): float
     {
-        return (float) (MargemFornecedor::where('fornecedor_id', $fornecedorId)->value('margem') ?? 0);
+        $this->margensFornecedor ??= MargemFornecedor::pluck('margem', 'fornecedor_id');
+
+        return (float) ($this->margensFornecedor[$fornecedorId] ?? 0);
     }
 }
