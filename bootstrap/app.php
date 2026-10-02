@@ -4,6 +4,7 @@ use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsConsultor;
 use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -36,6 +37,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Exclusão barrada por chave estrangeira: volta para a tela com aviso em vez de erro 500.
+        // Restrito a DELETE para não mascarar outros erros de integridade.
+        $exceptions->render(function (QueryException $e, Request $request) {
+            if ($request->isMethod('delete') && ! $request->expectsJson() && str_starts_with((string) $e->getCode(), '23')) {
+                return back()->with('error', 'Não é possível excluir: o registro está vinculado a outros dados.');
+            }
+        });
 
         // Sem efeito até SENTRY_LARAVEL_DSN ser definido no .env.
         Integration::handles($exceptions);

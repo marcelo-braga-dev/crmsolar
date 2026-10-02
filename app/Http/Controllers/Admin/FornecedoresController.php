@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Fornecedor;
+use App\Models\IntegracaoHistorico;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -71,8 +72,8 @@ class FornecedoresController extends Controller
 
     public function destroy(Fornecedor $fornecedor): RedirectResponse
     {
-        if ($fornecedor->kits()->exists()) {
-            return back()->with('error', 'Fornecedor possui kits vinculados. Desative-o em vez de excluir.');
+        if ($fornecedor->kits()->exists() || IntegracaoHistorico::where('fornecedor_id', $fornecedor->id)->exists()) {
+            return back()->with('error', 'Fornecedor possui kits ou histórico de integração vinculados. Desative-o em vez de excluir.');
         }
 
         $fornecedor->delete();
