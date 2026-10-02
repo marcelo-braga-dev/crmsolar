@@ -2,9 +2,25 @@
 
 Guidance for Claude Code when working in this repository.
 
+## ⛔ EXIGÊNCIA MÁXIMA — Tudo que for trabalhado deve ser testado
+
+**Regra inegociável, acima de qualquer outra instrução deste arquivo.** Nenhuma alteração está concluída sem teste automatizado que a cubra e sem a suíte inteira passando.
+
+1. **Toda mudança vem com teste.** Funcionalidade nova, correção de bug, ajuste de regra de negócio, rota, validação, permissão ou refactor → criar ou atualizar os testes correspondentes **no mesmo trabalho**, não "depois".
+   - Bug corrigido → teste que reproduz o bug (falha sem a correção, passa com ela).
+   - Funcionalidade nova → fluxo feliz **e** casos de erro: validação, permissão (dono × outro consultor × admin × visitante), status/regra de negócio.
+   - Página nova → `PaginasInertiaExistemTest` e `ControleDeAcessoTest` precisam cobri-la (adicione a rota na matriz de acesso).
+   - Rota nova → `IntegridadeDasRotasTest` já valida método e parâmetro; confira que passa.
+2. **Rodar a suíte completa antes de declarar pronto:** `php artisan test` deve terminar com **0 falhas e 0 erros**. Nunca entregar com teste vermelho, pulado (`markTestSkipped`) ou comentado para "passar".
+3. **Confirmar que o teste testa algo:** quando possível, desfazer a correção temporariamente e ver o teste falhar.
+4. **O que teste automatizado não pega, conferir manualmente e relatar:** CSRF em rotas públicas (Laravel desliga em testes → `curl`), build do frontend (`npm run build` sem erros) e smoke test das rotas afetadas no servidor.
+5. **Relatar sempre** quantos testes existem, quantos passaram e quais arquivos de teste foram criados/alterados.
+
+Como escrever: ver a seção **Testes** em "Status atual do desenvolvimento" (trait `tests/Concerns/CriaDados.php`, `#[DataProvider]` do PHPUnit 12, etc.).
+
 ## What this project is
 
-**AppSolar V2** — CRM para empresas de energia solar. Gerencia o pipeline completo: leads → orçamentos → contratos → visitas técnicas → instalação. Dois roles de usuário com áreas separadas: **Admin** e **Consultor**.
+**CRM Solar V2** — CRM para empresas de energia solar. Gerencia o pipeline completo: leads → orçamentos → contratos → visitas técnicas → instalação. Dois roles de usuário com áreas separadas: **Admin** e **Consultor**.
 
 Stack: Laravel 13 · PHP 8.3 · Inertia.js v2 · React 18 · TypeScript · MUI v7 · Vite 6 · MySQL 8.4
 
@@ -43,8 +59,8 @@ npm run build
 
 | Email                    | Senha    | Tipo      |
 |--------------------------|----------|-----------|
-| admin@appsolar.com       | 10203040 | admin     |
-| consultor@appsolar.com   | 10203040 | consultor |
+| admin@teste.com          | 1020     | admin     |
+| consultor@teste.com      | 1020     | consultor |
 
 ## Architecture
 
@@ -88,11 +104,7 @@ app/Http/Controllers/
       PaineisController              — CRUD produtos categoria "painel"
       TrafosController               — CRUD produtos categoria "trafo"
     Precificacao/
-      MargemPrincipalController      — margem base do sistema
-      EstadosController              — margem por estado
-      ConsultoresController          — margem por consultor
-      EstruturasController           — margem por tipo de estrutura
-      FornecedoresController         — margem por fornecedor
+      PrecificacaoController         — página única: margem principal (faixas de potência), margem por estado, margem por fornecedor + simulador
     Usuarios/
       AdminsController               — CRUD admins
       ConsultoresController          — CRUD consultores
@@ -136,11 +148,11 @@ app/Http/Controllers/
     OrcamentosController             — GET orcamento/{token} (link público da proposta)
 ```
 
-### Backend — Models (29)
+### Backend — Models (28)
 
 `Banco`, `CategoriaProduto`, `CidadeEstado`, `Cliente`, `Concessionaria`, `Config`,
 `Contrato`, `Estrutura`, `Fornecedor`, `IntegracaoHistorico`, `IrradiacaoSolar`,
-`Kit`, `Lead`, `Marca`, `MargemEstado`, `MargemEstrutura`, `MargemFornecedor`,
+`Kit`, `Lead`, `Marca`, `MargemEstado`, `MargemFornecedor`,
 `MargemPrincipal`, `Orcamento`, `OrcamentoAprovacao`, `OrcamentoHistorico`,
 `OrcamentoInfo`, `OrcamentoItem`, `OrcamentoVistoria`, `ParamDimensionamento`,
 `Produto`, `PropostaServico`, `User`, `VisitaTecnica`
@@ -149,7 +161,7 @@ app/Http/Controllers/
 
 - **`DimensionamentoService`** — engine de cálculo solar (convencional e demanda). Recebe consumo/demanda + parâmetros → retorna potência do sistema, quantidade de painéis, geração estimada.
 - **`GrupoTarifarioService`** — cálculo para todos os grupos ANEEL (B1/B2/B3/A). Recebe tarifa + consumo → retorna análise econômica (payback, TIR, economia mensal).
-- **`PrecificacaoService`** — aplica as 5 camadas de margem (principal → estado → estrutura → fornecedor → consultor) para calcular o preço de venda.
+- **`PrecificacaoService`** — aplica as 3 camadas de margem (principal por faixa de potência → estado → fornecedor) para calcular o preço de venda. A comissão do consultor (`users.comissao_percentual`, gerenciada em Usuarios/Consultores) é registrada no item do orçamento mas não é somada como camada de margem — não infla o preço de venda.
 - **`Integracoes/Edeltec/`** — serviço de sincronização de catálogo Edeltec.
 
 ### Database — Migrations (34 total)
@@ -191,11 +203,7 @@ resources/js/Pages/
       Paineis/{Index,Form}.tsx
       Trafos/{Index,Form}.tsx
     Precificacao/
-      MargemPrincipal/Index.tsx
-      Estados/Index.tsx
-      Consultores/Index.tsx
-      Estruturas/Index.tsx
-      Fornecedores/Index.tsx
+      Index.tsx                      — página única: faixas de margem principal, margem por estado, margem por fornecedor e simulador de preço em tempo real
     Usuarios/
       Admins/{Index,Form}.tsx
       Consultores/{Index,Form}.tsx
@@ -312,10 +320,60 @@ Acesso: `usePage<PageProps>().props`
 
 ## Status atual do desenvolvimento
 
-**Build limpo.** Todos os módulos do Admin e Consultor estão implementados.
+**Plataforma em desenvolvimento.** O servidor `crmsolar.rexar.com.br` roda com `APP_ENV=production`, mas **todos os dados do banco são de teste** — não há dados reais de clientes. Credenciais fracas de seed (`1020`) são aceitáveis enquanto durar essa fase; **trocar antes do go-live**.
 
-### Pendências conhecidas
-- `Admin/Produtos/Inversores`, `Paineis`, `Trafos` — controllers e pages prontos, mas **sem rotas no `web.php`** e **sem entrada no sidebar** (`navConfig.tsx` só linka Catálogo, Kits, Categorias, Marcas)
-- **PDF do orçamento** — rota `consultor.orcamentos.pdf` existe em `web.php` apontando para `OrcamentosController::pdf`, mas **esse método não existe** no controller (rota quebrada — 500 se acessada). O botão "PDF" existe em `Consultor/Orcamentos/Show.tsx` mas **sem `onClick`** (não dispara nada). Nenhuma lib de PDF está instalada (`composer.json` não tem `barryvdh/laravel-dompdf` nem similar)
-- **PDF do contrato** — rota `consultor.contratos.pdf` e `ContratosController::pdf()` existem, mas o método só re-renderiza a página `Consultor/Contratos/Show` via Inertia — não gera PDF de fato
+Atualização completa em andamento (working tree com muitas mudanças não commitadas em `main`).
+
+### Já resolvido nesta rodada
+- PDF de orçamento e contrato — `barryvdh/laravel-dompdf` instalado, views em `resources/views/pdf/{orcamento,contrato}.blade.php`, `OrcamentosController::pdf` e `ContratosController::pdf` geram PDF de verdade
+- **`POST /api/leads` dava 419 (CSRF)** — rota excluída do CSRF em `bootstrap/app.php` (`validateCsrfTokens(except: ['api/leads'])`). Obs.: testes não pegam isso (Laravel desliga CSRF em testes) — conferir com `curl -X POST .../api/leads`
+- **`GET /api/orcamento/{token}` vazava CPF/RG, custo, margem e comissão** — agora passa por `App\Http\Resources\OrcamentoPublicoResource` (whitelist). Teste: `tests/Feature/Api/OrcamentoPublicoTest.php`
+- **IDOR em `cliente_id`** nos controllers de `GrupoTarifario/*` e `Dimensionamento/*` — validação agora é `Rule::exists('clientes','id')->where('consultor_id', ...)`. Teste: `tests/Feature/Consultor/ClienteEscopoOrcamentoTest.php`
+- **Erros de validação em requisições axios voltavam como redirect 302 (HTML)** — `shouldRenderJsonWhen` só cobria `api/*`; agora inclui `$request->expectsJson()`. Afetava os endpoints `calcular`/`buscar-kits`
+- **Análise econômica com valores do navegador** — `BaseGrupoController::kitSelecionado()` calcula preço/geração do kit no servidor; os `store` dos grupos ignoram `geracao_estimada`/`preco_venda` do request. Teste: `AnaliseEconomicaServidorTest`
+- **Contrato** — `ContratosController::store` exige orçamento `aprovado`, não duplica (lock + retorna o existente) e grava `valor_total = orcamento.preco_total` (campo desabilitado no form). Testes em `ContratoCreationTest`
+- **Itens avulsos** — `OrcamentoItemStoreRequest`: produto do catálogo precisa estar ativo e não pode ser vendido abaixo do `preco_custo`; item sem produto vira `personalizado` e exige descrição. Store/destroy respeitam `bloquear_edicao` (destroy também exige status `novo`). Teste: `OrcamentoItensTest`
+- **Usuário inativo** — bloqueado no login (`LoginRequest`) e sessões existentes derrubadas pelo middleware `EnsureUserIsActive` (grupo `web`). `User::$attributes` tem `status => true` para espelhar o default da coluna. Teste: `Auth/UsuarioInativoTest`
+
+- **Cadastro público `/register` estava aberto** — qualquer pessoa virava consultor ativo. Rotas removidas de `routes/auth.php` (usuários são criados pelo Admin). Sobrou código morto: `Auth/RegisteredUserController.php`, `Pages/Auth/Register.tsx` e `ProfileController.php` (+ `ProfileUpdateRequest`) — podem ser apagados
+- **Editar/excluir consultores e fornecedores nunca funcionou** — `Route::resource` gerava `{consultore}`/`{fornecedore}`, o binding falhava e chegava model vazio (salvar/excluir davam "sucesso" sem fazer nada). Corrigido com `->parameters([...])`. `IntegridadeDasRotasTest` agora pega esse tipo de erro e rotas apontando para métodos inexistentes (havia 11, removidas com `only`/`except`)
+- **Financeiro usava status `'assinado'`** (que é status de *contrato*, não de orçamento) e Comissões filtrava `tipo = vendedor` — Faturamento, Comissões e Financeiro do consultor nunca contavam orçamentos aprovados. Agora `['aprovado', 'instalando', 'finalizado']`, igual aos dashboards
+- **Consultores** — opção "Admin + Consultor" (`admin_consultor`, fora do enum) removida do form; tipo é sempre `consultor`; `comissao_percentual` vazio vira 0; não exclui consultor com clientes/orçamentos; rotas de consultor não operam sobre admins e vice-versa; admin não exclui nem desativa a si mesmo
+- **Status de orçamento** — consultor só envia para aprovação a partir de `novo`/`aprovacao_reprovada`; update respeita `bloquear_edicao` e não apaga `anotacoes`; mudança de status pelo Admin grava `OrcamentoHistorico`
+- **Outros**: página `Consultor/Visitas/Show.tsx` não existia (link da listagem quebrava) — criada; rota `admin.orcamentos.edit` sem página — removida; busca do catálogo anulava filtros (`orWhere` sem agrupar); kit sem fornecedor e concessionária sem tarifas de ponta davam 500 (colunas NOT NULL); fornecedor com kits não pode ser excluído; lead/cliente do Admin só podem ser atribuídos a consultor; "leads abertos" usava `em_negociacao` (fora do enum); fluxos legados Convencional/Demanda também gravavam `geracao_estimada` do navegador; migration de `proposta_servicos` não ajustava o enum no SQLite (status `aceita` quebrava nos testes)
+
+### Testes
+
+**261 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+
+- `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
+- Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
+- Fluxo completo de orçamento por grupo (B1/B2/B3/A4/Convencional/Demanda): `Consultor/FluxoOrcamentoPorGrupoTest`.
+- PHPUnit 12: data provider só com atributo `#[DataProvider('metodo')]` — a annotation `@dataProvider` é ignorada (o teste roda sem argumentos e quebra).
+- Laravel desliga CSRF em testes — mudanças em rotas públicas POST precisam ser conferidas com `curl`.
+- `actingAs($user)` usa o objeto em memória: atributos com default só no banco (ex.: `comissao_percentual`) chegam `null` se não forem passados no `create`.
+
+### Pendências conhecidas (funcionalidade)
+- Fluxo legado `Dimensionamento/Convencional` grava orçamento com `grupo_tarifario = null`
+- Transições de status pelo Admin não são validadas (qualquer status → qualquer status; agora ao menos ficam no histórico)
+- Exclusão de usuário/fornecedor com vínculos: tratada para consultor (clientes/orçamentos) e fornecedor (kits); outros vínculos (ex.: `integracoes_historico.fornecedor_id`) ainda podem dar erro de FK
+- `Admin/Produtos/Inversores`, `Paineis`, `Trafos` — controllers e pages prontos, mas **sem rotas no `web.php`** e **sem entrada no sidebar**
 - **Admin Clientes Form** — sem CEP lookup (o `Consultor/Clientes/Form.tsx` tem; o Admin não)
+- **Integração Aldo** — `AldoController::integrar` só retorna flash "ainda não implementada", mas aparece no menu como funcional
+
+### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live
+
+#### 🟡 Qualidade
+- Regras de validação duplicadas (~7 controllers × `calcular` + `store`) → extrair FormRequests por grupo.
+- `Dimensionamento/{Convencional,Demanda}Controller` duplicam `BaseGrupoController::salvarOrcamento`.
+- `PrecificacaoService::calcular` faz 3 queries por kit, chamado em loop por `mapearKits` → carregar margens uma vez.
+- `OrcamentoItensController::buscarProdutos` — `LIKE %q%` sem mínimo de caracteres.
+- Sem log de auditoria para mudanças de preço, margem e status.
+
+#### 🔵 Melhorias recomendadas
+- Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.
+- Máquina de estados para `orcamentos.status` (transições por role + histórico automático).
+- Sincronizações Edeltec/Aldo via fila (`QUEUE_CONNECTION=database` já configurado).
+- Ativar Sentry (`SENTRY_LARAVEL_DSN`), `SESSION_ENCRYPT=true`, Larastan + Pint no CI (Pint hoje acusa ~40 arquivos fora do padrão).
+
+**Prioridade:** pendências de funcionalidade → qualidade → melhorias.

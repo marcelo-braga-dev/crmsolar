@@ -1,4 +1,4 @@
-# AppSolar V2
+# CRM Solar V2
 
 CRM para empresas de energia solar. Gerencia o pipeline completo de vendas: **leads → orçamentos → contratos → visitas técnicas → instalação**.
 
@@ -54,8 +54,8 @@ npm run build                   # produção
 
 | E-mail                   | Senha    | Área         |
 |--------------------------|----------|--------------|
-| admin@appsolar.com       | 10203040 | Admin        |
-| consultor@appsolar.com   | 10203040 | Consultor    |
+| admin@teste.com          | 1020     | Admin        |
+| consultor@teste.com      | 1020     | Consultor    |
 
 ## Funcionalidades
 
@@ -128,11 +128,31 @@ database/
   seeders/             — dados de estrutura + dados de teste
 ```
 
+## Status do projeto
+
+> ⚠️ **Em desenvolvimento.** O ambiente `crmsolar.rexar.com.br` contém **apenas dados de teste**. As credenciais padrão (senha `1020`) devem ser trocadas antes do go-live.
+
 ## Limitações conhecidas
 
 - **Catálogo de Inversores/Painéis/Trafos (Admin)** — telas prontas, mas ainda sem rota registrada e sem entrada no menu lateral
-- **PDF de orçamento e de contrato** — ainda não geram PDF de fato (sem biblioteca de PDF instalada); os botões/rotas existem na interface mas não estão funcionais
+- **Cadastro de usuários** — não há cadastro público; admins e consultores são criados em Admin → Usuários
 - **Cadastro de Clientes (Admin)** — sem busca automática de CEP (o formulário do Consultor já tem)
+- **Integração Aldo** — botão existe, mas a sincronização ainda não está implementada
+
+## Problemas conhecidos (a corrigir antes do go-live)
+
+Detalhes técnicos em [`CLAUDE.md`](CLAUDE.md#status-atual-do-desenvolvimento).
+
+- Transições de status do orçamento pelo Admin não são validadas (ficam registradas no histórico)
+- Fluxo legado de dimensionamento convencional grava orçamento sem grupo tarifário
+
+## Testes
+
+```bash
+php artisan test   # 261 testes, SQLite em memória
+```
+
+> ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).
 
 ## Comandos úteis
 
