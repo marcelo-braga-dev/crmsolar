@@ -30,3 +30,6 @@ Thumbs.db
 /.htaccess
 /.well-known/
 /public/.user.ini
+
+# Configurações pessoais do Claude Code
+/.claude/settings.local.json
