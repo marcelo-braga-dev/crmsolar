@@ -345,7 +345,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**347 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**351 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -378,6 +378,7 @@ Trabalho de atualização integrado à `main`.
 - **Orçamento com contrato podia voltar para `aprovando`/`novo`** e ter itens e preço alterados — `Orcamento::transicoesPermitidas()` remove os status pré-aprovação quando há contrato não cancelado. Testes em `TransicoesStatusTest`
 - `npm audit fix` (axios, form-data, qs e outras) — `npm audit` limpo
 - **Contrato gravava potência/geração/consumo digitados no formulário** — agora vêm do orçamento aprovado (potência = soma dos kits, geração do orçamento, consumo do `OrcamentoInfo`), como já era com `valor_total`; o formulário só preenche o que o orçamento não tiver (campos desabilitados na tela). Testes em `ContratoCreationTest`
+- **Sincronização Edeltec em fila (opcional)** — `EDELTEC_SYNC_FILA=true` faz o botão "Integrar" enfileirar o job `App\Jobs\SincronizarEdeltec` em vez de rodar na requisição (padrão `false` = comportamento antigo). **Só ative depois de configurar o worker `queue:work`** no servidor. `EdeltecImportService::importar()` usa a trava `integracao-edeltec` (cache, expira em 1h): botão, job e comando agendado nunca rodam ao mesmo tempo. Testes em `IntegracaoEdeltecTest`
 
 ### Pendências conhecidas (funcionalidade)
 - **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
@@ -389,7 +390,7 @@ Trabalho de atualização integrado à `main`.
 
 #### 🔵 Melhorias recomendadas
 - Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.
-- Sincronização Edeltec via fila (`QUEUE_CONNECTION=database` já configurado). **Pré-requisito:** este servidor não tem worker de fila para o crmsolar — configurar `queue:work` (supervisor/aaPanel) antes, senão os jobs nunca rodam.
+- Ativar a sincronização Edeltec em fila: configurar o worker `queue:work` (supervisor/aaPanel) e só então definir `EDELTEC_SYNC_FILA=true`.
 - Ativar Sentry (`SENTRY_LARAVEL_DSN`) e `SESSION_ENCRYPT=true`. Subir o nível do Larastan aos poucos (hoje 5).
 
 **Prioridade:** qualidade → melhorias.

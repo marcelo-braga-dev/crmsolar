@@ -2,12 +2,15 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Jobs\SincronizarEdeltec;
 use App\Models\IntegracaoHistorico;
 use App\Models\Kit;
+use App\Services\Integracoes\Edeltec\EdeltecImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Tests\Concerns\CriaDados;
 use Tests\TestCase;
 
@@ -133,5 +136,57 @@ class IntegracaoEdeltecTest extends TestCase
         $this->integrar()->assertSessionHas('error');
 
         $this->assertSame('erro', IntegracaoHistorico::sole()->status);
+    }
+
+    public function test_com_fila_ativada_o_botao_enfileira_e_nao_sincroniza_na_requisicao(): void
+    {
+        config(['services.edeltec.fila' => true]);
+        Queue::fake();
+        $this->fornecedor(['nome' => 'Edeltec']);
+        $this->apiComProdutos([$this->produtoApi('ED-1')]);
+
+        $this->integrar()->assertSessionHas('info');
+
+        Queue::assertPushed(SincronizarEdeltec::class);
+        $this->assertSame(0, Kit::count());
+        $this->assertSame(0, IntegracaoHistorico::count());
+    }
+
+    public function test_job_executa_a_sincronizacao(): void
+    {
+        $edeltec = $this->fornecedor(['nome' => 'Edeltec']);
+        $this->apiComProdutos([$this->produtoApi('ED-1'), $this->produtoApi('ED-2')]);
+
+        (new SincronizarEdeltec)->handle();
+
+        $this->assertSame(2, Kit::where('fornecedor_id', $edeltec->id)->count());
+        $this->assertSame('concluido', IntegracaoHistorico::sole()->status);
+    }
+
+    public function test_sincronizacao_em_andamento_bloqueia_outra(): void
+    {
+        $this->fornecedor(['nome' => 'Edeltec']);
+        $this->apiComProdutos([$this->produtoApi('ED-1')]);
+        $lock = Cache::lock(EdeltecImportService::LOCK, 60);
+        $lock->get();
+
+        $this->integrar()->assertSessionHas('warning');
+        (new SincronizarEdeltec)->handle(); // job também respeita a trava, sem lançar erro
+
+        $this->assertSame(0, Kit::count());
+        $this->assertSame(0, IntegracaoHistorico::count());
+
+        $lock->release();
+        $this->integrar()->assertSessionHas('success');
+        $this->assertSame(1, Kit::count());
+    }
+
+    public function test_trava_e_liberada_mesmo_quando_a_sincronizacao_falha(): void
+    {
+        $this->fornecedor(['nome' => 'Edeltec']);
+        Http::fake(['*/api-access/token' => Http::response([], 403)]);
+        $this->integrar()->assertSessionHas('error');
+
+        $this->assertTrue(Cache::lock(EdeltecImportService::LOCK, 60)->get());
     }
 }

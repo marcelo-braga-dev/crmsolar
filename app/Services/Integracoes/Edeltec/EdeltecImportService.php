@@ -5,6 +5,7 @@ namespace App\Services\Integracoes\Edeltec;
 use App\Models\Fornecedor;
 use App\Models\IntegracaoHistorico;
 use App\Models\Kit;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -45,10 +46,31 @@ class EdeltecImportService
 
     // ── Entrada pública ───────────────────────────────────────────────────
 
+    /** Trava compartilhada por botão, job e comando agendado — nunca duas sincronizações ao mesmo tempo. */
+    public const LOCK = 'integracao-edeltec';
+
     /**
      * Executa a integração completa. Cria um registro de histórico e retorna-o.
+     *
+     * @throws EdeltecSincronizacaoEmAndamento
      */
     public function importar(): IntegracaoHistorico
+    {
+        // Expira sozinha se o processo morrer no meio (ex.: timeout), para não travar para sempre.
+        $lock = Cache::lock(self::LOCK, 3600);
+
+        if (! $lock->get()) {
+            throw new EdeltecSincronizacaoEmAndamento('Já existe uma sincronização Edeltec em andamento.');
+        }
+
+        try {
+            return $this->sincronizar();
+        } finally {
+            $lock->release();
+        }
+    }
+
+    private function sincronizar(): IntegracaoHistorico
     {
         $fornecedor = Fornecedor::where('nome', 'like', '%edeltec%')
             ->orWhere('nome', 'like', '%Edeltec%')

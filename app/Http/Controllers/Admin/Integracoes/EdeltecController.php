@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin\Integracoes;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SincronizarEdeltec;
 use App\Models\Fornecedor;
 use App\Models\IntegracaoHistorico;
 use App\Services\Integracoes\Edeltec\EdeltecImportService;
+use App\Services\Integracoes\Edeltec\EdeltecSincronizacaoEmAndamento;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -59,6 +61,12 @@ class EdeltecController extends Controller
             return back()->with('error', 'Credenciais da Edeltec não configuradas. Verifique as variáveis EDELTEC_API_KEY e EDELTEC_SECRET no .env.');
         }
 
+        if (config('services.edeltec.fila')) {
+            SincronizarEdeltec::dispatch();
+
+            return back()->with('info', 'Sincronização iniciada em segundo plano. Acompanhe o resultado no histórico abaixo.');
+        }
+
         try {
             $historico = (new EdeltecImportService)->importar();
 
@@ -72,6 +80,8 @@ class EdeltecController extends Controller
 
             return back()->with('success', $msg);
 
+        } catch (EdeltecSincronizacaoEmAndamento $e) {
+            return back()->with('warning', $e->getMessage().' Aguarde terminar e confira o histórico.');
         } catch (\Throwable $e) {
             Log::error('Edeltec (controller): '.$e->getMessage());
 

@@ -39,6 +39,8 @@ return [
         'url' => env('EDELTEC_API_URL', 'https://api.edeltecsolar.com.br'),
         'api_key' => env('EDELTEC_API_KEY'),
         'secret' => env('EDELTEC_SECRET'),
+        // true: botão "Integrar" enfileira a sincronização (exige worker queue:work rodando).
+        'fila' => (bool) env('EDELTEC_SYNC_FILA', false),
     ],
 
 ];
