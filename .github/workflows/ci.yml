@@ -40,6 +40,9 @@ jobs:
       - name: Check code style (Pint)
         run: vendor/bin/pint --test
 
+      - name: Static analysis (Larastan)
+        run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
       - name: Run test suite
         run: php artisan test
 

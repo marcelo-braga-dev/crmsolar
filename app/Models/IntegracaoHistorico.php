@@ -21,6 +21,7 @@ class IntegracaoHistorico extends Model
         'finalizado_em' => 'datetime',
     ];
 
+    /** @return BelongsTo<Fornecedor, $this> */
     public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);

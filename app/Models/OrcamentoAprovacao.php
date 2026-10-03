@@ -18,6 +18,7 @@ class OrcamentoAprovacao extends Model
         'assinado_em' => 'datetime',
     ];
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);

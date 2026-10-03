@@ -26,21 +26,25 @@ class Cliente extends Model
         'data_nascimento' => 'date',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');
     }
 
+    /** @return BelongsTo<CidadeEstado, $this> */
     public function cidade(): BelongsTo
     {
         return $this->belongsTo(CidadeEstado::class, 'cidade_id');
     }
 
+    /** @return HasMany<Orcamento, $this> */
     public function orcamentos(): HasMany
     {
         return $this->hasMany(Orcamento::class);
     }
 
+    /** @return HasMany<VisitaTecnica, $this> */
     public function visitas(): HasMany
     {
         return $this->hasMany(VisitaTecnica::class);

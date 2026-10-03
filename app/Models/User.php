@@ -60,11 +60,13 @@ class User extends Authenticatable
         return $this->tipo === 'consultor';
     }
 
+    /** @return HasMany<Cliente, $this> */
     public function clientes(): HasMany
     {
         return $this->hasMany(Cliente::class, 'consultor_id');
     }
 
+    /** @return HasMany<Orcamento, $this> */
     public function orcamentos(): HasMany
     {
         return $this->hasMany(Orcamento::class, 'consultor_id');

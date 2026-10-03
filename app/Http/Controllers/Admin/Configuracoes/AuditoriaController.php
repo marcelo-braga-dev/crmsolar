@@ -65,7 +65,7 @@ class AuditoriaController extends Controller
                 'evento' => $a->event,
                 'tipo' => $rotulos[$a->subject_type] ?? class_basename((string) $a->subject_type),
                 'registro_id' => $a->subject_id,
-                'usuario' => $a->causer?->name, // null = sistema (seed, integração)
+                'usuario' => $a->causer instanceof User ? $a->causer->name : null, // null = sistema (seed, integração)
                 'alteracoes' => $this->alteracoes($a),
             ]);
 

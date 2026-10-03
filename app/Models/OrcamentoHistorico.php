@@ -11,11 +11,13 @@ class OrcamentoHistorico extends Model
 
     protected $fillable = ['orcamento_id', 'usuario_id', 'status', 'mensagem'];
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');

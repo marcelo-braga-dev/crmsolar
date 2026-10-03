@@ -68,7 +68,7 @@ class GeografiaController extends Controller
             'bairro' => $dados['bairro'] ?? '',
             'cidade' => $dados['localidade'] ?? '',
             'sigla' => strtoupper($dados['uf'] ?? ''),
-            'estado' => $cidade?->estado ?? '',
+            'estado' => $cidade->estado ?? '',
             'cidade_id' => $cidade?->id,
             'cidade_obj' => $cidade,
         ]);

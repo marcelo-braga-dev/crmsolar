@@ -35,8 +35,6 @@ class DimensionamentoService
 {
     private const HSP_FALLBACK = 4.5;   // kWh/m²/dia (valor conservador médio BR)
 
-    private const PR_FALLBACK = 0.80;  // Performance Ratio padrão (20% perdas)
-
     private const ORIENTACAO_FATOR = [
         'norte' => 1.00,
         'nordeste_noroeste' => 0.95,
@@ -53,17 +51,17 @@ class DimensionamentoService
 
         return [
             // PR do sistema (inverso do fator_perda): 20% perda → PR = 0.80
-            'pr_sistema' => 1 - ((float) ($rows['fator_perda_sistema']?->valor ?? 20)) / 100,
-            'fator_perda' => (float) ($rows['fator_perda_sistema']?->valor ?? 20),
+            'pr_sistema' => 1 - ((float) ($rows['fator_perda_sistema']->valor ?? 20)) / 100,
+            'fator_perda' => (float) ($rows['fator_perda_sistema']->valor ?? 20),
             // Margem de segurança adicional aplicada sobre a potência calculada
-            'margem' => (float) ($rows['margem_seguranca']?->valor ?? 5),
+            'margem' => (float) ($rows['margem_seguranca']->valor ?? 5),
             // Perdas por orientação (em %)
             'perda_orient' => [
-                'norte' => (float) ($rows['perda_norte']?->valor ?? 0),
-                'nordeste_noroeste' => (float) ($rows['perda_nordeste_noroeste']?->valor ?? 5),
-                'leste_oeste' => (float) ($rows['perda_leste_oeste']?->valor ?? 12),
-                'sudeste_sudoeste' => (float) ($rows['perda_sudeste_sudoeste']?->valor ?? 18),
-                'sul' => (float) ($rows['perda_sul']?->valor ?? 25),
+                'norte' => (float) ($rows['perda_norte']->valor ?? 0),
+                'nordeste_noroeste' => (float) ($rows['perda_nordeste_noroeste']->valor ?? 5),
+                'leste_oeste' => (float) ($rows['perda_leste_oeste']->valor ?? 12),
+                'sudeste_sudoeste' => (float) ($rows['perda_sudeste_sudoeste']->valor ?? 18),
+                'sul' => (float) ($rows['perda_sul']->valor ?? 25),
             ],
         ];
     }
@@ -253,6 +251,7 @@ class DimensionamentoService
      */
     /**
      * @param  array<string>  $categorias  filtro de categorias — ex: ['ongrid','hibrido']. Vazio = todas.
+     * @return Collection<int, Kit>
      */
     public function buscarKits(
         float $potenciaKwp,

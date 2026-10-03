@@ -30,16 +30,19 @@ class OrcamentoItem extends Model
         'comissao_percentual' => 'decimal:3',
     ];
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
+    /** @return BelongsTo<Kit, $this> */
     public function kit(): BelongsTo
     {
         return $this->belongsTo(Kit::class);
     }
 
+    /** @return BelongsTo<Produto, $this> */
     public function produto(): BelongsTo
     {
         return $this->belongsTo(Produto::class);

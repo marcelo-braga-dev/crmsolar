@@ -60,16 +60,16 @@ class ContratosController extends Controller
         return Inertia::render('Consultor/Contratos/Create', [
             'orcamento' => $orcamento,
             'sugestao' => [
-                'nome_cliente' => $orcamento->cliente?->nome_display,
-                'documento_cliente' => $orcamento->cliente?->tipo_pessoa === 'pj'
-                    ? $orcamento->cliente?->cnpj
-                    : $orcamento->cliente?->cpf,
+                'nome_cliente' => $orcamento->cliente->nome_display,
+                'documento_cliente' => $orcamento->cliente->tipo_pessoa === 'pj'
+                    ? $orcamento->cliente->cnpj
+                    : $orcamento->cliente->cpf,
                 'endereco_instalacao' => collect([
-                    $orcamento->cliente?->rua,
-                    $orcamento->cliente?->numero,
-                    $orcamento->cliente?->bairro,
-                    $orcamento->cliente?->cidade?->cidade,
-                    $orcamento->cliente?->cidade?->estado,
+                    $orcamento->cliente->rua,
+                    $orcamento->cliente->numero,
+                    $orcamento->cliente->bairro,
+                    $orcamento->cliente->cidade?->cidade,
+                    $orcamento->cliente->cidade?->estado,
                 ])->filter()->implode(', '),
                 'potencia_kwp' => $kitItem?->metadados['potencia_kwp'] ?? null,
                 'consumo_mensal' => $orcamento->info?->consumo,

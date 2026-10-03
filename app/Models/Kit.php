@@ -32,16 +32,19 @@ class Kit extends Model
         'potencia_kwp' => 'decimal:3',
     ];
 
+    /** @return BelongsTo<Fornecedor, $this> */
     public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);
     }
 
+    /** @return BelongsTo<Estrutura, $this> */
     public function estrutura(): BelongsTo
     {
         return $this->belongsTo(Estrutura::class);
     }
 
+    /** @return BelongsToMany<Produto, $this> */
     public function componentes(): BelongsToMany
     {
         return $this->belongsToMany(Produto::class, 'kit_componentes')

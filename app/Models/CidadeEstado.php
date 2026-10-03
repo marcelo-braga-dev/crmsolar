@@ -13,6 +13,7 @@ class CidadeEstado extends Model
 
     protected $fillable = ['cidade', 'estado', 'sigla'];
 
+    /** @return HasOne<IrradiacaoSolar, $this> */
     public function irradiacaoSolar(): HasOne
     {
         return $this->hasOne(IrradiacaoSolar::class, 'cidade_id');

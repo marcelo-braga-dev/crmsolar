@@ -32,9 +32,9 @@ class EdeltecController extends Controller
                 'itens_atualizados' => $h->itens_atualizados,
                 'itens_desativados' => $h->itens_desativados,
                 'alertas' => $h->alertas,
-                'iniciado_em' => $h->iniciado_em?->format('d/m/Y H:i'),
+                'iniciado_em' => $h->iniciado_em->format('d/m/Y H:i'),
                 'finalizado_em' => $h->finalizado_em?->format('d/m/Y H:i'),
-                'duracao_s' => $h->iniciado_em && $h->finalizado_em
+                'duracao_s' => $h->finalizado_em
                     ? $h->iniciado_em->diffInSeconds($h->finalizado_em)
                     : null,
             ]);

@@ -51,16 +51,19 @@ class OrcamentoInfo extends Model
         'metadados' => 'array',
     ];
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
+    /** @return BelongsTo<Estrutura, $this> */
     public function estrutura(): BelongsTo
     {
         return $this->belongsTo(Estrutura::class);
     }
 
+    /** @return BelongsTo<Concessionaria, $this> */
     public function concessionaria(): BelongsTo
     {
         return $this->belongsTo(Concessionaria::class);

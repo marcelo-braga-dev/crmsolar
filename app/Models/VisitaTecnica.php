@@ -23,16 +23,23 @@ class VisitaTecnica extends Model
         'data_agendada' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');
     }
 
+    /**
+     * Inclui clientes excluídos (soft delete): o registro continua mostrando de quem é.
+     *
+     * @return BelongsTo<Cliente, $this>
+     */
     public function cliente(): BelongsTo
     {
-        return $this->belongsTo(Cliente::class);
+        return $this->belongsTo(Cliente::class)->withTrashed();
     }
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);

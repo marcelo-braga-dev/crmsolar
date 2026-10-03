@@ -29,8 +29,6 @@ class GrupoTarifarioService
 
     private const TAXA_DESCONTO = 0.08;   // 8% a.a. — taxa mínima de atratividade
 
-    private const ANOS_GARANTIA_PAINEL = 25;     // garantia de desempenho
-
     // Custo de disponibilidade por tipo de ligação (Grupo B) — em kWh equivalentes
     private const DISPONIBILIDADE_KWH = [
         'monofasico' => 30,

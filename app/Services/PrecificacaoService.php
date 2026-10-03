@@ -55,7 +55,7 @@ class PrecificacaoService
             && ($f->potencia_max === null || (float) $f->potencia_max >= $potenciaTotal));
 
         // Fallback: faixa mais alta cadastrada
-        return (float) (($faixa ?? $this->faixas->last())?->margem ?? 0);
+        return (float) (($faixa ?? $this->faixas->last())->margem ?? 0);
     }
 
     private function margemEstado(string $estado): float

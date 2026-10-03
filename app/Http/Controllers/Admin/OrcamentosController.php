@@ -63,7 +63,7 @@ class OrcamentosController extends Controller
 
         return Inertia::render('Admin/Orcamentos/Show', [
             'orcamento' => $orcamento,
-            'transicoes' => Orcamento::TRANSICOES[$orcamento->status] ?? [],
+            'transicoes' => Orcamento::TRANSICOES[$orcamento->status],
         ]);
     }
 

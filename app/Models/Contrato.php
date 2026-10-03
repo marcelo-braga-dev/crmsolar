@@ -27,11 +27,13 @@ class Contrato extends Model
         'potencia_kwp' => 'decimal:3',
     ];
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');

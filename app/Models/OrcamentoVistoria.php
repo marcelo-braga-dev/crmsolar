@@ -22,6 +22,7 @@ class OrcamentoVistoria extends Model
         'altura_telhado' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo
     {
         return $this->belongsTo(Orcamento::class);

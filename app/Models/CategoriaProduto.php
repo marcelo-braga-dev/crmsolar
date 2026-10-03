@@ -17,6 +17,7 @@ class CategoriaProduto extends Model
         'exige_potencia' => 'boolean',
     ];
 
+    /** @return HasMany<Produto, $this> */
     public function produtos(): HasMany
     {
         return $this->hasMany(Produto::class, 'categoria_id');

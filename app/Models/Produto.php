@@ -31,21 +31,25 @@ class Produto extends Model
         'potencia' => 'decimal:3',
     ];
 
+    /** @return BelongsTo<CategoriaProduto, $this> */
     public function categoria(): BelongsTo
     {
         return $this->belongsTo(CategoriaProduto::class, 'categoria_id');
     }
 
+    /** @return BelongsTo<Marca, $this> */
     public function marca(): BelongsTo
     {
         return $this->belongsTo(Marca::class);
     }
 
+    /** @return BelongsTo<Fornecedor, $this> */
     public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);
     }
 
+    /** @return BelongsToMany<Kit, $this> */
     public function kits(): BelongsToMany
     {
         return $this->belongsToMany(Kit::class, 'kit_componentes')

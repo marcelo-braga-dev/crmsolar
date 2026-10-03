@@ -17,6 +17,7 @@ class MargemFornecedor extends Model
 
     protected $casts = ['margem' => 'decimal:3'];
 
+    /** @return BelongsTo<Fornecedor, $this> */
     public function fornecedor(): BelongsTo
     {
         return $this->belongsTo(Fornecedor::class);

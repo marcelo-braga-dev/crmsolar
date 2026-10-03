@@ -13,6 +13,7 @@ class Estrutura extends Model
 
     protected $casts = ['ativo' => 'boolean'];
 
+    /** @return HasMany<Kit, $this> */
     public function kits(): HasMany
     {
         return $this->hasMany(Kit::class);

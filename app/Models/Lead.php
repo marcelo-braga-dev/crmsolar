@@ -22,6 +22,7 @@ class Lead extends Model
         'consumo_mensal' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function consultor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'consultor_id');

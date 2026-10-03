@@ -51,6 +51,7 @@ abstract class BaseGrupoController extends Controller
 
     // ── Busca e mapeamento de kits (fluxo comum) ──────────────────────────
 
+    /** @param  \Illuminate\Database\Eloquent\Collection<int, Kit>  $kits */
     protected function mapearKits(
         \Illuminate\Database\Eloquent\Collection $kits,
         int $qtd,
@@ -92,7 +93,7 @@ abstract class BaseGrupoController extends Controller
         $cliente = Cliente::with('cidade')->findOrFail($dados['cliente_id']);
         $kit = Kit::findOrFail($dados['kit_id']);
         $qtd = (int) $dados['qtd_kits'];
-        $estado = $cliente->cidade?->sigla ?? $cliente->cidade?->estado ?? '';
+        $estado = $cliente->cidade->sigla ?? $cliente->cidade->estado ?? '';
         $params = $this->dimensionamento->getParams();
         $hsp = $this->dimensionamento->getIrradiacao($cliente->cidade_id);
         $orientacao = $dados['orientacao'];

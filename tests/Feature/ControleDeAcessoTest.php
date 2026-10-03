@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\CriaDados;
 use Tests\TestCase;
@@ -89,5 +90,15 @@ class ControleDeAcessoTest extends TestCase
         ])->assertNotFound();
 
         $this->assertDatabaseMissing('users', ['email' => 'intruso@teste.com']);
+    }
+
+    public function test_verificacao_de_email_do_breeze_nao_existe(): void
+    {
+        // Contas são criadas pelo Admin; User não implementa MustVerifyEmail.
+        foreach (['verification.notice', 'verification.verify', 'verification.send'] as $rota) {
+            $this->assertFalse(Route::has($rota), "Rota {$rota} não deveria existir");
+        }
+
+        $this->actingAs($this->consultor())->get('/verify-email')->assertNotFound();
     }
 }

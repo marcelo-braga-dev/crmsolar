@@ -25,6 +25,7 @@ class IrradiacaoSolar extends Model
         'out' => 'decimal:3', 'nov' => 'decimal:3', 'dez' => 'decimal:3',
     ];
 
+    /** @return BelongsTo<CidadeEstado, $this> */
     public function cidade(): BelongsTo
     {
         return $this->belongsTo(CidadeEstado::class, 'cidade_id');
