@@ -345,7 +345,7 @@ Trabalho de atualização na branch `atualizacao-seguranca-e-testes` (ainda não
 
 ### Testes
 
-**325 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**337 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -365,6 +365,7 @@ Trabalho de atualização na branch `atualizacao-seguranca-e-testes` (ainda não
 - **Fluxos Convencional/Demanda** estendem `BaseGrupoController` (usam `mapearKits` e `salvarOrcamento`)
 - **Precificação** carrega as margens uma vez por requisição (antes 3 queries por kit); busca de produtos exige 2+ caracteres
 - **Auditoria** — `spatie/activitylog` também em margens (3 camadas), `Kit`/`Produto` (só `updated`/`deleted` de preço e disponibilidade — a sincronização cria milhares), `OrcamentoItem`, `Concessionaria`, `ParamDimensionamento` e `User` (nome, e-mail, tipo, status, comissão; nunca senha). Tela em **Configurações → Auditoria** (`AuditoriaController`). Atualizações em massa via query builder (`Model::where()->update()`) **não disparam auditoria** — atualize pelo model
+- **Integração Edeltec nunca funcionou** — 3 bugs: (1) `EdeltecApiClient` reatribuía propriedades `readonly` promovidas no construtor → `Error` em toda execução; (2) renovação de token no meio da paginação reenviava o token velho (closure capturava `$token` por valor); (3) `kits.sku` não tinha índice único, então o `upsert` nunca atualizava e cada sincronização duplicaria o catálogo — agora índice único `(fornecedor_id, sku)`. Testes com API simulada: `Services/EdeltecApiClientTest`, `Admin/IntegracaoEdeltecTest`. Obs.: a sincronização usa `upsert` (sem eventos de model), então preços vindos da Edeltec ficam no histórico da integração, não na Auditoria kit a kit
 - **Exclusões com vínculo** — fornecedor com histórico de integração é bloqueado; erro de FK em qualquer DELETE vira aviso em vez de 500 (`bootstrap/app.php`)
 
 ### Pendências conhecidas (funcionalidade)

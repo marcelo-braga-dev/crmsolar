@@ -29,11 +29,15 @@ class EdeltecApiClient
 
     private const RETRY_DELAY_MS = 800;  // ms entre tentativas
 
-    public function __construct(
-        private readonly string $apiUrl = '',
-        private readonly string $apiKey = '',
-        private readonly string $secret = '',
-    ) {
+    private readonly string $apiUrl;
+
+    private readonly string $apiKey;
+
+    private readonly string $secret;
+
+    /** Credenciais vazias caem no config/services.php (variáveis EDELTEC_* do .env). */
+    public function __construct(string $apiUrl = '', string $apiKey = '', string $secret = '')
+    {
         $this->apiUrl = $apiUrl ?: rtrim((string) config('services.edeltec.url', 'https://api.edeltecsolar.com.br'), '/');
         $this->apiKey = $apiKey ?: (string) config('services.edeltec.api_key');
         $this->secret = $secret ?: (string) config('services.edeltec.secret');
@@ -106,7 +110,8 @@ class EdeltecApiClient
         $total = null;
 
         do {
-            $resposta = $this->tentarComRetry(function () use ($token, $page) {
+            // $token por referência: se for renovado no 401, a nova tentativa já usa o token novo.
+            $resposta = $this->tentarComRetry(function () use (&$token, $page) {
                 return Http::baseUrl($this->apiUrl)
                     ->timeout(30)
                     ->withToken($token)

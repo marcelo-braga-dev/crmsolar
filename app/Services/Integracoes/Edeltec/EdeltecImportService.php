@@ -216,16 +216,17 @@ class EdeltecImportService
             ->flip()
             ->toArray();
 
-        foreach ($rows as $row) {
-            if (! isset($row['created_at'])) {
-                $row['created_at'] = isset($existentes[$row['sku']]) ? null : now();
-            }
+        // created_at vai em todas as linhas (o upsert exige as mesmas colunas), mas não está
+        // na lista de colunas atualizadas — kits existentes mantêm a data original.
+        foreach ($rows as &$row) {
+            $row['created_at'] = now();
         }
+        unset($row);
 
         // Upsert nativo do Laravel — uma única query
         Kit::upsert(
             $rows,
-            ['sku'],           // coluna de conflito
+            ['fornecedor_id', 'sku'], // índice único kits_fornecedor_id_sku_unique
             [                  // colunas a atualizar se já existir
                 'nome', 'modelo', 'estrutura_id', 'categoria', 'potencia_kwp',
                 'tensao', 'preco_custo', 'ativo', 'ativo_fornecedor',
