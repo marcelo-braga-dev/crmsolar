@@ -81,7 +81,7 @@ Dois tipos de usuário no enum `users.tipo`:
 /admin/*               → middleware: auth, admin
 /consultor/*           → middleware: auth, consultor
 /api/*                 → público (sem auth)
-/auth/*                → Breeze (auth.php)
+/auth/*                → Breeze (auth.php) — login, senha; sem cadastro público
 ```
 
 ### Backend — Controllers
@@ -92,7 +92,7 @@ app/Http/Controllers/
     DashboardController              — KPIs, gráficos, top consultores
     ClientesController               — CRUD clientes (Admin)
     LeadsController                  — index, show, update (status)
-    OrcamentosController             — index, show, edit, update
+    OrcamentosController             — index, show, update (status validado por Orcamento::TRANSICOES)
     FornecedoresController           — CRUD fornecedores
     PerfilController                 — edit, update, senha
     Produtos/
@@ -109,7 +109,7 @@ app/Http/Controllers/
       AdminsController               — CRUD admins
       ConsultoresController          — CRUD consultores
     Financeiro/
-      ComissoesController            — listagem/edição de comissões
+      ComissoesController            — listagem de comissões
       FaturamentoController          — relatório de faturamento
     Configuracoes/
       AuditoriaController            — consulta do log de auditoria (activitylog)
@@ -164,7 +164,7 @@ app/Http/Controllers/
 - **`PrecificacaoService`** — aplica as 3 camadas de margem (principal por faixa de potência → estado → fornecedor) para calcular o preço de venda. A comissão do consultor (`users.comissao_percentual`, gerenciada em Usuarios/Consultores) é registrada no item do orçamento mas não é somada como camada de margem — não infla o preço de venda.
 - **`Integracoes/Edeltec/`** — serviço de sincronização de catálogo Edeltec.
 
-### Database — Migrations (34 total)
+### Database — Migrations (38 total)
 
 Todas em `database/migrations/`. Seeders principais:
 - `UsersSeeder` — cria admin e consultor de demo
@@ -213,6 +213,7 @@ resources/js/Pages/
     Configuracoes/
       Bancos/Index.tsx
       Concessionarias/Index.tsx
+      Auditoria/Index.tsx            — log de auditoria com filtros
       Dimensionamento/Index.tsx      — parâmetros do motor de cálculo
       Sistema/Index.tsx
     Integracoes/
@@ -233,11 +234,11 @@ resources/js/Pages/
       GrupoA.tsx                     — form dimensionamento Média/Alta Tensão
       Show.tsx                       — detalhes, itens, histórico, ações
       Edit.tsx                       — edição de anotações (proposta + técnicas)
-    Contratos/Index.tsx
+    Contratos/{Index,Create,Show}.tsx
     Financeiro/Index.tsx             — extrato de comissões do consultor
     Perfil/{Edit,Senha}.tsx
     PropostasServicos/{Index,Form,Show}.tsx
-    Visitas/{Index,Form}.tsx
+    Visitas/{Index,Form,Show}.tsx
 ```
 
 ### Frontend — Components
@@ -254,6 +255,7 @@ resources/js/
       AnaliseEconomica.tsx           — card de análise econômica (payback, TIR, economia)
       ConfirmDialog.tsx              — dialog de confirmação genérico
       KpiCard.tsx                    — card de KPI com ícone e tendência
+      EnderecoFields.tsx             — endereço com busca de CEP e estado → cidade (forms de cliente)
       MaskedTextField.tsx            — campo com máscara (CPF, CNPJ, CEP, telefone)
       PageHeader.tsx                 — title + breadcrumbs + action slot (named export!)
       StatusChip.tsx                 — OrcamentoStatusChip, LeadStatusChip, BoolChip
@@ -321,7 +323,7 @@ Acesso: `usePage<PageProps>().props`
 
 **Plataforma em desenvolvimento.** O servidor `crmsolar.rexar.com.br` roda com `APP_ENV=production`, mas **todos os dados do banco são de teste** — não há dados reais de clientes. Credenciais fracas de seed (`1020`) são aceitáveis enquanto durar essa fase; **trocar antes do go-live**.
 
-Atualização completa em andamento (working tree com muitas mudanças não commitadas em `main`).
+Trabalho de atualização na branch `atualizacao-seguranca-e-testes` (ainda não integrada à `main`).
 
 ### Já resolvido nesta rodada
 - PDF de orçamento e contrato — `barryvdh/laravel-dompdf` instalado, views em `resources/views/pdf/{orcamento,contrato}.blade.php`, `OrcamentosController::pdf` e `ContratosController::pdf` geram PDF de verdade
@@ -334,7 +336,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 - **Itens avulsos** — `OrcamentoItemStoreRequest`: produto do catálogo precisa estar ativo e não pode ser vendido abaixo do `preco_custo`; item sem produto vira `personalizado` e exige descrição. Store/destroy respeitam `bloquear_edicao` (destroy também exige status `novo`). Teste: `OrcamentoItensTest`
 - **Usuário inativo** — bloqueado no login (`LoginRequest`) e sessões existentes derrubadas pelo middleware `EnsureUserIsActive` (grupo `web`). `User::$attributes` tem `status => true` para espelhar o default da coluna. Teste: `Auth/UsuarioInativoTest`
 
-- **Cadastro público `/register` estava aberto** — qualquer pessoa virava consultor ativo. Rotas removidas de `routes/auth.php` (usuários são criados pelo Admin). Sobrou código morto: `Auth/RegisteredUserController.php`, `Pages/Auth/Register.tsx` e `ProfileController.php` (+ `ProfileUpdateRequest`) — podem ser apagados
+- **Cadastro público `/register` estava aberto** — qualquer pessoa virava consultor ativo. Rotas removidas de `routes/auth.php` (usuários são criados pelo Admin). O código do cadastro e do perfil do Breeze foi removido
 - **Editar/excluir consultores e fornecedores nunca funcionou** — `Route::resource` gerava `{consultore}`/`{fornecedore}`, o binding falhava e chegava model vazio (salvar/excluir davam "sucesso" sem fazer nada). Corrigido com `->parameters([...])`. `IntegridadeDasRotasTest` agora pega esse tipo de erro e rotas apontando para métodos inexistentes (havia 11, removidas com `only`/`except`)
 - **Financeiro usava status `'assinado'`** (que é status de *contrato*, não de orçamento) e Comissões filtrava `tipo = vendedor` — Faturamento, Comissões e Financeiro do consultor nunca contavam orçamentos aprovados. Agora `['aprovado', 'instalando', 'finalizado']`, igual aos dashboards
 - **Consultores** — opção "Admin + Consultor" (`admin_consultor`, fora do enum) removida do form; tipo é sempre `consultor`; `comissao_percentual` vazio vira 0; não exclui consultor com clientes/orçamentos; rotas de consultor não operam sobre admins e vice-versa; admin não exclui nem desativa a si mesmo
@@ -375,7 +377,7 @@ Atualização completa em andamento (working tree com muitas mudanças não comm
 
 #### 🔵 Melhorias recomendadas
 - Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.
-- Sincronização Edeltec via fila (`QUEUE_CONNECTION=database` já configurado).
-- Ativar Sentry (`SENTRY_LARAVEL_DSN`), `SESSION_ENCRYPT=true`, Larastan + Pint no CI (Pint hoje acusa ~40 arquivos fora do padrão).
+- Sincronização Edeltec via fila (`QUEUE_CONNECTION=database` já configurado). **Pré-requisito:** este servidor não tem worker de fila para o crmsolar — configurar `queue:work` (supervisor/aaPanel) antes, senão os jobs nunca rodam.
+- Ativar Sentry (`SENTRY_LARAVEL_DSN`), `SESSION_ENCRYPT=true` e Larastan no CI (o Pint já roda no CI e o projeto está 100% formatado).
 
 **Prioridade:** qualidade → melhorias.
