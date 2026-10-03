@@ -213,4 +213,29 @@ class FluxoOrcamentoPorGrupoTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath('error', 'Cliente sem cidade cadastrada.');
     }
+
+    /** @return array<string, array{array<string, bool>}> */
+    public static function kitsIndisponiveis(): array
+    {
+        return [
+            'desativado' => [['ativo' => false]],
+            'indisponível no fornecedor' => [['ativo_fornecedor' => false]],
+        ];
+    }
+
+    #[DataProvider('kitsIndisponiveis')]
+    public function test_salvar_recusa_kit_que_a_busca_nao_oferece(array $estado): void
+    {
+        $kit = Kit::first();
+        $kit->update($estado);
+
+        $this->actingAs($this->consultor)
+            ->post(route('consultor.grupo.b1.store'), $this->base + [
+                'tensao' => 220, 'fases' => 'bifasico', 'consumo' => 600, 'tarifa_kwh' => 0.95,
+                'objetivo_percentual' => 100, 'kit_id' => $kit->id,
+            ])
+            ->assertSessionHasErrors('kit_id');
+
+        $this->assertSame(0, Orcamento::count());
+    }
 }

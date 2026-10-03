@@ -9,6 +9,7 @@ use App\Models\MargemFornecedor;
 use App\Models\MargemPrincipal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -59,13 +60,7 @@ class PrecificacaoController extends Controller
 
     public function storeFaixa(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'nome' => 'required|string|max:255',
-            'potencia_min' => 'required|numeric|min:0',
-            'potencia_max' => 'nullable|numeric|gt:potencia_min',
-            'margem' => 'required|numeric|min:0|max:100',
-            'ordem' => 'required|integer|min:0',
-        ]);
+        $data = $this->validarFaixa($request);
 
         MargemPrincipal::create($data);
 
@@ -74,13 +69,7 @@ class PrecificacaoController extends Controller
 
     public function updateFaixa(Request $request, MargemPrincipal $faixa): RedirectResponse
     {
-        $data = $request->validate([
-            'nome' => 'required|string|max:255',
-            'potencia_min' => 'required|numeric|min:0',
-            'potencia_max' => 'nullable|numeric|gt:potencia_min',
-            'margem' => 'required|numeric|min:0|max:100',
-            'ordem' => 'required|integer|min:0',
-        ]);
+        $data = $this->validarFaixa($request, $faixa);
 
         $faixa->update($data);
 
@@ -125,5 +114,37 @@ class PrecificacaoController extends Controller
         );
 
         return back()->with('success', 'Margem por fornecedor atualizada.');
+    }
+
+    /**
+     * Faixas não podem se sobrepor — só compartilhar o limite (ex.: 0–10 e 10–20).
+     * Sobreposição tornaria a margem dependente da ordem de cadastro.
+     */
+    private function validarFaixa(Request $request, ?MargemPrincipal $atual = null): array
+    {
+        $data = $request->validate([
+            'nome' => 'required|string|max:255',
+            'potencia_min' => 'required|numeric|min:0',
+            'potencia_max' => 'nullable|numeric|gt:potencia_min',
+            'margem' => 'required|numeric|min:0|max:100',
+            'ordem' => 'required|integer|min:0',
+        ]);
+
+        $min = (float) $data['potencia_min'];
+        $max = isset($data['potencia_max']) ? (float) $data['potencia_max'] : null;
+
+        $conflito = MargemPrincipal::query()
+            ->when($atual, fn ($q) => $q->whereKeyNot($atual->id))
+            ->get()
+            ->first(fn ($f) => ($f->potencia_max === null || $min < (float) $f->potencia_max)
+                && ($max === null || (float) $f->potencia_min < $max));
+
+        if ($conflito) {
+            throw ValidationException::withMessages([
+                'potencia_min' => "A faixa se sobrepõe a \"{$conflito->nome}\".",
+            ]);
+        }
+
+        return $data;
     }
 }

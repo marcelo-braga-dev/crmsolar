@@ -39,9 +39,29 @@ class Orcamento extends Model
         'finalizado' => [],
     ];
 
+    /** Status anteriores à aprovação — reabrem o orçamento para edição de itens e preço. */
+    public const STATUS_PRE_APROVACAO = ['novo', 'aprovando', 'aprovacao_reprovada'];
+
     public function podeIrPara(string $status): bool
     {
-        return in_array($status, self::TRANSICOES[$this->status], true);
+        return in_array($status, $this->transicoesPermitidas(), true);
+    }
+
+    /**
+     * Destinos de TRANSICOES válidos para este orçamento. Com contrato vigente (não cancelado),
+     * não volta para antes da aprovação: o preço mudaria e deixaria de bater com o contrato.
+     *
+     * @return array<int, string>
+     */
+    public function transicoesPermitidas(): array
+    {
+        $destinos = self::TRANSICOES[$this->status];
+
+        if ($this->contrato()->where('status', '!=', 'cancelado')->exists()) {
+            $destinos = array_values(array_diff($destinos, self::STATUS_PRE_APROVACAO));
+        }
+
+        return $destinos;
     }
 
     protected static function boot(): void

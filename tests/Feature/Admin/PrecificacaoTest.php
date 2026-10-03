@@ -81,4 +81,40 @@ class PrecificacaoTest extends TestCase
         $this->assertSame(1, MargemFornecedor::count());
         $this->assertEquals(2, (float) MargemFornecedor::value('margem'));
     }
+
+    public function test_faixa_que_se_sobrepoe_a_outra_e_recusada(): void
+    {
+        $admin = $this->admin();
+        MargemPrincipal::create(['nome' => '0 a 10', 'potencia_min' => 0, 'potencia_max' => 10, 'margem' => 30, 'ordem' => 1]);
+        MargemPrincipal::create(['nome' => '50+', 'potencia_min' => 50, 'potencia_max' => null, 'margem' => 15, 'ordem' => 3]);
+
+        $this->actingAs($admin)->post(route('admin.precificacao.faixas.store'), [
+            'nome' => '5 a 20', 'potencia_min' => 5, 'potencia_max' => 20, 'margem' => 25, 'ordem' => 2,
+        ])->assertSessionHasErrors('potencia_min');
+
+        // Sem limite superior invade a faixa aberta "50+"
+        $this->actingAs($admin)->post(route('admin.precificacao.faixas.store'), [
+            'nome' => '20+', 'potencia_min' => 20, 'potencia_max' => null, 'margem' => 25, 'ordem' => 2,
+        ])->assertSessionHasErrors('potencia_min');
+
+        $this->assertDatabaseCount('margens_principal', 2);
+    }
+
+    public function test_faixas_podem_compartilhar_o_limite_e_editar_a_propria_faixa(): void
+    {
+        $admin = $this->admin();
+        $faixa = MargemPrincipal::create(['nome' => '0 a 10', 'potencia_min' => 0, 'potencia_max' => 10, 'margem' => 30, 'ordem' => 1]);
+
+        $this->actingAs($admin)->post(route('admin.precificacao.faixas.store'), [
+            'nome' => '10 a 20', 'potencia_min' => 10, 'potencia_max' => 20, 'margem' => 25, 'ordem' => 2,
+        ])->assertSessionHasNoErrors();
+
+        // A própria faixa não conta como conflito ao editar
+        $this->actingAs($admin)->put(route('admin.precificacao.faixas.update', $faixa), [
+            'nome' => '0 a 10', 'potencia_min' => 0, 'potencia_max' => 10, 'margem' => 28, 'ordem' => 1,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertDatabaseCount('margens_principal', 2);
+        $this->assertEquals(28, (float) $faixa->fresh()->margem);
+    }
 }

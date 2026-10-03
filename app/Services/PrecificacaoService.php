@@ -52,10 +52,14 @@ class PrecificacaoService
 
         // Primeira faixa onde potencia_min ≤ total ≤ potencia_max (null = sem limite superior)
         $faixa = $this->faixas->first(fn ($f) => (float) $f->potencia_min <= $potenciaTotal
-            && ($f->potencia_max === null || (float) $f->potencia_max >= $potenciaTotal));
+            && ($f->potencia_max === null || (float) $f->potencia_max >= $potenciaTotal))
+            // Fora de qualquer faixa (lacuna entre faixas ou acima de todas): última faixa que começa
+            // abaixo da potência — nunca salta para a faixa mais alta, que costuma ter a menor margem.
+            ?? $this->faixas->last(fn ($f) => (float) $f->potencia_min <= $potenciaTotal)
+            // Abaixo da primeira faixa: a de menor potência.
+            ?? $this->faixas->first();
 
-        // Fallback: faixa mais alta cadastrada
-        return (float) (($faixa ?? $this->faixas->last())->margem ?? 0);
+        return (float) ($faixa->margem ?? 0);
     }
 
     private function margemEstado(string $estado): float

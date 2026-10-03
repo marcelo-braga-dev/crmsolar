@@ -37,7 +37,8 @@ abstract class DimensionamentoRequest extends FormRequest
 
         $etapa = $this->salvando()
             ? [
-                'kit_id' => 'required|exists:kits,id',
+                // Mesmo filtro da busca de kits: kit desativado ou indisponível no fornecedor não é orçado.
+                'kit_id' => ['required', Rule::exists('kits', 'id')->where('ativo', true)->where('ativo_fornecedor', true)],
                 'anotacoes' => 'nullable|string|max:3000',
                 'anotacoes_tecnicas' => 'nullable|string|max:3000',
             ]

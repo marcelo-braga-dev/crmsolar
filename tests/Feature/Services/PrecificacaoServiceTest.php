@@ -102,6 +102,26 @@ class PrecificacaoServiceTest extends TestCase
         $this->assertEquals(18.0, $this->service->calcular($kit, 1, 'SP')['margem_principal']);
     }
 
+    public function test_potencia_na_lacuna_entre_faixas_usa_a_faixa_anterior_e_nao_a_mais_alta(): void
+    {
+        MargemPrincipal::create(['nome' => '0 a 10', 'potencia_min' => 0, 'potencia_max' => 10, 'margem' => 30, 'ordem' => 1]);
+        MargemPrincipal::create(['nome' => '10 a 20', 'potencia_min' => 10, 'potencia_max' => 20, 'margem' => 25, 'ordem' => 2]);
+        MargemPrincipal::create(['nome' => '20,5 a 50', 'potencia_min' => 20.5, 'potencia_max' => 50, 'margem' => 22, 'ordem' => 3]);
+        MargemPrincipal::create(['nome' => '50+', 'potencia_min' => 50, 'potencia_max' => null, 'margem' => 15, 'ordem' => 4]);
+        $kit = $this->kitSimples(Fornecedor::create(['nome' => 'F', 'ativo' => true]), 20.2);
+
+        $this->assertEquals(25.0, $this->service->calcular($kit, 1, 'SP')['margem_principal']);
+    }
+
+    public function test_potencia_abaixo_da_primeira_faixa_usa_a_de_menor_potencia(): void
+    {
+        MargemPrincipal::create(['nome' => '1 a 10', 'potencia_min' => 1, 'potencia_max' => 10, 'margem' => 30, 'ordem' => 1]);
+        MargemPrincipal::create(['nome' => '10+', 'potencia_min' => 10, 'potencia_max' => null, 'margem' => 15, 'ordem' => 2]);
+        $kit = $this->kitSimples(Fornecedor::create(['nome' => 'F', 'ativo' => true]), 0.5);
+
+        $this->assertEquals(30.0, $this->service->calcular($kit, 1, 'SP')['margem_principal']);
+    }
+
     public function test_sem_nenhuma_margem_cadastrada_vende_pelo_custo(): void
     {
         $kit = $this->kitSimples(Fornecedor::create(['nome' => 'F', 'ativo' => true]));

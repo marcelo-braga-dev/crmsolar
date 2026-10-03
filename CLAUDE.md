@@ -323,7 +323,7 @@ Acesso: `usePage<PageProps>().props`
 
 **Plataforma em desenvolvimento.** O servidor `crmsolar.rexar.com.br` roda com `APP_ENV=production`, mas **todos os dados do banco são de teste** — não há dados reais de clientes. Credenciais fracas de seed (`1020`) são aceitáveis enquanto durar essa fase; **trocar antes do go-live**.
 
-Trabalho de atualização na branch `atualizacao-seguranca-e-testes` (ainda não integrada à `main`).
+Trabalho de atualização integrado à `main`.
 
 ### Já resolvido nesta rodada
 - PDF de orçamento e contrato — `barryvdh/laravel-dompdf` instalado, views em `resources/views/pdf/{orcamento,contrato}.blade.php`, `OrcamentosController::pdf` e `ContratosController::pdf` geram PDF de verdade
@@ -345,7 +345,7 @@ Trabalho de atualização na branch `atualizacao-seguranca-e-testes` (ainda não
 
 ### Testes
 
-**336 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**345 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -371,6 +371,12 @@ Trabalho de atualização na branch `atualizacao-seguranca-e-testes` (ainda não
 - **Verificação de e-mail do Breeze removida** — rotas sem efeito (User não implementa `MustVerifyEmail`, nenhuma rota usa `verified`)
 - **Dependências com alertas de segurança** atualizadas (Guzzle, league/commonmark e outras; `composer audit` limpo)
 - **Exclusões com vínculo** — fornecedor com histórico de integração é bloqueado; erro de FK em qualquer DELETE vira aviso em vez de 500 (`bootstrap/app.php`)
+
+### Resolvido na terceira rodada
+- **Orçamento salvava kit inativo** — a busca só oferece kits `ativo`/`ativo_fornecedor`, mas o `store` aceitava qualquer `kit_id`. `DimensionamentoRequest` agora aplica o mesmo filtro. Teste: `FluxoOrcamentoPorGrupoTest::test_salvar_recusa_kit_que_a_busca_nao_oferece`
+- **Margem principal fora de faixa caía na faixa mais alta** (menor margem) — lacuna entre faixas usa a última faixa que começa abaixo da potência; abaixo da primeira faixa usa a primeira. Cadastro recusa faixas sobrepostas (compartilhar o limite, ex. 0–10 e 10–20, é permitido). Testes em `PrecificacaoServiceTest` e `Admin/PrecificacaoTest`
+- **Orçamento com contrato podia voltar para `aprovando`/`novo`** e ter itens e preço alterados — `Orcamento::transicoesPermitidas()` remove os status pré-aprovação quando há contrato não cancelado. Testes em `TransicoesStatusTest`
+- `npm audit fix` (axios, form-data, qs e outras) — `npm audit` limpo
 
 ### Pendências conhecidas (funcionalidade)
 - **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
