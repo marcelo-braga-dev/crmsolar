@@ -23,7 +23,12 @@ interface Props extends PageProps {
     };
 }
 
+const DO_ORCAMENTO = 'Vem do orçamento aprovado';
+
 export default function ContratosCreate({ orcamento, sugestao }: Props) {
+    // Valores que o orçamento aprovado já tem são gravados pelo servidor a partir dele.
+    const doOrcamento = (campo: 'potencia_kwp' | 'consumo_mensal' | 'geracao_estimada') => sugestao[campo] != null;
+
     const { data, setData, post, processing, errors } = useForm({
         orcamento_id: orcamento.id,
         nome_cliente: sugestao.nome_cliente ?? '',
@@ -117,7 +122,8 @@ export default function ContratosCreate({ orcamento, sugestao }: Props) {
                                     label="Potência (kWp) *" type="number" size="small" fullWidth
                                     value={data.potencia_kwp} onChange={(e) => setData('potencia_kwp', e.target.value)}
                                     inputProps={{ step: 0.001, min: 0 }}
-                                    error={Boolean(errors.potencia_kwp)} helperText={errors.potencia_kwp}
+                                    disabled={doOrcamento('potencia_kwp')}
+                                    error={Boolean(errors.potencia_kwp)} helperText={errors.potencia_kwp ?? (doOrcamento('potencia_kwp') ? DO_ORCAMENTO : undefined)}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, sm: 4 }}>
@@ -149,7 +155,8 @@ export default function ContratosCreate({ orcamento, sugestao }: Props) {
                                     value={data.consumo_mensal} onChange={(e) => setData('consumo_mensal', e.target.value)}
                                     InputProps={{ endAdornment: <InputAdornment position="end">kWh</InputAdornment> }}
                                     inputProps={{ min: 0 }}
-                                    error={Boolean(errors.consumo_mensal)} helperText={errors.consumo_mensal}
+                                    disabled={doOrcamento('consumo_mensal')}
+                                    error={Boolean(errors.consumo_mensal)} helperText={errors.consumo_mensal ?? (doOrcamento('consumo_mensal') ? DO_ORCAMENTO : undefined)}
                                 />
                             </Grid>
                             <Grid size={{ xs: 6, sm: 3 }}>
@@ -158,7 +165,8 @@ export default function ContratosCreate({ orcamento, sugestao }: Props) {
                                     value={data.geracao_estimada} onChange={(e) => setData('geracao_estimada', e.target.value)}
                                     InputProps={{ endAdornment: <InputAdornment position="end">kWh/mês</InputAdornment> }}
                                     inputProps={{ min: 0 }}
-                                    error={Boolean(errors.geracao_estimada)} helperText={errors.geracao_estimada}
+                                    disabled={doOrcamento('geracao_estimada')}
+                                    error={Boolean(errors.geracao_estimada)} helperText={errors.geracao_estimada ?? (doOrcamento('geracao_estimada') ? DO_ORCAMENTO : undefined)}
                                 />
                             </Grid>
                             <Grid size={{ xs: 12, sm: 6 }}>

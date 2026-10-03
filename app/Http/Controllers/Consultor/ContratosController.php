@@ -54,8 +54,7 @@ class ContratosController extends Controller
         }
 
         $orcamento->load(['cliente.cidade', 'itens', 'info']);
-
-        $kitItem = $orcamento->itens->firstWhere('tipo', 'kit');
+        $tecnicos = $this->dadosTecnicos($orcamento);
 
         return Inertia::render('Consultor/Contratos/Create', [
             'orcamento' => $orcamento,
@@ -71,9 +70,9 @@ class ContratosController extends Controller
                     $orcamento->cliente->cidade?->cidade,
                     $orcamento->cliente->cidade?->estado,
                 ])->filter()->implode(', '),
-                'potencia_kwp' => $kitItem?->metadados['potencia_kwp'] ?? null,
-                'consumo_mensal' => $orcamento->info?->consumo,
-                'geracao_estimada' => $orcamento->geracao_estimada,
+                'potencia_kwp' => $tecnicos['potencia_kwp'] ?? null,
+                'consumo_mensal' => $tecnicos['consumo_mensal'] ?? null,
+                'geracao_estimada' => $tecnicos['geracao_estimada'] ?? null,
                 'valor_total' => $orcamento->preco_total,
             ],
         ]);
@@ -85,7 +84,7 @@ class ContratosController extends Controller
 
         // Lock no orçamento: dois envios simultâneos não podem gerar dois contratos.
         $contrato = DB::transaction(function () use ($data) {
-            $orcamento = Orcamento::with('itens')->lockForUpdate()->findOrFail($data['orcamento_id']);
+            $orcamento = Orcamento::with(['itens', 'info'])->lockForUpdate()->findOrFail($data['orcamento_id']);
 
             abort_if($orcamento->status !== 'aprovado', 403, 'Só é possível gerar contrato para um orçamento aprovado.');
 
@@ -97,6 +96,8 @@ class ContratosController extends Controller
             $data['status'] = 'gerado';
             // Valor vem sempre do orçamento aprovado, nunca do formulário.
             $data['valor_total'] = $orcamento->preco_total;
+            // Dados técnicos que o orçamento tem também vêm dele; o formulário só preenche lacunas.
+            $data = $this->dadosTecnicos($orcamento) + $data;
             $data['produtos_snapshot'] = $orcamento->itens->map(fn ($item) => [
                 'descricao' => $item->descricao,
                 'quantidade' => $item->quantidade,
@@ -124,5 +125,22 @@ class ContratosController extends Controller
             ->setPaper('a4');
 
         return $pdf->stream("contrato-{$contrato->id}.pdf");
+    }
+
+    /**
+     * Potência, geração e consumo do orçamento aprovado — só as chaves que ele tem.
+     *
+     * @return array{potencia_kwp?: float, geracao_estimada?: int, consumo_mensal?: int}
+     */
+    private function dadosTecnicos(Orcamento $orcamento): array
+    {
+        $potencia = $orcamento->itens->where('tipo', 'kit')
+            ->sum(fn ($item) => (float) ($item->metadados['potencia_kwp'] ?? 0));
+
+        return array_filter([
+            'potencia_kwp' => $potencia > 0 ? round($potencia, 3) : null,
+            'geracao_estimada' => $orcamento->geracao_estimada,
+            'consumo_mensal' => $orcamento->info?->consumo !== null ? (int) round((float) $orcamento->info->consumo) : null,
+        ], fn ($valor) => $valor !== null);
     }
 }

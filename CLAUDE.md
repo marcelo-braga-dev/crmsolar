@@ -345,7 +345,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**345 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**347 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -377,6 +377,7 @@ Trabalho de atualização integrado à `main`.
 - **Margem principal fora de faixa caía na faixa mais alta** (menor margem) — lacuna entre faixas usa a última faixa que começa abaixo da potência; abaixo da primeira faixa usa a primeira. Cadastro recusa faixas sobrepostas (compartilhar o limite, ex. 0–10 e 10–20, é permitido). Testes em `PrecificacaoServiceTest` e `Admin/PrecificacaoTest`
 - **Orçamento com contrato podia voltar para `aprovando`/`novo`** e ter itens e preço alterados — `Orcamento::transicoesPermitidas()` remove os status pré-aprovação quando há contrato não cancelado. Testes em `TransicoesStatusTest`
 - `npm audit fix` (axios, form-data, qs e outras) — `npm audit` limpo
+- **Contrato gravava potência/geração/consumo digitados no formulário** — agora vêm do orçamento aprovado (potência = soma dos kits, geração do orçamento, consumo do `OrcamentoInfo`), como já era com `valor_total`; o formulário só preenche o que o orçamento não tiver (campos desabilitados na tela). Testes em `ContratoCreationTest`
 
 ### Pendências conhecidas (funcionalidade)
 - **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
