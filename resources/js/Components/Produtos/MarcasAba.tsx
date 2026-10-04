@@ -1,16 +1,14 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Avatar,
     Box,
     Button,
     Card,
-    CardContent,
     Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    Grid,
     IconButton,
     InputAdornment,
     MenuItem,
@@ -23,43 +21,34 @@ import {
     TextField,
     Tooltip,
     Typography,
-    alpha,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import LabelRoundedIcon from '@mui/icons-material/LabelRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import { Head, router, useForm } from '@inertiajs/react';
-import AppLayout from '@/Layouts/AppLayout';
-import { PageHeader } from '@/Components/UI/PageHeader';
-import { TablePagination } from '@/Components/UI/TablePagination';
+import { router, useForm } from '@inertiajs/react';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
-import { PageProps, PaginatedData } from '@/types';
 
-interface Marca {
+export interface Marca {
     id: number;
     nome: string;
-    url_logo?: string;
+    url_logo?: string | null;
     ativo: boolean;
     produtos_count: number;
     updated_at: string;
 }
 
-interface Stats { total: number; ativas: number }
-
-interface Props extends PageProps {
-    marcas: PaginatedData<Marca>;
-    filters: { search?: string; ativo?: string };
-    stats: Stats;
+interface Props {
+    marcas: Marca[];
 }
 
 type FormState = { nome: string; url_logo: string; ativo: boolean };
 
-export default function MarcasIndex({ marcas, filters, stats }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
-    const [ativoFilter, setAtivoFilter] = useState(filters.ativo ?? '');
+/** Aba "Marcas" do Catálogo de produtos. Lista curta: busca e filtro feitos na própria tela. */
+export function MarcasAba({ marcas }: Props) {
+    const [search, setSearch] = useState('');
+    const [ativoFilter, setAtivoFilter] = useState('');
 
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Marca | null>(null);
@@ -71,11 +60,12 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
         ativo: true,
     });
 
-    function applyFilters(overrides: object = {}) {
-        router.get(route('admin.produtos.marcas.index'), {
-            search, ativo: ativoFilter, ...overrides,
-        }, { preserveState: true, replace: true });
-    }
+    const visiveis = useMemo(() => {
+        const termo = search.trim().toLowerCase();
+        return marcas.filter((m) =>
+            (!termo || m.nome.toLowerCase().includes(termo))
+            && (ativoFilter === '' || m.ativo === (ativoFilter === '1')));
+    }, [marcas, search, ativoFilter]);
 
     function openCreate() {
         setEditTarget(null);
@@ -92,20 +82,18 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        const opcoes = { preserveScroll: true, onSuccess: () => setModalOpen(false) };
         if (editTarget) {
-            put(route('admin.produtos.marcas.update', editTarget.id), {
-                onSuccess: () => setModalOpen(false),
-            });
+            put(route('admin.produtos.marcas.update', editTarget.id), opcoes);
         } else {
-            post(route('admin.produtos.marcas.store'), {
-                onSuccess: () => setModalOpen(false),
-            });
+            post(route('admin.produtos.marcas.store'), opcoes);
         }
     }
 
     function handleDelete() {
         if (!deleteTarget) return;
         router.delete(route('admin.produtos.marcas.destroy', deleteTarget.id), {
+            preserveScroll: true,
             onSuccess: () => setDeleteTarget(null),
         });
     }
@@ -113,90 +101,37 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
     const initials = (nome: string) => nome.slice(0, 2).toUpperCase();
 
     return (
-        <AppLayout>
-            <Head title="Marcas" />
+        <>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                <TextField
+                    size="small"
+                    placeholder="Buscar marca..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    InputProps={{
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchRoundedIcon fontSize="small" />
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={{ minWidth: 240 }}
+                />
+                <TextField
+                    select size="small" label="Status" value={ativoFilter}
+                    onChange={(e) => setAtivoFilter(e.target.value)}
+                    sx={{ minWidth: 140 }}
+                >
+                    <MenuItem value="">Todas</MenuItem>
+                    <MenuItem value="1">Ativas</MenuItem>
+                    <MenuItem value="0">Inativas</MenuItem>
+                </TextField>
+                <Box sx={{ flex: 1 }} />
+                <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>
+                    Nova Marca
+                </Button>
+            </Box>
 
-            <PageHeader
-                title="Marcas"
-                breadcrumbs={[{ label: 'Produtos' }, { label: 'Marcas' }]}
-                action={
-                    <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>
-                        Nova Marca
-                    </Button>
-                }
-            />
-
-            {/* Stats */}
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid size={{ xs: 6, sm: 3 }}>
-                    <Card>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: alpha('#6366f1', 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6366f1' }}>
-                                    <LabelRoundedIcon fontSize="small" />
-                                </Box>
-                                <Box>
-                                    <Typography variant="h5" fontWeight={700}>{stats.total}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Total de Marcas</Typography>
-                                </Box>
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
-                <Grid size={{ xs: 6, sm: 3 }}>
-                    <Card>
-                        <CardContent sx={{ p: '16px !important' }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: alpha('#22c55e', 0.12), display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#22c55e' }}>
-                                    <CheckCircleRoundedIcon fontSize="small" />
-                                </Box>
-                                <Box>
-                                    <Typography variant="h5" fontWeight={700}>{stats.ativas}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Marcas Ativas</Typography>
-                                </Box>
-                            </Box>
-                        </CardContent>
-                    </Card>
-                </Grid>
-            </Grid>
-
-            {/* Filtros */}
-            <Card sx={{ mb: 3, p: 2 }}>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <TextField
-                        size="small"
-                        placeholder="Buscar por nome..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
-                        InputProps={{
-                            startAdornment: (
-                                <InputAdornment position="start">
-                                    <SearchRoundedIcon fontSize="small" />
-                                </InputAdornment>
-                            ),
-                        }}
-                        sx={{ minWidth: 240 }}
-                    />
-                    <TextField
-                        select size="small" label="Status" value={ativoFilter}
-                        onChange={(e) => { setAtivoFilter(e.target.value); applyFilters({ ativo: e.target.value }); }}
-                        sx={{ minWidth: 140 }}
-                    >
-                        <MenuItem value="">Todos</MenuItem>
-                        <MenuItem value="1">Ativas</MenuItem>
-                        <MenuItem value="0">Inativas</MenuItem>
-                    </TextField>
-                    <Button variant="contained" size="small" onClick={() => applyFilters()}>Buscar</Button>
-                    {(search || ativoFilter) && (
-                        <Button size="small" onClick={() => { setSearch(''); setAtivoFilter(''); applyFilters({ search: '', ativo: '' }); }}>
-                            Limpar
-                        </Button>
-                    )}
-                </Box>
-            </Card>
-
-            {/* Tabela */}
             <Card>
                 <Table>
                     <TableHead>
@@ -209,7 +144,7 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {marcas.data.length === 0 && (
+                        {visiveis.length === 0 && (
                             <TableRow>
                                 <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                                     <LabelRoundedIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
@@ -217,7 +152,7 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
                                 </TableCell>
                             </TableRow>
                         )}
-                        {marcas.data.map((m) => (
+                        {visiveis.map((m) => (
                             <TableRow key={m.id} hover>
                                 <TableCell>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -263,10 +198,13 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
                         ))}
                     </TableBody>
                 </Table>
-                <TablePagination {...marcas} label="marcas" />
+                <Box sx={{ px: 2, py: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                        {visiveis.length} de {marcas.length} marcas
+                    </Typography>
+                </Box>
             </Card>
 
-            {/* Modal criar/editar */}
             <Dialog open={modalOpen} onClose={() => setModalOpen(false)} maxWidth="sm" fullWidth>
                 <form onSubmit={handleSubmit}>
                     <DialogTitle>{editTarget ? 'Editar Marca' : 'Nova Marca'}</DialogTitle>
@@ -302,7 +240,6 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
                 </form>
             </Dialog>
 
-            {/* Confirm delete */}
             <ConfirmDialog
                 open={!!deleteTarget}
                 title="Excluir Marca"
@@ -311,6 +248,6 @@ export default function MarcasIndex({ marcas, filters, stats }: Props) {
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteTarget(null)}
             />
-        </AppLayout>
+        </>
     );
 }

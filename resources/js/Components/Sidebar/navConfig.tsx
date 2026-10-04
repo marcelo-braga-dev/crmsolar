@@ -63,13 +63,8 @@ export const adminNav: NavSection[] = [
                 title: 'Produtos',
                 icon: <Inventory2RoundedIcon />,
                 children: [
-                    { title: 'Catálogo', href: '/admin/produtos/catalogo' },
                     { title: 'Kits Solares', href: '/admin/produtos/kits' },
-                    { title: 'Painéis', href: '/admin/produtos/paineis' },
-                    { title: 'Inversores', href: '/admin/produtos/inversores' },
-                    { title: 'Transformadores', href: '/admin/produtos/trafos' },
-                    { title: 'Categorias', href: '/admin/produtos/categorias' },
-                    { title: 'Marcas', href: '/admin/produtos/marcas' },
+                    { title: 'Catálogo', href: '/admin/produtos/catalogo' },
                 ],
             },
             {

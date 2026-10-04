@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Produtos;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\ProdutoRequest;
 use App\Models\CategoriaProduto;
 use App\Models\Fornecedor;
 use App\Models\Marca;
@@ -14,54 +15,49 @@ use Inertia\Response;
 
 class CatalogoController extends Controller
 {
+    /** Abas da página única de produtos avulsos (antes eram páginas separadas no menu). */
+    public const ABAS = ['produtos', 'categorias', 'marcas'];
+
     public function index(Request $request): Response
     {
-        $query = Produto::with(['categoria', 'marca', 'fornecedor'])
+        $aba = in_array($request->aba, self::ABAS, true) ? $request->aba : 'produtos';
+
+        // Atalhos Painéis / Inversores / Transformadores... = filtro pelo slug da categoria.
+        $produtos = Produto::with(['categoria:id,nome,slug', 'marca:id,nome', 'fornecedor:id,nome'])
             ->when($request->search, fn ($q, $s) => $q->where(fn ($q) => $q->where('nome', 'like', "%{$s}%")->orWhere('modelo', 'like', "%{$s}%")->orWhere('sku', 'like', "%{$s}%")))
-            ->when($request->categoria_id, fn ($q, $c) => $q->where('categoria_id', $c))
+            ->when($request->categoria, fn ($q, $slug) => $q->whereHas('categoria', fn ($q) => $q->where('slug', $slug)))
             ->when($request->fornecedor_id, fn ($q, $f) => $q->where('fornecedor_id', $f))
-            ->when($request->ativo !== null, fn ($q) => $q->where('ativo', $request->boolean('ativo')))
-            ->orderBy('nome');
+            ->when($request->filled('ativo'), fn ($q) => $q->where('ativo', $request->boolean('ativo')))
+            ->orderBy('nome')
+            ->paginate(30)
+            ->withQueryString();
 
         return Inertia::render('Admin/Produtos/Catalogo/Index', [
-            'produtos' => $query->paginate(30)->withQueryString(),
-            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia']),
-            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'aba' => $aba,
+            'produtos' => $produtos,
+            'totalProdutos' => Produto::count(),
+            // Todas (inclusive inativas): a aba Categorias gerencia todas; os atalhos mostram só as ativas.
+            'categorias' => CategoriaProduto::withCount('produtos')->orderBy('ordem')->orderBy('nome')->get(),
+            'marcas' => Marca::withCount('produtos')->orderBy('nome')->get(),
             'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-            'filters' => $request->only(['search', 'categoria_id', 'fornecedor_id', 'ativo']),
+            'filters' => $request->only(['search', 'categoria', 'fornecedor_id', 'ativo']),
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('Admin/Produtos/Catalogo/Form', [
-            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
-            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-            'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            ...$this->opcoesFormulario(),
+            // "Novo produto" a partir de um atalho (ex.: Inversores) já vem com a categoria escolhida.
+            'categoriaInicial' => $request->categoria
+                ? CategoriaProduto::where('slug', $request->categoria)->value('id')
+                : null,
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(ProdutoRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'categoria_id' => 'required|exists:categorias_produtos,id',
-            'marca_id' => 'nullable|exists:marcas,id',
-            'fornecedor_id' => 'nullable|exists:fornecedores,id',
-            'nome' => 'required|string|max:200',
-            'modelo' => 'nullable|string|max:100',
-            'sku' => 'nullable|string|max:60|unique:produtos,sku',
-            'descricao' => 'nullable|string',
-            'potencia' => 'nullable|numeric|min:0',
-            'unidade_potencia' => 'nullable|string|max:10',
-            'tensao' => 'nullable|integer',
-            'unidade' => 'nullable|string|max:20',
-            'preco_custo' => 'required|numeric|min:0',
-            'garantia' => 'nullable|string|max:100',
-            'imagem_url' => 'nullable|url|max:500',
-            'ficha_tecnica_url' => 'nullable|url|max:500',
-            'atributos' => 'nullable|array',
-            'ativo' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $produto = Produto::create($validated);
 
@@ -80,33 +76,13 @@ class CatalogoController extends Controller
     {
         return Inertia::render('Admin/Produtos/Catalogo/Form', [
             'produto' => $catalogo,
-            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
-            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-            'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            ...$this->opcoesFormulario(),
         ]);
     }
 
-    public function update(Request $request, Produto $catalogo): RedirectResponse
+    public function update(ProdutoRequest $request, Produto $catalogo): RedirectResponse
     {
-        $validated = $request->validate([
-            'categoria_id' => 'required|exists:categorias_produtos,id',
-            'marca_id' => 'nullable|exists:marcas,id',
-            'fornecedor_id' => 'nullable|exists:fornecedores,id',
-            'nome' => 'required|string|max:200',
-            'modelo' => 'nullable|string|max:100',
-            'sku' => 'nullable|string|max:60|unique:produtos,sku,'.$catalogo->id,
-            'descricao' => 'nullable|string',
-            'potencia' => 'nullable|numeric|min:0',
-            'unidade_potencia' => 'nullable|string|max:10',
-            'tensao' => 'nullable|integer',
-            'unidade' => 'nullable|string|max:20',
-            'preco_custo' => 'required|numeric|min:0',
-            'garantia' => 'nullable|string|max:100',
-            'imagem_url' => 'nullable|url|max:500',
-            'ficha_tecnica_url' => 'nullable|url|max:500',
-            'atributos' => 'nullable|array',
-            'ativo' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $catalogo->update($validated);
 
@@ -120,5 +96,14 @@ class CatalogoController extends Controller
 
         return redirect()->route('admin.produtos.catalogo.index')
             ->with('success', 'Produto removido.');
+    }
+
+    private function opcoesFormulario(): array
+    {
+        return [
+            'categorias' => CategoriaProduto::where('ativo', true)->orderBy('ordem')->get(['id', 'nome', 'slug', 'eh_componente_kit', 'exige_potencia', 'icone']),
+            'marcas' => Marca::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+        ];
     }
 }

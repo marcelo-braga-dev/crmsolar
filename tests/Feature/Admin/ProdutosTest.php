@@ -168,7 +168,7 @@ class ProdutosTest extends TestCase
 
         // Antes, o orWhere('modelo') sem agrupamento anulava o filtro de categoria.
         $this->actingAs($this->admin())
-            ->get(route('admin.produtos.catalogo.index', ['search' => 'Solar', 'categoria_id' => $paineis->id]))
+            ->get(route('admin.produtos.catalogo.index', ['search' => 'Solar', 'categoria' => $paineis->slug]))
             ->assertInertia(fn ($page) => $page->has('produtos.data', 1)->where('produtos.data.0.nome', 'Solar X'));
     }
 

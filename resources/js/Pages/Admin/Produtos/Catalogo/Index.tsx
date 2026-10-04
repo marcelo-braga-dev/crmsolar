@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
-    Box, Button, Chip, IconButton, InputAdornment, MenuItem,
-    Select, Table, TableBody, TableCell, TableHead, TableRow,
+    Box, Button, Card, Chip, IconButton, InputAdornment, MenuItem,
+    Select, Tab, Table, TableBody, TableCell, TableHead, TableRow, Tabs,
     TextField, Tooltip, Typography,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -12,6 +12,9 @@ import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { BoolChip } from '@/Components/UI/StatusChip';
+import { TablePagination } from '@/Components/UI/TablePagination';
+import { CategoriasAba, Categoria } from '@/Components/Produtos/CategoriasAba';
+import { MarcasAba, Marca } from '@/Components/Produtos/MarcasAba';
 import { PaginatedData } from '@/types';
 
 interface Produto {
@@ -29,31 +32,26 @@ interface Produto {
     fornecedor?: { nome: string };
 }
 
-interface Categoria { id: number; nome: string; slug: string; }
 interface Fornecedor { id: number; nome: string; }
-interface Marca { id: number; nome: string; }
+
+type Aba = 'produtos' | 'categorias' | 'marcas';
+
+interface Filters { search?: string; categoria?: string; fornecedor_id?: string; ativo?: string }
 
 interface Props {
+    aba: Aba;
     produtos: PaginatedData<Produto>;
+    totalProdutos: number;
     categorias: Categoria[];
     marcas: Marca[];
     fornecedores: Fornecedor[];
-    filters: { search?: string; categoria_id?: string; fornecedor_id?: string; ativo?: string };
+    filters: Filters;
 }
 
-export default function CatalogoIndex({ produtos, categorias, fornecedores, filters }: Props) {
-    const [search, setSearch] = useState(filters.search ?? '');
-
-    const applyFilter = (extra: object = {}) => {
-        router.get(route('admin.produtos.catalogo.index'), {
-            search,
-            ...filters,
-            ...extra,
-        }, { preserveState: true, replace: true });
+export default function CatalogoIndex({ aba, produtos, totalProdutos, categorias, marcas, fornecedores, filters }: Props) {
+    const trocarAba = (nova: Aba) => {
+        router.get(route('admin.produtos.catalogo.index'), nova === 'produtos' ? {} : { aba: nova }, { preserveState: true, replace: true });
     };
-
-    const formatPreco = (v: number) =>
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 
     return (
         <AppLayout title="Catálogo de Produtos">
@@ -61,21 +59,80 @@ export default function CatalogoIndex({ produtos, categorias, fornecedores, filt
 
             <PageHeader
                 title="Catálogo de Produtos"
+                subtitle="Painéis, inversores, transformadores e demais itens avulsos — com suas categorias e marcas"
                 breadcrumbs={[{ label: 'Admin' }, { label: 'Produtos' }, { label: 'Catálogo' }]}
-                action={
-                    <Button
-                        variant="contained"
-                        startIcon={<AddRoundedIcon />}
-                        component={Link}
-                        href={route('admin.produtos.catalogo.create')}
-                    >
-                        Novo Produto
-                    </Button>
-                }
             />
 
-            {/* Filters */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Tabs value={aba} onChange={(_, nova) => trocarAba(nova)} variant="scrollable" allowScrollButtonsMobile>
+                    <Tab value="produtos" label={`Produtos (${totalProdutos})`} />
+                    <Tab value="categorias" label={`Categorias (${categorias.length})`} />
+                    <Tab value="marcas" label={`Marcas (${marcas.length})`} />
+                </Tabs>
+            </Box>
+
+            {aba === 'produtos' && (
+                <ProdutosAba
+                    produtos={produtos}
+                    totalProdutos={totalProdutos}
+                    categorias={categorias}
+                    fornecedores={fornecedores}
+                    filters={filters}
+                />
+            )}
+            {aba === 'categorias' && <CategoriasAba categorias={categorias} />}
+            {aba === 'marcas' && <MarcasAba marcas={marcas} />}
+        </AppLayout>
+    );
+}
+
+interface ProdutosAbaProps {
+    produtos: PaginatedData<Produto>;
+    totalProdutos: number;
+    categorias: Categoria[];
+    fornecedores: Fornecedor[];
+    filters: Filters;
+}
+
+function ProdutosAba({ produtos, totalProdutos, categorias, fornecedores, filters }: ProdutosAbaProps) {
+    const [search, setSearch] = useState(filters.search ?? '');
+
+    const applyFilter = (extra: Filters = {}) => {
+        // Filtros vazios ficam fora da URL (ex.: sem "&search=").
+        const params = Object.fromEntries(
+            Object.entries({ ...filters, search, ...extra }).filter(([, v]) => v !== '' && v != null),
+        );
+        router.get(route('admin.produtos.catalogo.index'), params, { preserveState: true, replace: true });
+    };
+
+    const formatPreco = (v: number) =>
+        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+
+    // Atalhos por categoria (substituem as antigas páginas Painéis / Inversores / Transformadores).
+    const atalhos = categorias.filter((c) => c.ativo);
+    const categoriaAtual = categorias.find((c) => c.slug === filters.categoria);
+
+    return (
+        <>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
+                <Chip
+                    label={`Todos (${totalProdutos})`}
+                    color={!filters.categoria ? 'primary' : 'default'}
+                    variant={!filters.categoria ? 'filled' : 'outlined'}
+                    onClick={() => applyFilter({ categoria: '' })}
+                />
+                {atalhos.map((c) => (
+                    <Chip
+                        key={c.id}
+                        label={`${c.nome} (${c.produtos_count})`}
+                        color={filters.categoria === c.slug ? 'primary' : 'default'}
+                        variant={filters.categoria === c.slug ? 'filled' : 'outlined'}
+                        onClick={() => applyFilter({ categoria: c.slug })}
+                    />
+                ))}
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap', alignItems: 'center' }}>
                 <TextField
                     placeholder="Buscar por nome, modelo ou SKU..."
                     size="small"
@@ -83,27 +140,17 @@ export default function CatalogoIndex({ produtos, categorias, fornecedores, filt
                     onChange={(e) => setSearch(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && applyFilter()}
                     InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-                    sx={{ minWidth: 300 }}
+                    sx={{ minWidth: 280, flex: { xs: 1, sm: 'none' } }}
                 />
-                <Select
-                    size="small"
-                    displayEmpty
-                    value={filters.categoria_id ?? ''}
-                    onChange={(e) => applyFilter({ categoria_id: e.target.value })}
-                    sx={{ minWidth: 180 }}
-                >
-                    <MenuItem value="">Todas as categorias</MenuItem>
-                    {categorias.map((c) => <MenuItem key={c.id} value={c.id}>{c.nome}</MenuItem>)}
-                </Select>
                 <Select
                     size="small"
                     displayEmpty
                     value={filters.fornecedor_id ?? ''}
                     onChange={(e) => applyFilter({ fornecedor_id: e.target.value })}
-                    sx={{ minWidth: 160 }}
+                    sx={{ minWidth: 180 }}
                 >
                     <MenuItem value="">Todos os fornecedores</MenuItem>
-                    {fornecedores.map((f) => <MenuItem key={f.id} value={f.id}>{f.nome}</MenuItem>)}
+                    {fornecedores.map((f) => <MenuItem key={f.id} value={String(f.id)}>{f.nome}</MenuItem>)}
                 </Select>
                 <Select
                     size="small"
@@ -116,11 +163,20 @@ export default function CatalogoIndex({ produtos, categorias, fornecedores, filt
                     <MenuItem value="1">Ativos</MenuItem>
                     <MenuItem value="0">Inativos</MenuItem>
                 </Select>
+                <Box sx={{ flex: 1 }} />
+                <Button
+                    variant="contained"
+                    startIcon={<AddRoundedIcon />}
+                    component={Link}
+                    href={route('admin.produtos.catalogo.create', categoriaAtual ? { categoria: categoriaAtual.slug } : {})}
+                >
+                    {categoriaAtual ? `Novo em ${categoriaAtual.nome}` : 'Novo Produto'}
+                </Button>
             </Box>
 
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+            <Card>
                 <Table size="small">
-                    <TableHead sx={{ bgcolor: '#F8FAFC' }}>
+                    <TableHead>
                         <TableRow>
                             <TableCell sx={{ fontWeight: 600 }}>Produto</TableCell>
                             <TableCell sx={{ fontWeight: 600 }}>Categoria</TableCell>
@@ -149,12 +205,7 @@ export default function CatalogoIndex({ produtos, categorias, fornecedores, filt
                                     )}
                                 </TableCell>
                                 <TableCell>
-                                    <Chip
-                                        label={p.categoria.nome}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={{ fontSize: '0.75rem' }}
-                                    />
+                                    <Chip label={p.categoria.nome} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2">{p.marca?.nome ?? '—'}</Typography>
@@ -170,29 +221,19 @@ export default function CatalogoIndex({ produtos, categorias, fornecedores, filt
                                     ) : '—'}
                                 </TableCell>
                                 <TableCell>
-                                    <Typography variant="body2" fontWeight={500}>
-                                        {formatPreco(p.preco_custo)}
-                                    </Typography>
+                                    <Typography variant="body2" fontWeight={500}>{formatPreco(p.preco_custo)}</Typography>
                                 </TableCell>
                                 <TableCell>
                                     <BoolChip value={p.ativo && p.ativo_fornecedor} />
                                 </TableCell>
-                                <TableCell align="right">
+                                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
                                     <Tooltip title="Ver detalhes">
-                                        <IconButton
-                                            size="small"
-                                            component={Link}
-                                            href={route('admin.produtos.catalogo.show', p.id)}
-                                        >
+                                        <IconButton size="small" component={Link} href={route('admin.produtos.catalogo.show', p.id)}>
                                             <VisibilityRoundedIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
                                     <Tooltip title="Editar">
-                                        <IconButton
-                                            size="small"
-                                            component={Link}
-                                            href={route('admin.produtos.catalogo.edit', p.id)}
-                                        >
+                                        <IconButton size="small" component={Link} href={route('admin.produtos.catalogo.edit', p.id)}>
                                             <EditRoundedIcon fontSize="small" />
                                         </IconButton>
                                     </Tooltip>
@@ -201,30 +242,8 @@ export default function CatalogoIndex({ produtos, categorias, fornecedores, filt
                         ))}
                     </TableBody>
                 </Table>
-
-                {/* Pagination info */}
-                {produtos.total > 0 && (
-                    <Box sx={{ px: 2, py: 1.5, borderTop: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="caption" color="text.secondary">
-                            {produtos.from}–{produtos.to} de {produtos.total} produtos
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                            {produtos.links.filter(l => l.label !== '&laquo; Previous' && l.label !== 'Next &raquo;').map((link, i) => (
-                                <Button
-                                    key={i}
-                                    size="small"
-                                    variant={link.active ? 'contained' : 'outlined'}
-                                    disabled={!link.url}
-                                    onClick={() => link.url && router.visit(link.url)}
-                                    sx={{ minWidth: 32, px: 1 }}
-                                >
-                                    {link.label}
-                                </Button>
-                            ))}
-                        </Box>
-                    </Box>
-                )}
-            </Box>
-        </AppLayout>
+                <TablePagination {...produtos} label="produtos" />
+            </Card>
+        </>
     );
 }

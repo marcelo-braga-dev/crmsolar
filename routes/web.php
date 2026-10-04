@@ -18,11 +18,8 @@ use App\Http\Controllers\Admin\PerfilController;
 use App\Http\Controllers\Admin\Precificacao\PrecificacaoController;
 use App\Http\Controllers\Admin\Produtos\CatalogoController;
 use App\Http\Controllers\Admin\Produtos\CategoriasController;
-use App\Http\Controllers\Admin\Produtos\InversoresController;
 use App\Http\Controllers\Admin\Produtos\KitsController;
 use App\Http\Controllers\Admin\Produtos\MarcasController;
-use App\Http\Controllers\Admin\Produtos\PaineisController;
-use App\Http\Controllers\Admin\Produtos\TrafosController;
 use App\Http\Controllers\Admin\Usuarios\AdminsController;
 use App\Http\Controllers\Admin\Usuarios\ConsultoresController;
 use App\Http\Controllers\Api\GeografiaController;
@@ -64,17 +61,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::prefix('produtos')->name('produtos.')->group(function () {
         Route::resource('kits', KitsController::class);
-        Route::resource('inversores', InversoresController::class)
-            ->parameters(['inversores' => 'produto'])->except(['show']);
-        Route::resource('paineis', PaineisController::class)
-            ->parameters(['paineis' => 'produto'])->except(['show']);
-        Route::resource('trafos', TrafosController::class)
-            ->parameters(['trafos' => 'produto'])->except(['show']);
         Route::resource('catalogo', CatalogoController::class);
+        // Categorias e marcas são abas do Catálogo — só as ações ficam aqui.
         Route::resource('categorias', CategoriasController::class)
-            ->only(['index', 'store', 'update', 'destroy']);
+            ->only(['store', 'update', 'destroy']);
         Route::resource('marcas', MarcasController::class)
-            ->only(['index', 'store', 'update', 'destroy']);
+            ->only(['store', 'update', 'destroy']);
+
+        // Endereços antigos (páginas separadas) levam ao Catálogo unificado.
+        foreach (['paineis' => 'painel-solar', 'inversores' => 'inversor-solar', 'trafos' => 'transformador'] as $antigo => $slug) {
+            Route::get($antigo, fn () => to_route('admin.produtos.catalogo.index', ['categoria' => $slug]))
+                ->name("{$antigo}.antigo");
+            Route::get("{$antigo}/create", fn () => to_route('admin.produtos.catalogo.create', ['categoria' => $slug]))
+                ->name("{$antigo}.create.antigo");
+        }
+        Route::get('categorias', fn () => to_route('admin.produtos.catalogo.index', ['aba' => 'categorias']))
+            ->name('categorias.antigo');
+        Route::get('marcas', fn () => to_route('admin.produtos.catalogo.index', ['aba' => 'marcas']))
+            ->name('marcas.antigo');
     });
 
     Route::prefix('usuarios')->name('usuarios.')->group(function () {

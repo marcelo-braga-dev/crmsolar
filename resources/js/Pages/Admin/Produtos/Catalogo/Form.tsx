@@ -45,15 +45,16 @@ interface Props {
     categorias: Categoria[];
     marcas: Marca[];
     fornecedores: Fornecedor[];
+    categoriaInicial?: number | null;
 }
 
 const UNIDADES_POTENCIA = ['Wp', 'kWp', 'W', 'kW', 'VA', 'kVA'];
 
-export default function CatalogoForm({ produto, categorias, marcas, fornecedores }: Props) {
+export default function CatalogoForm({ produto, categorias, marcas, fornecedores, categoriaInicial }: Props) {
     const editing = Boolean(produto?.id);
 
     const { data, setData, post, put, processing, errors } = useForm<FormData>({
-        categoria_id: produto?.categoria_id ?? '',
+        categoria_id: produto?.categoria_id ?? categoriaInicial ?? '',
         marca_id: produto?.marca_id ?? '',
         fornecedor_id: produto?.fornecedor_id ?? '',
         nome: produto?.nome ?? '',

@@ -96,13 +96,10 @@ app/Http/Controllers/
     FornecedoresController           — CRUD fornecedores
     PerfilController                 — edit, update, senha
     Produtos/
-      CatalogoController             — CRUD catálogo geral de produtos
-      CategoriasController           — CRUD categorias
-      InversoresController           — CRUD produtos categoria "inversor"
-      KitsController                 — CRUD kits solares (com KitComponente)
-      MarcasController               — index, store, update, destroy
-      PaineisController              — CRUD produtos categoria "painel"
-      TrafosController               — CRUD produtos categoria "trafo"
+      CatalogoController             — página única de produtos avulsos: abas Produtos (atalhos por categoria via ?categoria=slug), Categorias e Marcas (?aba=)
+      CategoriasController           — store, update, destroy (aba do Catálogo)
+      KitsController                 — CRUD kits solares (sistemas completos usados no dimensionamento)
+      MarcasController               — store, update, destroy (aba do Catálogo)
     Precificacao/
       PrecificacaoController         — página única: margem principal (faixas de potência), margem por estado, margem por fornecedor + simulador
     Usuarios/
@@ -196,12 +193,8 @@ resources/js/Pages/
     Fornecedores/{Index,Form,Show}.tsx
     Perfil/{Edit,Senha}.tsx
     Produtos/
-      Catalogo/{Index,Form,Show}.tsx
-      Inversores/{Index,Form}.tsx
+      Catalogo/{Index,Form,Show}.tsx — Index com abas Produtos / Categorias / Marcas
       Kits/{Index,Form,Show}.tsx
-      Marcas/Index.tsx               — inline edit/delete (sem página própria)
-      Paineis/{Index,Form}.tsx
-      Trafos/{Index,Form}.tsx
     Precificacao/
       Index.tsx                      — página única: faixas de margem principal, margem por estado, margem por fornecedor e simulador de preço em tempo real
     Usuarios/
@@ -260,6 +253,8 @@ resources/js/
       PageHeader.tsx                 — title + breadcrumbs + action slot (named export!)
       StatusChip.tsx                 — OrcamentoStatusChip, LeadStatusChip, BoolChip
       TablePagination.tsx            — paginação padrão para tabelas
+    Produtos/
+      CategoriasAba.tsx, MarcasAba.tsx — abas do Catálogo de produtos
   Layouts/
     AppLayout.tsx                    — sidebar + topbar + flash snackbar
     GuestLayout.tsx                  — layout de autenticação (split-screen escuro)
@@ -345,7 +340,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**351 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**358 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -379,6 +374,10 @@ Trabalho de atualização integrado à `main`.
 - `npm audit fix` (axios, form-data, qs e outras) — `npm audit` limpo
 - **Contrato gravava potência/geração/consumo digitados no formulário** — agora vêm do orçamento aprovado (potência = soma dos kits, geração do orçamento, consumo do `OrcamentoInfo`), como já era com `valor_total`; o formulário só preenche o que o orçamento não tiver (campos desabilitados na tela). Testes em `ContratoCreationTest`
 - **Sincronização Edeltec em fila (opcional)** — `EDELTEC_SYNC_FILA=true` faz o botão "Integrar" enfileirar o job `App\Jobs\SincronizarEdeltec` em vez de rodar na requisição (padrão `false` = comportamento antigo). **Só ative depois de configurar o worker `queue:work`** no servidor. `EdeltecImportService::importar()` usa a trava `integracao-edeltec` (cache, expira em 1h): botão, job e comando agendado nunca rodam ao mesmo tempo. Testes em `IntegracaoEdeltecTest`
+- **Listas com mais de uma página quebravam (React #60)** — botões de paginação usavam `Button` do MUI com `dangerouslySetInnerHTML`; rótulos agora são texto via `rotuloPaginacao()` (`Components/UI/TablePagination.tsx`)
+- **Cadastro manual de kit dava erro 500** — tensão era texto livre ("220V / 380V") para coluna inteira obrigatória. Agora tensão (`Kit::TENSOES`) e tipo de sistema (`Kit::CATEGORIAS`, antes ausente do form — todo kit manual virava on-grid) são selects obrigatórios; SKU único por fornecedor validado (antes o índice único dava 500); preço de custo obrigatório. `margem_padrao` saiu das telas de kit (não entra no preço — só as 3 camadas de Precificação). Testes em `Admin/ProdutosTest`
+- **Produtos: regras únicas** — `App\Http\Requests\Admin\ProdutoRequest` (categoria e custo obrigatórios, SKU único até 60, garantia em texto)
+- **Menu Produtos reduzido de 7 para 2 submenus** (Kits Solares, Catálogo). Painéis/Inversores/Transformadores eram o mesmo catálogo filtrado — viraram atalhos de categoria na aba Produtos; Categorias e Marcas viraram abas. Endereços antigos redirecionam (rotas `admin.produtos.*.antigo`). Testes em `Admin/CatalogoUnificadoTest`
 
 ### Pendências conhecidas (funcionalidade)
 - **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica

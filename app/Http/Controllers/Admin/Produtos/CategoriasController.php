@@ -6,18 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CategoriaProduto;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 class CategoriasController extends Controller
 {
-    public function index(): Response
-    {
-        return Inertia::render('Admin/Produtos/Categorias/Index', [
-            'categorias' => CategoriaProduto::withCount('produtos')->orderBy('ordem')->get(),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([

@@ -23,14 +23,11 @@ import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
-import { Head, router, useForm } from '@inertiajs/react';
-import AppLayout from '@/Layouts/AppLayout';
-import { PageHeader } from '@/Components/UI/PageHeader';
+import { router, useForm } from '@inertiajs/react';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { BoolChip } from '@/Components/UI/StatusChip';
-import { PageProps } from '@/types';
 
-interface Categoria {
+export interface Categoria {
     id: number;
     nome: string;
     slug: string;
@@ -43,7 +40,7 @@ interface Categoria {
     produtos_count: number;
 }
 
-interface Props extends PageProps {
+interface Props {
     categorias: Categoria[];
 }
 
@@ -69,7 +66,8 @@ const emptyForm: FormState = {
     ordem: 0,
 };
 
-export default function CategoriasIndex({ categorias }: Props) {
+/** Aba "Categorias" do Catálogo de produtos. */
+export function CategoriasAba({ categorias }: Props) {
     const [modalOpen, setModalOpen] = useState(false);
     const [editTarget, setEditTarget] = useState<Categoria | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<Categoria | null>(null);
@@ -119,18 +117,15 @@ export default function CategoriasIndex({ categorias }: Props) {
     }
 
     return (
-        <AppLayout>
-            <Head title="Categorias de Produtos" />
-
-            <PageHeader
-                title="Categorias de Produtos"
-                breadcrumbs={[{ label: 'Produtos' }, { label: 'Categorias' }]}
-                action={
-                    <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>
-                        Nova Categoria
-                    </Button>
-                }
-            />
+        <>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
+                <Typography variant="body2" color="text.secondary">
+                    Organizam o catálogo e viram os atalhos da aba Produtos.
+                </Typography>
+                <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={openCreate}>
+                    Nova Categoria
+                </Button>
+            </Box>
 
             <Card>
                 <Table>
@@ -289,6 +284,6 @@ export default function CategoriasIndex({ categorias }: Props) {
                 onConfirm={handleDelete}
                 onCancel={() => setDeleteTarget(null)}
             />
-        </AppLayout>
+        </>
     );
 }
