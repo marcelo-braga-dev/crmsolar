@@ -96,6 +96,10 @@ class OrcamentosController extends Controller
 
         $statusAnterior = $orcamento->status;
 
+        if (isset($data['status']) && $orcamento->estaPerdido()) {
+            return back()->with('error', 'Orçamento marcado como perdido: reative-o no funil antes de enviar para aprovação.');
+        }
+
         // Consultor só envia para aprovação; voltar status (ex.: aprovado → aprovando) é exclusivo do Admin.
         if (isset($data['status']) && ! in_array($statusAnterior, ['novo', 'aprovacao_reprovada'], true)) {
             return back()->with('error', 'Só é possível enviar para aprovação orçamentos novos ou reprovados.');

@@ -42,7 +42,10 @@ export const adminNav: NavSection[] = [
             {
                 title: 'Orçamentos',
                 icon: <ReceiptLongRoundedIcon />,
-                href: '/admin/orcamentos',
+                children: [
+                    { title: 'Funil (Kanban)', href: '/admin/funil' },
+                    { title: 'Lista', href: '/admin/orcamentos' },
+                ],
             },
             {
                 title: 'Clientes',
@@ -119,6 +122,7 @@ export const adminNav: NavSection[] = [
                     { title: 'Bancos', href: '/admin/configuracoes/bancos' },
                     { title: 'Concessionárias', href: '/admin/configuracoes/concessionarias' },
                     { title: 'Dimensionamento', href: '/admin/configuracoes/dimensionamento' },
+                    { title: 'Funil de vendas', href: '/admin/configuracoes/funil' },
                     { title: 'Sistema', href: '/admin/configuracoes/sistema' },
                 ],
             },
@@ -137,7 +141,10 @@ export const consultorNav: NavSection[] = [
             {
                 title: 'Orçamentos',
                 icon: <ReceiptLongRoundedIcon />,
-                href: '/consultor/orcamentos',
+                children: [
+                    { title: 'Funil (Kanban)', href: '/consultor/funil' },
+                    { title: 'Lista', href: '/consultor/orcamentos' },
+                ],
             },
             {
                 title: 'Clientes',

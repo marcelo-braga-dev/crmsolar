@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\Configuracoes\AuditoriaController;
 use App\Http\Controllers\Admin\Configuracoes\BancosController;
 use App\Http\Controllers\Admin\Configuracoes\ConcessionariasController;
 use App\Http\Controllers\Admin\Configuracoes\DimensionamentoController;
+use App\Http\Controllers\Admin\Configuracoes\FunilVendasController;
 use App\Http\Controllers\Admin\Configuracoes\SistemaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Financeiro\ComissoesController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\Consultor\GrupoTarifario\GrupoB3Controller;
 use App\Http\Controllers\Consultor\OrcamentoItensController;
 use App\Http\Controllers\Consultor\PropostasServicosController;
 use App\Http\Controllers\Consultor\VisitasController;
+use App\Http\Controllers\FunilController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -50,6 +52,13 @@ Route::get('/dashboard', function () {
 // ─────────────────────────────────────────────
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Funil de vendas (Kanban) — mesmo controller para Admin e Consultor; ver docs/funil-de-vendas.md
+    Route::get('funil', [FunilController::class, 'index'])->name('funil.index');
+    Route::post('funil/{orcamento}/mover', [FunilController::class, 'mover'])->name('funil.mover');
+    Route::post('funil/{orcamento}/perder', [FunilController::class, 'perder'])->name('funil.perder');
+    Route::post('funil/{orcamento}/reativar', [FunilController::class, 'reativar'])->name('funil.reativar');
+    Route::post('funil/{orcamento}/contato', [FunilController::class, 'contato'])->name('funil.contato');
 
     Route::resource('orcamentos', OrcamentosController::class)
         ->only(['index', 'show', 'update']);
@@ -122,6 +131,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         Route::get('dimensionamento', [DimensionamentoController::class, 'index'])->name('dimensionamento');
         Route::put('dimensionamento', [DimensionamentoController::class, 'update'])->name('dimensionamento.update');
         Route::get('auditoria', [AuditoriaController::class, 'index'])->name('auditoria');
+
+        Route::prefix('funil')->name('funil.')->group(function () {
+            Route::get('/', [FunilVendasController::class, 'index'])->name('index');
+            Route::post('etapas', [FunilVendasController::class, 'storeEtapa'])->name('etapas.store');
+            Route::put('etapas/ordem', [FunilVendasController::class, 'reordenarEtapas'])->name('etapas.reordenar');
+            Route::put('etapas/{etapa}', [FunilVendasController::class, 'updateEtapa'])->name('etapas.update');
+            Route::delete('etapas/{etapa}', [FunilVendasController::class, 'destroyEtapa'])->name('etapas.destroy');
+            Route::post('motivos', [FunilVendasController::class, 'storeMotivo'])->name('motivos.store');
+            Route::put('motivos/{motivo}', [FunilVendasController::class, 'updateMotivo'])->name('motivos.update');
+            Route::delete('motivos/{motivo}', [FunilVendasController::class, 'destroyMotivo'])->name('motivos.destroy');
+            Route::put('parametros', [FunilVendasController::class, 'updateParametros'])->name('parametros');
+        });
         Route::get('sistema', [SistemaController::class, 'index'])->name('sistema');
         Route::put('sistema', [SistemaController::class, 'update'])->name('sistema.update');
     });
@@ -139,6 +160,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 // ─────────────────────────────────────────────
 Route::middleware(['auth', 'consultor'])->prefix('consultor')->name('consultor.')->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\Consultor\DashboardController::class, 'index'])->name('dashboard');
+
+    // Funil de vendas (Kanban) — mesmo controller para Admin e Consultor; ver docs/funil-de-vendas.md
+    Route::get('funil', [FunilController::class, 'index'])->name('funil.index');
+    Route::post('funil/{orcamento}/mover', [FunilController::class, 'mover'])->name('funil.mover');
+    Route::post('funil/{orcamento}/perder', [FunilController::class, 'perder'])->name('funil.perder');
+    Route::post('funil/{orcamento}/reativar', [FunilController::class, 'reativar'])->name('funil.reativar');
+    Route::post('funil/{orcamento}/contato', [FunilController::class, 'contato'])->name('funil.contato');
 
     // Rotas estáticas ANTES do resource para evitar captura pelo parâmetro {orcamento}
     Route::get('orcamentos/selecionar-grupo', fn () => inertia('Consultor/Orcamentos/SelecionarGrupo'))->name('orcamentos.selecionar_grupo');

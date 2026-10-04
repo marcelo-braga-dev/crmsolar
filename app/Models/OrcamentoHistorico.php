@@ -9,7 +9,13 @@ class OrcamentoHistorico extends Model
 {
     protected $table = 'orcamento_historicos';
 
-    protected $fillable = ['orcamento_id', 'usuario_id', 'status', 'mensagem'];
+    /** Tipos de evento da linha do tempo (o funil registra eventos que não mudam o status). */
+    public const TIPOS = ['status', 'etapa', 'contato', 'perda', 'reativacao'];
+
+    protected $fillable = ['orcamento_id', 'usuario_id', 'tipo', 'status', 'mensagem'];
+
+    /** Espelha o default da coluna: entradas antigas e criadas sem tipo são de status. */
+    protected $attributes = ['tipo' => 'status'];
 
     /** @return BelongsTo<Orcamento, $this> */
     public function orcamento(): BelongsTo

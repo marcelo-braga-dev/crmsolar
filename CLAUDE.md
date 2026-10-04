@@ -113,6 +113,7 @@ app/Http/Controllers/
       BancosController               — CRUD bancos (para contratos)
       ConcessionariasController      — CRUD concessionárias de energia
       DimensionamentoController      — parâmetros do motor de cálculo
+      FunilVendasController          — etapas do Kanban, motivos de perda e parâmetros do funil
       SistemaController              — configurações gerais
     Integracoes/
       EdeltecController              — integração Edeltec
@@ -139,17 +140,19 @@ app/Http/Controllers/
       GrupoB2Controller              — Rural BT
       GrupoB3Controller              — Comercial/Industrial BT
 
+  FunilController                    — quadro Kanban do funil de vendas (Admin e Consultor, mesma classe) — docs/funil-de-vendas.md
+
   Api/
     GeografiaController              — GET cep/{cep}, cidades/{estado}, estados
     LeadsController                  — POST leads (formulário público externo)
     OrcamentosController             — GET orcamento/{token} (link público da proposta)
 ```
 
-### Backend — Models (28)
+### Backend — Models (30)
 
 `Banco`, `CategoriaProduto`, `CidadeEstado`, `Cliente`, `Concessionaria`, `Config`,
-`Contrato`, `Estrutura`, `Fornecedor`, `IntegracaoHistorico`, `IrradiacaoSolar`,
-`Kit`, `Lead`, `Marca`, `MargemEstado`, `MargemFornecedor`,
+`Contrato`, `Estrutura`, `Fornecedor`, `FunilEtapa`, `IntegracaoHistorico`, `IrradiacaoSolar`,
+`Kit`, `Lead`, `Marca`, `MargemEstado`, `MargemFornecedor`, `MotivoPerda`,
 `MargemPrincipal`, `Orcamento`, `OrcamentoAprovacao`, `OrcamentoHistorico`,
 `OrcamentoInfo`, `OrcamentoItem`, `OrcamentoVistoria`, `ParamDimensionamento`,
 `Produto`, `PropostaServico`, `User`, `VisitaTecnica`
@@ -160,8 +163,9 @@ app/Http/Controllers/
 - **`GrupoTarifarioService`** — cálculo para todos os grupos ANEEL (B1/B2/B3/A). Recebe tarifa + consumo → retorna análise econômica (payback, TIR, economia mensal).
 - **`PrecificacaoService`** — aplica as 3 camadas de margem (principal por faixa de potência → estado → fornecedor) para calcular o preço de venda. A comissão do consultor (`users.comissao_percentual`, gerenciada em Usuarios/Consultores) é registrada no item do orçamento mas não é somada como camada de margem — não infla o preço de venda.
 - **`Integracoes/Edeltec/`** — serviço de sincronização de catálogo Edeltec.
+- **`Funil/FunilService`** — funil de vendas: em que coluna cada orçamento aparece (colunas de sistema derivadas do `status`) e todas as movimentações (mover, aprovar/reprovar, perder, reativar, follow-up). **Especificação completa: `docs/funil-de-vendas.md`.**
 
-### Database — Migrations (38 total)
+### Database — Migrations (39 total)
 
 Todas em `database/migrations/`. Seeders principais:
 - `UsersSeeder` — cria admin e consultor de demo
@@ -178,6 +182,7 @@ Campos críticos do schema:
 - `orcamentos.modalidade_tarifaria` enum: `convencional | THS_VERDE | THS_AZUL` — só relevante pro Grupo A (Horo-Sazonal Verde/Azul)
 - `orcamento_infos.bloquear_edicao` boolean — impede edição pelo consultor quando true
 - `users.tipo` enum: `admin | consultor`
+- Funil: `orcamentos.funil_etapa_id` (só etapas abertas; Em aprovação/Ganho vêm do `status`), `perdido_em` + `motivo_perda_id` (perda **não** é status), `proximo_contato_em`, `etapa_entrou_em` (aging, reiniciado pelo model quando a coluna muda). `orcamento_historicos.tipo`: `status | etapa | contato | perda | reativacao` (eventos do funil têm `status` null)
 
 ### Frontend — Pages
 
@@ -208,10 +213,14 @@ resources/js/Pages/
       Concessionarias/Index.tsx
       Auditoria/Index.tsx            — log de auditoria com filtros
       Dimensionamento/Index.tsx      — parâmetros do motor de cálculo
+      Funil/Index.tsx                — etapas, cores, motivos de perda e parâmetros do funil
       Sistema/Index.tsx
     Integracoes/
       Edeltec/Index.tsx
       Historico/Index.tsx
+
+  Funil/
+    Index.tsx                        — quadro Kanban do funil (Admin e Consultor, prop `area`)
 
   Consultor/
     Dashboard.tsx                    — KPIs + evolução + pipeline + orçamentos recentes
@@ -255,6 +264,7 @@ resources/js/
       TablePagination.tsx            — paginação padrão para tabelas
     Produtos/
       CategoriasAba.tsx, MarcasAba.tsx — abas do Catálogo de produtos
+    Funil/                           — CardOrcamento, ColunaFunil, CaixaEntrada, Dialogos, tipos.ts (quadro Kanban, @dnd-kit/core)
   Layouts/
     AppLayout.tsx                    — sidebar + topbar + flash snackbar
     GuestLayout.tsx                  — layout de autenticação (split-screen escuro)
@@ -340,7 +350,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**358 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**424 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -379,7 +389,14 @@ Trabalho de atualização integrado à `main`.
 - **Produtos: regras únicas** — `App\Http\Requests\Admin\ProdutoRequest` (categoria e custo obrigatórios, SKU único até 60, garantia em texto)
 - **Menu Produtos reduzido de 7 para 2 submenus** (Kits Solares, Catálogo). Painéis/Inversores/Transformadores eram o mesmo catálogo filtrado — viraram atalhos de categoria na aba Produtos; Categorias e Marcas viraram abas. Endereços antigos redirecionam (rotas `admin.produtos.*.antigo`). Testes em `Admin/CatalogoUnificadoTest`
 
+### Funil de vendas (Kanban) — Fase 1 entregue
+- Especificação, regras e arquivos em **`docs/funil-de-vendas.md`** — leia antes de mexer em status de orçamento, etapas ou no quadro.
+- Regra de ouro: o `status` operacional não mudou (financeiro/comissões continuam iguais). Colunas Em aprovação e Ganho são **derivadas** do status; nunca grave etapa de sistema em `funil_etapa_id`.
+- Datas: app em UTC; navegador envia ISO com fuso; textos do servidor usam `config('app.timezone_exibicao')` (`APP_TIMEZONE_EXIBICAO`, padrão `America/Sao_Paulo`).
+- Testes em `tests/Feature/Funil/` (+ `tests/Concerns/CriaFunil.php`).
+
 ### Pendências conhecidas (funcionalidade)
+- **Funil — Fase 2:** aba Recuperação (novos parados, negócios acima do SLA, perdidos reativáveis — usa `motivos_perda.reativar_apos_dias` e `funil.max_tentativas_reativacao`), métricas do funil e "contatos de hoje" no dashboard. **Fase 3:** atividades detalhadas e automações. Ver `docs/funil-de-vendas.md`, seção 19
 - **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
 
 ### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live

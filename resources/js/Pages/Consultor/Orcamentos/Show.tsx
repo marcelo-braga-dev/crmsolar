@@ -20,6 +20,7 @@ import { PageHeader } from '@/Components/UI/PageHeader';
 import { OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { PageProps, OrcamentoStatus } from '@/types';
+import { ROTULO_EVENTO } from '@/Components/Funil/eventoHistorico';
 
 interface ProdutoBusca {
     id: number; nome: string; modelo?: string; sku?: string;
@@ -33,11 +34,12 @@ interface OrcamentoItem {
     preco_venda_unitario: number; preco_venda_total: number; geracao_estimada?: number; ordem: number;
 }
 interface Historico {
-    id: number; status?: string; mensagem?: string; created_at: string;
+    id: number; tipo: string; status?: string | null; mensagem?: string; created_at: string;
     usuario?: { id: number; name: string };
 }
 interface OrcamentoFull {
     id: number; status: OrcamentoStatus; preco_total: number; geracao_estimada: number;
+    perdido_em?: string | null;
     anotacoes?: string; token: string; created_at: string;
     cliente?: { id: number; nome?: string; razao_social?: string; tipo_pessoa: string; email?: string; celular?: string; telefone?: string };
     cidade?: { id: number; cidade: string; estado: string };
@@ -435,7 +437,7 @@ export default function OrcamentosShow({ orcamento, flash }: Props) {
                                                 {h.usuario?.name ?? 'Sistema'} · {new Date(h.created_at).toLocaleString('pt-BR')}
                                             </Typography>
                                         </Box>
-                                        {h.status && <Chip label={h.status} size="small" variant="outlined" />}
+                                        <Chip label={h.status ?? ROTULO_EVENTO[h.tipo] ?? h.tipo} size="small" variant="outlined" />
                                     </Box>
                                 ))}
                             </CardContent>
@@ -450,16 +452,22 @@ export default function OrcamentosShow({ orcamento, flash }: Props) {
                             <CardHeader title="Ações" titleTypographyProps={{ variant: 'subtitle1', fontWeight: 600 }} />
                             <Divider />
                             <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    fullWidth
-                                    startIcon={<CheckCircleRoundedIcon />}
-                                    onClick={() => put(route('consultor.orcamentos.update', orcamento.id), { data: { status: 'aprovando' } } as any)}
-                                    disabled={processing}
-                                >
-                                    Solicitar Aprovação
-                                </Button>
+                                {orcamento.perdido_em ? (
+                                    <Alert severity="warning" action={<Button size="small" color="inherit" href={route('consultor.funil.index')}>Funil</Button>}>
+                                        Venda marcada como perdida. Reative no funil para retomar a negociação.
+                                    </Alert>
+                                ) : (
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        fullWidth
+                                        startIcon={<CheckCircleRoundedIcon />}
+                                        onClick={() => put(route('consultor.orcamentos.update', orcamento.id), { data: { status: 'aprovando' } } as any)}
+                                        disabled={processing}
+                                    >
+                                        Solicitar Aprovação
+                                    </Button>
+                                )}
                                 <Button
                                     variant="outlined"
                                     color="error"

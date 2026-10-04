@@ -76,6 +76,10 @@ class OrcamentosController extends Controller
 
         $statusAnterior = $orcamento->status;
 
+        if ($data['status'] !== $statusAnterior && $orcamento->estaPerdido()) {
+            return back()->withErrors(['status' => 'Orçamento marcado como perdido: reative-o no funil antes de mudar o status.']);
+        }
+
         if ($data['status'] !== $statusAnterior && ! $orcamento->podeIrPara($data['status'])) {
             return back()->withErrors(['status' => "Não é possível mudar de \"{$statusAnterior}\" para \"{$data['status']}\"."]);
         }

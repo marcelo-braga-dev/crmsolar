@@ -20,7 +20,7 @@ class ControleDeAcessoTest extends TestCase
     public static function telasAdmin(): array
     {
         return array_combine($r = [
-            'admin.dashboard', 'admin.orcamentos.index', 'admin.clientes.index', 'admin.clientes.create',
+            'admin.dashboard', 'admin.funil.index', 'admin.configuracoes.funil.index', 'admin.orcamentos.index', 'admin.clientes.index', 'admin.clientes.create',
             'admin.leads.index', 'admin.produtos.kits.index', 'admin.produtos.kits.create',
             'admin.produtos.catalogo.index', 'admin.produtos.catalogo.create',
             'admin.usuarios.consultores.index', 'admin.usuarios.consultores.create',
@@ -37,7 +37,7 @@ class ControleDeAcessoTest extends TestCase
     public static function telasConsultor(): array
     {
         return array_combine($r = [
-            'consultor.dashboard', 'consultor.orcamentos.index', 'consultor.orcamentos.selecionar_grupo',
+            'consultor.dashboard', 'consultor.funil.index', 'consultor.orcamentos.index', 'consultor.orcamentos.selecionar_grupo',
             'consultor.grupo.b1.create', 'consultor.grupo.b2.create', 'consultor.grupo.b3.create',
             'consultor.dimensionamento.convencional', 'consultor.dimensionamento.demanda',
             'consultor.clientes.index', 'consultor.clientes.create', 'consultor.proposta-servicos.index',

@@ -67,6 +67,10 @@ return [
 
     'timezone' => 'UTC',
 
+    // Fuso usado em textos gerados no servidor para o usuário (ex.: linha do tempo do funil).
+    // Datas continuam gravadas em UTC; o navegador converte as que recebe em ISO.
+    'timezone_exibicao' => env('APP_TIMEZONE_EXIBICAO', 'America/Sao_Paulo'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

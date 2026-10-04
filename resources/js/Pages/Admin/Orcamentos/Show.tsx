@@ -28,6 +28,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { PageProps, OrcamentoStatus } from '@/types';
+import { ROTULO_EVENTO } from '@/Components/Funil/eventoHistorico';
 
 interface OrcamentoInfo {
     tipo_sistema?: string;
@@ -49,7 +50,8 @@ interface OrcamentoItem {
 
 interface Historico {
     id: number;
-    status: OrcamentoStatus;
+    tipo: string;
+    status: OrcamentoStatus | null;
     mensagem?: string;
     created_at: string;
     usuario?: { id: number; name: string };
@@ -259,14 +261,14 @@ export default function OrcamentosShow({ orcamento, transicoes }: Props) {
                                         </Box>
                                         <Box sx={{ flexGrow: 1 }}>
                                             <Typography variant="body2">
-                                                {h.mensagem ?? `Status alterado para ${STATUS_LABEL[h.status]}`}
+                                                {h.mensagem ?? (h.status ? `Status alterado para ${STATUS_LABEL[h.status]}` : '')}
                                             </Typography>
                                             <Typography variant="caption" color="text.secondary">
                                                 {h.usuario?.name ?? 'Sistema'} · {new Date(h.created_at).toLocaleString('pt-BR')}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ flexShrink: 0 }}>
-                                            <Chip label={STATUS_LABEL[h.status]} size="small" variant="outlined" />
+                                            <Chip label={h.status ? STATUS_LABEL[h.status] : (ROTULO_EVENTO[h.tipo] ?? h.tipo)} size="small" variant="outlined" />
                                         </Box>
                                     </Box>
                                 ))}

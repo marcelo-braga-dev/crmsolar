@@ -20,11 +20,24 @@ class Orcamento extends Model
         'status', 'grupo_tarifario', 'modalidade_tarifaria',
         'preco_total', 'geracao_estimada',
         'token', 'anotacoes',
+        // Funil de vendas (docs/funil-de-vendas.md)
+        'funil_etapa_id', 'etapa_entrou_em', 'proximo_contato_em',
+        'perdido_em', 'motivo_perda_id', 'perda_observacao', 'tentativas_reativacao',
     ];
 
     protected $casts = [
         'preco_total' => 'decimal:2',
+        'etapa_entrou_em' => 'datetime',
+        'proximo_contato_em' => 'datetime',
+        'perdido_em' => 'datetime',
+        'tentativas_reativacao' => 'integer',
     ];
+
+    /** Status em que a negociação ainda está aberta (antes de enviar para aprovação). */
+    public const STATUS_EM_NEGOCIACAO = ['novo', 'aprovacao_reprovada'];
+
+    /** Status que contam como venda fechada (coluna Ganho, faturamento, comissões). */
+    public const STATUS_GANHO = ['aprovado', 'instalando', 'finalizado'];
 
     /**
      * Transições de status permitidas (de → para). Fonte única para Admin e Consultor.
@@ -72,7 +85,52 @@ class Orcamento extends Model
             if (empty($orcamento->token)) {
                 $orcamento->token = Str::random(60);
             }
+            $orcamento->etapa_entrou_em ??= now();
         });
+
+        // Aging do funil: o relógio da etapa só reinicia quando o card muda de coluna,
+        // seja pelo quadro ou pela tela do orçamento (aprovação, reprovação, perda).
+        static::updating(function (self $orcamento) {
+            $mudouColuna = $orcamento->isDirty(['funil_etapa_id', 'perdido_em'])
+                || ($orcamento->isDirty('status')
+                    && self::grupoDoStatus((string) $orcamento->getOriginal('status')) !== self::grupoDoStatus((string) $orcamento->status));
+
+            if ($mudouColuna && ! $orcamento->isDirty('etapa_entrou_em')) {
+                $orcamento->etapa_entrou_em = now();
+            }
+        });
+    }
+
+    /** Agrupa o status operacional nas colunas que ele determina no funil. */
+    public static function grupoDoStatus(string $status): string
+    {
+        return match (true) {
+            in_array($status, self::STATUS_GANHO, true) => FunilEtapa::GANHO,
+            $status === 'aprovando' => FunilEtapa::APROVACAO,
+            default => FunilEtapa::ABERTA,
+        };
+    }
+
+    public function estaPerdido(): bool
+    {
+        return $this->perdido_em !== null;
+    }
+
+    public function emNegociacao(): bool
+    {
+        return ! $this->estaPerdido() && in_array($this->status, self::STATUS_EM_NEGOCIACAO, true);
+    }
+
+    /** @return BelongsTo<FunilEtapa, $this> */
+    public function funilEtapa(): BelongsTo
+    {
+        return $this->belongsTo(FunilEtapa::class, 'funil_etapa_id');
+    }
+
+    /** @return BelongsTo<MotivoPerda, $this> */
+    public function motivoPerda(): BelongsTo
+    {
+        return $this->belongsTo(MotivoPerda::class, 'motivo_perda_id');
     }
 
     /** @return BelongsTo<User, $this> */
