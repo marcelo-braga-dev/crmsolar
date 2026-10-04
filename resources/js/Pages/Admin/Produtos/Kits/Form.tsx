@@ -27,11 +27,11 @@ interface Kit {
     nome: string;
     modelo?: string;
     sku?: string;
+    categoria?: string;
     potencia_kwp?: number;
-    tensao?: string;
+    tensao?: number;
     inclui_trafo: boolean;
     preco_custo?: number;
-    margem_padrao?: number;
     ativo: boolean;
     ativo_fornecedor: boolean;
     observacoes?: string;
@@ -44,9 +44,11 @@ interface Props extends PageProps {
     kit?: Kit;
     fornecedores: Fornecedor[];
     estruturas: Estrutura[];
+    categorias: Record<string, string>;
+    tensoes: number[];
 }
 
-export default function KitsForm({ kit, fornecedores, estruturas }: Props) {
+export default function KitsForm({ kit, fornecedores, estruturas, categorias, tensoes }: Props) {
     const isEdit = !!kit?.id;
 
     const { data, setData, post, put, processing, errors } = useForm({
@@ -55,11 +57,11 @@ export default function KitsForm({ kit, fornecedores, estruturas }: Props) {
         nome: kit?.nome ?? '',
         modelo: kit?.modelo ?? '',
         sku: kit?.sku ?? '',
+        categoria: kit?.categoria ?? 'ongrid',
         potencia_kwp: kit?.potencia_kwp ?? '',
         tensao: kit?.tensao ?? '',
         inclui_trafo: kit?.inclui_trafo ?? false,
         preco_custo: kit?.preco_custo ?? '',
-        margem_padrao: kit?.margem_padrao ?? '',
         ativo: kit?.ativo ?? true,
         ativo_fornecedor: kit?.ativo_fornecedor ?? true,
         observacoes: kit?.observacoes ?? '',
@@ -134,14 +136,13 @@ export default function KitsForm({ kit, fornecedores, estruturas }: Props) {
                                     <Grid size={{ xs: 12, sm: 6 }}>
                                         <TextField
                                             select
-                                            label="Fornecedor"
+                                            label="Fornecedor *"
                                             fullWidth
                                             value={data.fornecedor_id}
                                             onChange={(e) => setData('fornecedor_id', e.target.value)}
                                             error={!!errors.fornecedor_id}
                                             helperText={errors.fornecedor_id}
                                         >
-                                            <MenuItem value="">Nenhum</MenuItem>
                                             {fornecedores.map((f) => (
                                                 <MenuItem key={f.id} value={f.id}>{f.nome}</MenuItem>
                                             ))}
@@ -199,12 +200,33 @@ export default function KitsForm({ kit, fornecedores, estruturas }: Props) {
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
                                         <TextField
-                                            label="Tensão"
+                                            select
+                                            label="Tipo de sistema *"
+                                            fullWidth
+                                            value={data.categoria}
+                                            onChange={(e) => setData('categoria', e.target.value)}
+                                            error={!!errors.categoria}
+                                            helperText={errors.categoria ?? 'Usado no filtro de kits do dimensionamento'}
+                                        >
+                                            {Object.entries(categorias).map(([valor, rotulo]) => (
+                                                <MenuItem key={valor} value={valor}>{rotulo}</MenuItem>
+                                            ))}
+                                        </TextField>
+                                    </Grid>
+                                    <Grid size={{ xs: 12 }}>
+                                        <TextField
+                                            select
+                                            label="Tensão de saída *"
                                             fullWidth
                                             value={data.tensao}
                                             onChange={(e) => setData('tensao', e.target.value)}
-                                            placeholder="Ex: 220V / 380V"
-                                        />
+                                            error={!!errors.tensao}
+                                            helperText={errors.tensao}
+                                        >
+                                            {tensoes.map((t) => (
+                                                <MenuItem key={t} value={t}>{t} V</MenuItem>
+                                            ))}
+                                        </TextField>
                                     </Grid>
                                     <Grid size={{ xs: 12 }}>
                                         <FormControlLabel
@@ -228,26 +250,14 @@ export default function KitsForm({ kit, fornecedores, estruturas }: Props) {
                                 <Grid container spacing={3}>
                                     <Grid size={{ xs: 12 }}>
                                         <TextField
-                                            label="Preço de Custo (R$)"
+                                            label="Preço de Custo (R$) *"
                                             type="number"
                                             fullWidth
                                             inputProps={{ step: '0.01', min: '0' }}
                                             value={data.preco_custo}
                                             onChange={(e) => setData('preco_custo', e.target.value)}
                                             error={!!errors.preco_custo}
-                                            helperText={errors.preco_custo}
-                                        />
-                                    </Grid>
-                                    <Grid size={{ xs: 12 }}>
-                                        <TextField
-                                            label="Margem Padrão (%)"
-                                            type="number"
-                                            fullWidth
-                                            inputProps={{ step: '0.1', min: '0', max: '100' }}
-                                            value={data.margem_padrao}
-                                            onChange={(e) => setData('margem_padrao', e.target.value)}
-                                            error={!!errors.margem_padrao}
-                                            helperText={errors.margem_padrao}
+                                            helperText={errors.preco_custo ?? 'O preço de venda é calculado pelas margens de Precificação'}
                                         />
                                     </Grid>
                                 </Grid>

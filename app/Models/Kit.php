@@ -12,6 +12,18 @@ class Kit extends Model
 {
     use LogsActivity;
 
+    /** Tipos de sistema (coluna kits.categoria) — o dimensionamento filtra por eles. */
+    public const CATEGORIAS = [
+        'ongrid' => 'On-grid',
+        'offgrid' => 'Off-grid',
+        'hibrido' => 'Híbrido',
+        'bomba' => 'Bombeamento',
+        'microinversor' => 'Microinversor',
+    ];
+
+    /** Tensões de saída (V) usadas na busca de kits do dimensionamento. */
+    public const TENSOES = [127, 220, 380];
+
     /** Só mudanças de preço/disponibilidade — a sincronização cria milhares de kits. */
     protected static array $recordEvents = ['updated', 'deleted'];
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Consultor\Dimensionamento;
 
+use App\Models\Kit;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -44,7 +45,7 @@ abstract class DimensionamentoRequest extends FormRequest
             ]
             : [
                 'categorias' => 'nullable|array',
-                'categorias.*' => 'in:ongrid,offgrid,hibrido,bomba,microinversor',
+                'categorias.*' => Rule::in(array_keys(Kit::CATEGORIAS)),
             ];
 
         return $comuns + $this->regrasDoFluxo() + $etapa;

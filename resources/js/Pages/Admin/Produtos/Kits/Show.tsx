@@ -20,6 +20,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ElectricBoltRoundedIcon from '@mui/icons-material/ElectricBoltRounded';
 import LocalOfferRoundedIcon from '@mui/icons-material/LocalOfferRounded';
+import SolarPowerRoundedIcon from '@mui/icons-material/SolarPowerRounded';
 import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
@@ -40,10 +41,10 @@ interface Kit {
     modelo?: string;
     sku?: string;
     potencia_kwp: number;
-    tensao?: string;
+    categoria: string;
+    tensao?: number;
     inclui_trafo: boolean;
     preco_custo?: number;
-    margem_padrao?: number;
     ativo: boolean;
     ativo_fornecedor: boolean;
     observacoes?: string;
@@ -54,7 +55,7 @@ interface Kit {
     updated_at: string;
 }
 
-interface Props extends PageProps { kit: Kit }
+interface Props extends PageProps { kit: Kit; categorias: Record<string, string> }
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     return (
@@ -67,14 +68,10 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
     );
 }
 
-export default function KitsShow({ kit }: Props) {
+export default function KitsShow({ kit, categorias }: Props) {
     const fmtMoney = (v?: number) => v != null
         ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
         : '—';
-
-    const precoVenda = kit.preco_custo && kit.margem_padrao
-        ? kit.preco_custo / (1 - kit.margem_padrao / 100)
-        : null;
 
     return (
         <AppLayout>
@@ -112,8 +109,8 @@ export default function KitsShow({ kit }: Props) {
                         {[
                             { label: 'Potência', value: `${kit.potencia_kwp} kWp`, color: '#f59e0b', icon: <ElectricBoltRoundedIcon /> },
                             { label: 'Preço de Custo', value: fmtMoney(kit.preco_custo), color: '#6366f1', icon: <LocalOfferRoundedIcon /> },
-                            { label: 'Preço de Venda Est.', value: fmtMoney(precoVenda ?? undefined), color: '#22c55e', icon: <LocalOfferRoundedIcon /> },
-                            { label: 'Margem Padrão', value: kit.margem_padrao != null ? `${kit.margem_padrao}%` : '—', color: '#3b82f6', icon: <LocalOfferRoundedIcon /> },
+                            { label: 'Tipo de sistema', value: categorias[kit.categoria] ?? kit.categoria, color: '#22c55e', icon: <SolarPowerRoundedIcon /> },
+                            { label: 'Tensão de saída', value: kit.tensao ? `${kit.tensao} V` : '—', color: '#3b82f6', icon: <ElectricBoltRoundedIcon /> },
                         ].map((item) => (
                             <Grid key={item.label} size={{ xs: 6, sm: 3 }}>
                                 <Card>
@@ -142,7 +139,6 @@ export default function KitsShow({ kit }: Props) {
                         <CardContent>
                             <InfoRow label="Modelo" value={kit.modelo} />
                             <InfoRow label="SKU" value={kit.sku} />
-                            <InfoRow label="Tensão" value={kit.tensao} />
                             <InfoRow label="Inclui Trafo" value={kit.inclui_trafo ? 'Sim' : 'Não'} />
                             <InfoRow label="Fornecedor" value={kit.fornecedor?.nome} />
                             <InfoRow label="Estrutura" value={kit.estrutura?.nome} />

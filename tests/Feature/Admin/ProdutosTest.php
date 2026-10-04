@@ -7,6 +7,7 @@ use App\Models\Kit;
 use App\Models\Marca;
 use App\Models\Produto;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\CriaDados;
 use Tests\TestCase;
 
@@ -23,12 +24,14 @@ class ProdutosTest extends TestCase
         $estrutura = $this->estrutura();
         $dados = [
             'fornecedor_id' => $fornecedor->id, 'estrutura_id' => $estrutura->id, 'nome' => 'Kit 8kWp',
-            'potencia_kwp' => 8, 'tensao' => '220', 'preco_custo' => 30000, 'ativo' => true,
+            'categoria' => 'hibrido', 'potencia_kwp' => 8, 'tensao' => '220', 'preco_custo' => 30000, 'ativo' => true,
         ];
 
         $this->actingAs($admin)->post(route('admin.produtos.kits.store'), $dados)
             ->assertRedirect(route('admin.produtos.kits.index'));
         $kit = Kit::where('nome', 'Kit 8kWp')->firstOrFail();
+        $this->assertSame('hibrido', $kit->categoria);
+        $this->assertSame(220, $kit->tensao);
 
         $this->actingAs($admin)->get(route('admin.produtos.kits.show', $kit))->assertOk();
         $this->actingAs($admin)->get(route('admin.produtos.kits.edit', $kit))->assertOk();
@@ -46,6 +49,72 @@ class ProdutosTest extends TestCase
         $this->actingAs($this->admin())
             ->post(route('admin.produtos.kits.store'), ['nome' => 'Kit sem fornecedor', 'potencia_kwp' => 0])
             ->assertSessionHasErrors(['fornecedor_id', 'potencia_kwp']);
+    }
+
+    /** @return array<string, array{array<string, mixed>, string}> */
+    public static function kitsInvalidos(): array
+    {
+        return [
+            'tensão em texto livre' => [['tensao' => '220V / 380V'], 'tensao'],
+            'tensão fora da lista' => [['tensao' => 110], 'tensao'],
+            'tensão vazia' => [['tensao' => ''], 'tensao'],
+            'tipo inválido' => [['categoria' => 'solar'], 'categoria'],
+            'tipo vazio' => [['categoria' => ''], 'categoria'],
+            'sem preço de custo' => [['preco_custo' => ''], 'preco_custo'],
+        ];
+    }
+
+    #[DataProvider('kitsInvalidos')]
+    public function test_kit_com_dado_invalido_e_recusado_sem_erro_500(array $override, string $campo): void
+    {
+        $dados = $override + [
+            'fornecedor_id' => $this->fornecedor()->id, 'nome' => 'Kit X', 'categoria' => 'ongrid',
+            'potencia_kwp' => 5, 'tensao' => 220, 'preco_custo' => 10000,
+        ];
+
+        $this->actingAs($this->admin())->post(route('admin.produtos.kits.store'), $dados)
+            ->assertSessionHasErrors($campo);
+
+        $this->assertSame(0, Kit::count());
+    }
+
+    public function test_sku_do_kit_e_unico_por_fornecedor(): void
+    {
+        $admin = $this->admin();
+        $fornecedor = $this->fornecedor();
+        $existente = $this->kit(['fornecedor_id' => $fornecedor->id, 'sku' => 'K-1']);
+        $dados = ['nome' => 'Kit Y', 'categoria' => 'ongrid', 'potencia_kwp' => 5, 'tensao' => 220, 'preco_custo' => 10000, 'sku' => 'K-1'];
+
+        $this->actingAs($admin)->post(route('admin.produtos.kits.store'), $dados + ['fornecedor_id' => $fornecedor->id])
+            ->assertSessionHasErrors('sku');
+
+        // Mesmo SKU em outro fornecedor é permitido
+        $this->actingAs($admin)->post(route('admin.produtos.kits.store'), $dados + ['fornecedor_id' => $this->fornecedor()->id])
+            ->assertSessionHasNoErrors();
+
+        // Editar o próprio kit mantendo o SKU não conta como duplicado
+        $this->actingAs($admin)->put(route('admin.produtos.kits.update', $existente), $dados + ['fornecedor_id' => $fornecedor->id])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(2, Kit::where('sku', 'K-1')->count());
+    }
+
+    public function test_formulario_de_kit_recebe_tipos_e_tensoes_aceitos(): void
+    {
+        $this->actingAs($this->admin())->get(route('admin.produtos.kits.create'))
+            ->assertInertia(fn ($page) => $page
+                ->where('tensoes', Kit::TENSOES)
+                ->where('categorias', Kit::CATEGORIAS));
+    }
+
+    public function test_margem_padrao_enviada_no_kit_e_ignorada(): void
+    {
+        $this->actingAs($this->admin())->post(route('admin.produtos.kits.store'), [
+            'fornecedor_id' => $this->fornecedor()->id, 'nome' => 'Kit Z', 'categoria' => 'ongrid',
+            'potencia_kwp' => 5, 'tensao' => 220, 'preco_custo' => 10000, 'margem_padrao' => 40,
+        ])->assertSessionHasNoErrors();
+
+        $this->assertEquals(0, (float) Kit::sole()->margem_padrao);
     }
 
     public function test_listagem_de_kits_filtra_por_potencia(): void

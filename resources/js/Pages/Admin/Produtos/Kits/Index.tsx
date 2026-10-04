@@ -40,10 +40,10 @@ interface Kit {
     modelo?: string;
     sku?: string;
     potencia_kwp: number;
-    tensao?: string;
+    categoria: string;
+    tensao?: number;
     inclui_trafo: boolean;
     preco_custo?: number;
-    margem_padrao?: number;
     ativo: boolean;
     ativo_fornecedor: boolean;
     fornecedor?: { id: number; nome: string };
@@ -59,10 +59,11 @@ interface Props extends PageProps {
     filters: { search?: string; fornecedor_id?: string; estrutura_id?: string; ativo?: string };
     fornecedores: Fornecedor[];
     estruturas: Estrutura[];
+    categorias: Record<string, string>;
     stats: Stats;
 }
 
-export default function KitsIndex({ kits, filters, fornecedores, estruturas, stats }: Props) {
+export default function KitsIndex({ kits, filters, fornecedores, estruturas, categorias, stats }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
     const [fornecedorId, setFornecedorId] = useState(filters.fornecedor_id ?? '');
     const [estruturaId, setEstruturaId] = useState(filters.estrutura_id ?? '');
@@ -198,7 +199,7 @@ export default function KitsIndex({ kits, filters, fornecedores, estruturas, sta
                             <TableCell>Fornecedor</TableCell>
                             <TableCell>Estrutura</TableCell>
                             <TableCell>Preço Custo</TableCell>
-                            <TableCell>Margem</TableCell>
+                            <TableCell>Tipo</TableCell>
                             <TableCell>Status</TableCell>
                             <TableCell align="right">Ações</TableCell>
                         </TableRow>
@@ -247,7 +248,7 @@ export default function KitsIndex({ kits, filters, fornecedores, estruturas, sta
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2">
-                                        {k.margem_padrao != null ? `${k.margem_padrao}%` : '—'}
+                                        {categorias[k.categoria] ?? k.categoria}
                                     </Typography>
                                 </TableCell>
                                 <TableCell>

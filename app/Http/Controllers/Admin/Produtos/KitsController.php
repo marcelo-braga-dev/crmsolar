@@ -8,6 +8,7 @@ use App\Models\Fornecedor;
 use App\Models\Kit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,6 +36,7 @@ class KitsController extends Controller
             'filters' => $request->only(['search', 'fornecedor_id', 'estrutura_id', 'potencia_min', 'potencia_max', 'ativo']),
             'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
             'estruturas' => Estrutura::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'categorias' => Kit::CATEGORIAS,
             'stats' => [
                 'total' => Kit::count(),
                 'ativos' => Kit::where('ativo', true)->count(),
@@ -45,17 +47,12 @@ class KitsController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Produtos/Kits/Form', [
-            'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-            'estruturas' => Estrutura::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-        ]);
+        return Inertia::render('Admin/Produtos/Kits/Form', $this->opcoesFormulario());
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate($this->rules());
-
-        Kit::create($data);
+        Kit::create($request->validate($this->rules($request)));
 
         return redirect()->route('admin.produtos.kits.index')
             ->with('success', 'Kit solar criado com sucesso.');
@@ -67,6 +64,7 @@ class KitsController extends Controller
 
         return Inertia::render('Admin/Produtos/Kits/Show', [
             'kit' => $kit,
+            'categorias' => Kit::CATEGORIAS,
         ]);
     }
 
@@ -74,14 +72,13 @@ class KitsController extends Controller
     {
         return Inertia::render('Admin/Produtos/Kits/Form', [
             'kit' => $kit,
-            'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
-            'estruturas' => Estrutura::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            ...$this->opcoesFormulario(),
         ]);
     }
 
     public function update(Request $request, Kit $kit): RedirectResponse
     {
-        $kit->update($request->validate($this->rules($kit->id)));
+        $kit->update($request->validate($this->rules($request, $kit->id)));
 
         return redirect()->route('admin.produtos.kits.index')
             ->with('success', 'Kit solar atualizado com sucesso.');
@@ -95,19 +92,31 @@ class KitsController extends Controller
             ->with('success', 'Kit solar removido.');
     }
 
-    private function rules(?int $id = null): array
+    private function opcoesFormulario(): array
+    {
+        return [
+            'fornecedores' => Fornecedor::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'estruturas' => Estrutura::where('ativo', true)->orderBy('nome')->get(['id', 'nome']),
+            'categorias' => Kit::CATEGORIAS,
+            'tensoes' => Kit::TENSOES,
+        ];
+    }
+
+    private function rules(Request $request, ?int $id = null): array
     {
         return [
             'fornecedor_id' => 'required|exists:fornecedores,id',
             'estrutura_id' => 'nullable|exists:estruturas,id',
             'nome' => 'required|string|max:255',
             'modelo' => 'nullable|string|max:255',
-            'sku' => 'nullable|string|max:100',
+            // Índice único (fornecedor_id, sku): sem esta regra o SKU repetido viraria erro 500.
+            'sku' => ['nullable', 'string', 'max:60',
+                Rule::unique('kits', 'sku')->where('fornecedor_id', $request->input('fornecedor_id'))->ignore($id)],
+            'categoria' => ['required', Rule::in(array_keys(Kit::CATEGORIAS))],
             'potencia_kwp' => 'required|numeric|min:0.1',
-            'tensao' => 'nullable|string|max:50',
+            'tensao' => ['required', 'integer', Rule::in(Kit::TENSOES)],
             'inclui_trafo' => 'boolean',
-            'preco_custo' => 'nullable|numeric|min:0',
-            'margem_padrao' => 'nullable|numeric|min:0|max:100',
+            'preco_custo' => 'required|numeric|min:0',
             'ativo' => 'boolean',
             'ativo_fornecedor' => 'boolean',
             'observacoes' => 'nullable|string',
