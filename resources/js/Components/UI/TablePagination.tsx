@@ -17,6 +17,17 @@ interface Props {
     label?: string;
 }
 
+/** Rótulo dos links de paginação do Laravel ("&laquo; Anterior", "Próximo &raquo;") como texto puro. */
+export function rotuloPaginacao(label: string): string {
+    return label
+        .replace(/<[^>]*>/g, '')
+        .replace(/&laquo;/g, '«')
+        .replace(/&raquo;/g, '»')
+        .replace(/&hellip;/g, '…')
+        .replace(/&amp;/g, '&')
+        .trim();
+}
+
 export function TablePagination({ from, to, total, last_page, links, label = 'registros' }: Props) {
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5, flexWrap: 'wrap', gap: 1 }}>
@@ -33,9 +44,8 @@ export function TablePagination({ from, to, total, last_page, links, label = 're
                             color={link.active ? 'primary' : 'inherit'}
                             disabled={!link.url}
                             onClick={() => link.url && router.visit(link.url)}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
                             sx={{ minWidth: 32, px: 0.75, fontSize: '0.78rem' }}
-                        />
+                        >{rotuloPaginacao(link.label)}</Button>
                     ))}
                 </Box>
             )}

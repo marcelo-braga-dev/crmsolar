@@ -28,6 +28,7 @@ import { PageHeader } from '@/Components/UI/PageHeader';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { BoolChip } from '@/Components/UI/StatusChip';
 import { PageProps, PaginatedData } from '@/types';
+import { rotuloPaginacao } from '@/Components/UI/TablePagination';
 
 interface Consultor {
     id: number;
@@ -213,9 +214,8 @@ export default function ConsultoresIndex({ consultores, filters }: Props) {
                                 variant={link.active ? 'contained' : 'outlined'}
                                 disabled={!link.url}
                                 onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
                                 sx={{ minWidth: 36 }}
-                            />
+                            >{rotuloPaginacao(link.label)}</Button>
                         ))}
                     </Box>
                 )}

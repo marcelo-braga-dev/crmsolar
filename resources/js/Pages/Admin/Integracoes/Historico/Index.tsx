@@ -18,6 +18,7 @@ import { Head, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { PageProps, PaginatedData } from '@/types';
+import { rotuloPaginacao } from '@/Components/UI/TablePagination';
 
 interface Historico {
     id: number;
@@ -166,8 +167,8 @@ export default function HistoricoIndex({ historicos, filters }: Props) {
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, p: 2 }}>
                         {historicos.links.map((link, i) => (
                             <Button key={i} size="small" variant={link.active ? 'contained' : 'outlined'}
-                                disabled={!link.url} onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }} sx={{ minWidth: 36 }} />
+                                disabled={!link.url} onClick={() => link.url && router.visit(link.url)} sx={{ minWidth: 36 }}
+                            >{rotuloPaginacao(link.label)}</Button>
                         ))}
                     </Box>
                 )}

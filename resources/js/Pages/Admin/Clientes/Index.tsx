@@ -28,6 +28,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { ClienteStatusChip } from '@/Components/UI/StatusChip';
 import { PageProps, PaginatedData } from '@/types';
+import { rotuloPaginacao } from '@/Components/UI/TablePagination';
 
 interface Cliente {
     id: number;
@@ -252,9 +253,8 @@ export default function ClientesIndex({ clientes, filters, consultores }: Props)
                                 variant={link.active ? 'contained' : 'outlined'}
                                 disabled={!link.url}
                                 onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
                                 sx={{ minWidth: 36 }}
-                            />
+                            >{rotuloPaginacao(link.label)}</Button>
                         ))}
                     </Box>
                 )}

@@ -27,6 +27,7 @@ import { PageHeader } from '@/Components/UI/PageHeader';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { BoolChip } from '@/Components/UI/StatusChip';
 import { PageProps, PaginatedData } from '@/types';
+import { rotuloPaginacao } from '@/Components/UI/TablePagination';
 
 interface Fornecedor {
     id: number;
@@ -173,8 +174,8 @@ export default function FornecedoresIndex({ fornecedores, filters }: Props) {
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, p: 2 }}>
                         {fornecedores.links.map((link, i) => (
                             <Button key={i} size="small" variant={link.active ? 'contained' : 'outlined'}
-                                disabled={!link.url} onClick={() => link.url && router.visit(link.url)}
-                                dangerouslySetInnerHTML={{ __html: link.label }} sx={{ minWidth: 36 }} />
+                                disabled={!link.url} onClick={() => link.url && router.visit(link.url)} sx={{ minWidth: 36 }}
+                            >{rotuloPaginacao(link.label)}</Button>
                         ))}
                     </Box>
                 )}
