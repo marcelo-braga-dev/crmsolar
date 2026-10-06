@@ -1,7 +1,7 @@
 # Funil de Vendas (Kanban de Orçamentos)
 
 > Especificação funcional e técnica do funil comercial do CRM Solar V2.
-> Status: **Fase 1 concluída** · Fases 2 e 3 planejadas · Atualizado em 2026-10-04
+> Status: **Fase 1 concluída** · Evolução da experiência em andamento (seção 22) · Fases 2 e 3 planejadas · Atualizado em 2026-10-06
 
 ## Sumário
 
@@ -26,6 +26,7 @@
 19. [Fases de entrega](#19-fases-de-entrega)
 20. [Decisões e premissas](#20-decisões-e-premissas)
 21. [Implementação (Fase 1)](#21-implementação-fase-1)
+22. [Plano de evolução da experiência](#22-plano-de-evolução-da-experiência)
 
 ---
 
@@ -108,9 +109,9 @@ Todas podem ser **renomeadas e recoloridas**.
 | 2 | Proposta apresentada | 30% | 5 dias |
 | 3 | Visita técnica | 50% | 7 dias |
 | 4 | Negociação | 70% | 7 dias |
-| 5 | Financiamento / análise de crédito | 80% | 15 dias |
-| 6 | Fechamento / documentação | 90% | 5 dias |
-| — | Em aprovação *(sistema)* | — | 2 dias |
+| 5 | Financiamento | 80% | 15 dias |
+| 6 | Fechamento | 90% | 5 dias |
+| — | Em aprovação *(sistema)* | 95% | 2 dias |
 | — | Ganho *(sistema)* | 100% | — |
 | — | Perdido *(sistema)* | 0% | — |
 
@@ -202,9 +203,10 @@ Ações: **Reativar** (volta à primeira etapa, `tentativas_reativacao + 1`) ou 
 └─────────────────────────────────┘
 ```
 
-- Cabeçalho da coluna: quantidade · soma (R$) · valor ponderado.
+- Cabeçalho da coluna: quantidade · soma (R$) · valor ponderado (exibido só nas etapas abertas).
+- Indicadores no topo: em negociação, previsão ponderada (etapas abertas **+ Em aprovação**, com a probabilidade de 95%), contatos atrasados (clique filtra) e caixa de entrada.
 - Topo do quadro: busca por cliente, filtros (consultor — admin; grupo tarifário; só atrasados), totais do funil e botão da Caixa de entrada.
-- Ganho e Perdido mostram os últimos 30 dias (link "ver todos" para a lista).
+- Ganho e Perdido mostram os últimos 30 dias (`FunilService::DIAS_FECHADOS_NO_QUADRO`); o histórico completo fica em **Orçamentos → Lista**.
 - Ordem automática dentro da coluna: contato atrasado primeiro, depois o mais antigo na etapa.
 - Arrastar e soltar com `@dnd-kit` (mouse, toque e teclado); atualização otimista com reversão se o servidor recusar.
 - Mobile: rolagem horizontal com encaixe por coluna.
@@ -284,6 +286,9 @@ Tela **Configurações → Funil de vendas**:
 | POST | `/consultor/funil/{orcamento}/reativar` | `consultor.funil.reativar` |
 | POST | `/consultor/funil/{orcamento}/contato` | `consultor.funil.contato` |
 | GET/POST | `/admin/funil…` | `admin.funil.*` (mesmas ações; aprovar = soltar em Ganho, reprovar = tirar de Em aprovação) |
+| GET | `/{area}/funil/{orcamento}` | `admin.funil.show`, `consultor.funil.show` — dados do painel lateral (JSON) |
+| POST | `/admin/funil/{orcamento}/consultor` | `admin.funil.reatribuir` — troca o responsável |
+| POST | `/admin/funil/lote` | `admin.funil.lote` — `acao` = `mover` \| `reatribuir` \| `perder` para vários `ids` |
 | GET | `/admin/configuracoes/funil` | `admin.configuracoes.funil.index` |
 | POST/PUT/DELETE | `/admin/configuracoes/funil/etapas…` | `…etapas.store`, `…etapas.update`, `…etapas.destroy` (com `destino_id`), `…etapas.reordenar` (PUT `etapas/ordem`) |
 | POST/PUT/DELETE | `/admin/configuracoes/funil/motivos…` | `…motivos.store`, `…motivos.update`, `…motivos.destroy` |
@@ -327,6 +332,7 @@ Fase 1 cobre, com dono × outro consultor × admin × visitante:
 | Fase | Escopo |
 |---|---|
 | **1 — Quadro completo** | Banco e migração, configuração de etapas/motivos, quadro consultor e admin com arrastar e soltar, caixa de entrada, perda com motivo, reativação, próximo contato, linha do tempo, testes |
+| **1.5 — Experiência** | Correções e ondas 1 e 2 da seção 22: visual do card e das colunas, saúde do card, painel lateral, contato rápido (WhatsApp/ligar), filtros e versão mobile |
 | **2 — Recuperação e métricas** | Aba Recuperação (3 filas), métricas (conversão por etapa, tempo médio por etapa, ranking de motivos), "contatos de hoje" no dashboard |
 | **3 — Atividades** | Registro detalhado de interações (ligação, WhatsApp, e-mail, reunião), modelos de mensagem, automações por etapa |
 
@@ -351,7 +357,7 @@ Fase 1 cobre, com dono × outro consultor × admin × visitante:
 | Controller | `app/Http/Controllers/Admin/Configuracoes/FunilVendasController.php` | configuração |
 | Página | `resources/js/Pages/Funil/Index.tsx` | quadro (uma página para as duas áreas, prop `area`) |
 | Página | `resources/js/Pages/Admin/Configuracoes/Funil/Index.tsx` | configuração |
-| Componentes | `resources/js/Components/Funil/*` | `CardOrcamento`, `ColunaFunil`, `CaixaEntrada`, `Dialogos` (perda, agenda), `tipos.ts` |
+| Componentes | `resources/js/Components/Funil/*` | `CardOrcamento`, `ColunaFunil`, `CaixaEntrada`, `PainelOrcamento` (painel lateral), `Dialogos` (perda, agenda), `tipos.ts` |
 
 ### Detalhes técnicos
 
@@ -365,5 +371,96 @@ Fase 1 cobre, com dono × outro consultor × admin × visitante:
 
 ### Testes
 
-`tests/Feature/Funil/` — `FunilQuadroTest` (posicionamento, escopo, filtros, totais, aging), `FunilMovimentacaoTest` (todas as movimentações, permissões, concorrência, perda, reativação, follow-up) e `FunilConfiguracaoTest` (etapas, motivos, parâmetros, migration). Apoio em `tests/Concerns/CriaFunil.php`. Quadro e configuração estão na matriz de `ControleDeAcessoTest`.
+`tests/Feature/Funil/` — `FunilQuadroTest` (posicionamento, escopo, filtros, totais, aging, saúde do card), `FunilPainelELoteTest` (painel, contatos, filtros da seção 22, reatribuição, lote), `FunilMovimentacaoTest` (todas as movimentações, permissões, concorrência, perda, reativação, follow-up) e `FunilConfiguracaoTest` (etapas, motivos, parâmetros, migration). Apoio em `tests/Concerns/CriaFunil.php`. Quadro e configuração estão na matriz de `ControleDeAcessoTest`.
 
+## 22. Plano de evolução da experiência
+
+Análise feita em 2026-10-06 sobre a Fase 1. As regras de negócio estão sólidas; o que falta é **experiência de uso e gestão**. As regras das seções 6 e 7 não mudam.
+
+### 22.1 Diagnóstico
+
+| Ponto | Situação na Fase 1 |
+|---|---|
+| Sair do quadro para ver qualquer coisa | Clicar no card abre a tela do orçamento e perde filtros e rolagem |
+| Sem contato rápido | O card não traz telefone/WhatsApp (`clientes.celular` existe) |
+| "Todo orçamento tem um próximo passo" (seção 1) | Nada sinaliza card **sem** próximo contato — só os atrasados |
+| Sinais visuais concorrentes | Borda vermelha (contato), texto vermelho (SLA) e selos competem; não há um indicador único |
+| Quadro trava a cada movimento | Todos os cards ficam não arrastáveis até a resposta, e cada movimento recarrega todas as props |
+| Busca | Só dispara com Enter |
+| Mobile | Colunas de 296 px com rolagem horizontal e arraste com toque longo |
+| Gestão | Sem métricas, Recuperação nem "contatos de hoje" (Fase 2) |
+
+### 22.2 Correções (antes das melhorias)
+
+| # | Problema | Correção |
+|---|---|---|
+| C1 | Aprovar não limpava `proximo_contato_em`: card em **Ganho** ficava com contato "atrasado" (borda vermelha) e aparecia no filtro "Só atrasados" | Hook do model limpa o próximo contato quando o status entra em Ganho; `contato_atrasado` e o filtro só valem para negociações abertas e Em aprovação |
+| C2 | Cabeçalho de **Em aprovação** não mostrava o ponderado, mas a previsão do topo o somava (95%) | Ponderado exibido também em Em aprovação |
+| C3 | Quadro inteiro congelado durante a requisição | Só o card em envio fica bloqueado (com indicador); movimentos recarregam apenas `colunas`, `caixa` e `resumo` |
+| C4 | Busca por número: `'12abc'` encontrava o #12 (o MySQL converte texto em número) | Busca por id só com número puro (`#123` ou `123`) |
+
+### 22.3 Onda 1 — Visual
+
+- **Saúde do card** (`card.saude`, calculada no servidor) — um único indicador no lugar dos sinais concorrentes:
+
+  | Saúde | Regra (na ordem) |
+  |---|---|
+  | `atrasado` 🔴 | contato vencido **ou** SLA da etapa estourado |
+  | `atencao` 🟡 | contato hoje (fuso `app.timezone_exibicao`) **ou** ≥ 70% do SLA da etapa |
+  | `sem_passo` ⚪ | etapa aberta sem próximo contato |
+  | `em_dia` 🟢 | demais casos |
+  | `null` | Ganho, Perdido e caixa de entrada (a caixa usa o selo "esfriando") |
+
+  Em aprovação nunca é `sem_passo` (o próximo passo é do administrador).
+- **Card redesenhado**: cliente e valor em destaque, linha técnica (kWp · grupo · cidade), rodapé com saúde, próximo passo e barra de tempo na etapa (dias ÷ SLA).
+- **Colunas** com fundo tingido pela cor da etapa e barra da participação da etapa no valor do funil.
+- **Faixa do funil** no topo: valor por etapa aberta + Em aprovação; clicar rola até a coluna.
+- Animação ao soltar, indicador de envio no card, **densidade compacta/confortável** (preferência no navegador), estados vazios melhores.
+
+### 22.4 Onda 2 — Praticidade
+
+Entregue em 2026-10-06. Diferenças em relação ao planejado: o filtro por **faixa de valor** ficou para depois (a ordenação por valor cobre o caso mais comum) e, no celular, "Mover para" usa o menu do card em vez de folha inferior (o arraste fica desligado no celular).
+
+Regras definidas na implementação:
+
+- **Reatribuir** só vale para negociação em andamento (caixa ou etapa aberta, não perdida); Em aprovação, Ganho e Perdido mantêm o responsável. O `comissao_percentual` gravado nos itens passa a ser o do novo consultor (a comissão é de quem fecha). Evento `responsavel` na linha do tempo. O cliente continua vinculado ao consultor original.
+- **Lote** (admin): mover só para etapa aberta ativa e só cards em negociação — em lote não se aprova, reprova nem reativa. Cada card é validado individualmente; recusas não impedem os demais e a mensagem traz um exemplo.
+- **Pedir data ao mover**: entre etapas abertas, se o card não tem próximo contato (pode-se escolher "Sem data").
+- **Desfazer**: só movimentos entre etapas abertas (os demais mudam status). O desfazer é um novo movimento e também fica na linha do tempo.
+- **Contato rápido**: `FunilService::contatos()` prefere o celular; número de 10–11 dígitos recebe DDI 55.
+
+Planejado:
+
+- **Painel lateral** ao clicar no card: cliente, contatos, kit, valor, linha do tempo e ações (registrar contato, mover, perder, reativar, abrir orçamento). Dados carregados sob demanda; rota entra na matriz de acesso.
+- **WhatsApp (`wa.me`) e Ligar (`tel:`)** no card e no painel; ao voltar, oferece "Registrar contato?".
+- **Sem próximo passo**: indicador no topo, filtro e pedido de data ao mover para etapa aberta.
+- **Busca instantânea** (300 ms) e filtros em chips (SLA estourado, sem próximo passo, faixa de valor); escolha da ordenação (prioridade, valor, mais antigo).
+- **Desfazer** (5 s) em movimentos entre etapas abertas.
+- **Admin**: reatribuir consultor pelo quadro e ações em lote (mover, reatribuir, perder).
+- **Atalhos**: `/` busca, `C` caixa de entrada, `Esc` fecha.
+- **Mobile**: abas por etapa com lista vertical e "Mover para" em folha inferior.
+- Botão **+ Novo orçamento** no quadro.
+
+### 22.5 Onda 3 — Gestão (= Fase 2)
+
+- Visões **Quadro | Lista | Agenda** sobre o mesmo filtro (Lista com CSV; Agenda com hoje, atrasados e próximos 7 dias).
+- Aba **Recuperação** (seção 9), **métricas** (conversão e tempo médio por etapa, ranking de motivos, por consultor) e **contatos de hoje** nos dashboards.
+- Atualização automática leve (recarga parcial a cada 60 s com a aba visível — sem websockets nem fila).
+- Opcional: `orcamentos.previsao_fechamento` para previsão de receita por mês.
+
+### 22.6 Onda 4 — Atividades (= Fase 3)
+
+Tipos de contato (ligação, WhatsApp, e-mail, visita, reunião), modelos de mensagem com link da proposta pública, automações por etapa e etiquetas.
+
+### 22.7 Testes
+
+Cada correção tem teste que falha sem ela; a saúde do card é coberta regra a regra em `FunilQuadroTest`; rotas novas (painel, reatribuição, lote) entram em `ControleDeAcessoTest` com dono × outro consultor × admin × visitante. O frontend não tem testes automatizados: `tsc`, `npm run build` e conferência manual com admin e consultor (desktop e mobile).
+
+### 22.8 Andamento
+
+| Item | Situação |
+|---|---|
+| C1–C4 | ✅ concluído (testes em `FunilQuadroTest`) |
+| Onda 1 | ✅ concluído |
+| Onda 2 | ✅ concluído (exceto filtro por faixa de valor) |
+| Onda 3 / 4 | planejado (Fases 2 e 3) |

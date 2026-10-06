@@ -46,6 +46,25 @@ npm run build
 ./vendor/bin/sail artisan test
 ```
 
+### Deploy no servidor `crmsolar.rexar.com.br` (sem Sail)
+
+O servidor roda direto no host (aaPanel, PHP 8.4, usuário `www`). Rodar **como `www`** — se rodar como root, `chown -R www:www storage bootstrap/cache public/build node_modules` no fim, senão o PHP não consegue recriar cache e views compiladas.
+
+```bash
+git pull
+php artisan optimize:clear       # OBRIGATÓRIO antes dos testes (ver aviso abaixo)
+php artisan test                 # só seguir com 0 falhas
+php artisan migrate --force
+npm ci && npm run build          # quando package.json/lock mudar, ou sempre que houver mudança no frontend
+php artisan optimize:clear && php artisan optimize
+```
+
+> ⚠️ **Nunca rode `php artisan test` com a configuração em cache** (`bootstrap/cache/config.php`, gerado pelo `optimize`). O cache ignora o `phpunit.xml`: os testes rodam no MySQL real e o `RefreshDatabase` **apaga o banco** (aconteceu em 2026-10-06). `tests/TestCase.php` agora aborta nesse caso. Para testar sem desfazer o cache do servidor: `APP_CONFIG_CACHE=/tmp/x.php APP_ROUTES_CACHE=/tmp/y.php APP_EVENTS_CACHE=/tmp/z.php php artisan test`. Backups diários do banco: `/www/backup/database/mysql/crontab_backup/crmsolar/`.
+
+Depois: smoke test com login de admin e consultor nas telas afetadas e `curl -X POST -H 'Accept: application/json' .../api/leads` (espera 422, não 419). O agendador já está no crontab (`schedule:run` a cada minuto, como `www`); **não há worker `queue:work`**.
+
+CI (`.github/workflows/ci.yml`): Pint (`--test`), Larastan, `php artisan test`, `npx tsc --noEmit` e `npm run build`.
+
 ## Service ports (Sail defaults)
 
 | Service    | Port  | Env var             |
@@ -162,10 +181,10 @@ app/Http/Controllers/
 - **`DimensionamentoService`** — engine de cálculo solar (convencional e demanda). Recebe consumo/demanda + parâmetros → retorna potência do sistema, quantidade de painéis, geração estimada.
 - **`GrupoTarifarioService`** — cálculo para todos os grupos ANEEL (B1/B2/B3/A). Recebe tarifa + consumo → retorna análise econômica (payback, TIR, economia mensal).
 - **`PrecificacaoService`** — aplica as 3 camadas de margem (principal por faixa de potência → estado → fornecedor) para calcular o preço de venda. A comissão do consultor (`users.comissao_percentual`, gerenciada em Usuarios/Consultores) é registrada no item do orçamento mas não é somada como camada de margem — não infla o preço de venda.
-- **`Integracoes/Edeltec/`** — serviço de sincronização de catálogo Edeltec.
+- **`Integracoes/Edeltec/`** — serviço de sincronização de catálogo Edeltec. Roda pelo botão em Integrações → Edeltec, pelo comando `app:integracao-edeltec` (agendado diariamente às 04h00 em `routes/console.php`, log em `storage/logs/edeltec.log`) ou pelo job `App\Jobs\SincronizarEdeltec` (quando `EDELTEC_SYNC_FILA=true`).
 - **`Funil/FunilService`** — funil de vendas: em que coluna cada orçamento aparece (colunas de sistema derivadas do `status`) e todas as movimentações (mover, aprovar/reprovar, perder, reativar, follow-up). **Especificação completa: `docs/funil-de-vendas.md`.**
 
-### Database — Migrations (39 total)
+### Database — Migrations (40 total)
 
 Todas em `database/migrations/`. Seeders principais:
 - `UsersSeeder` — cria admin e consultor de demo
@@ -173,7 +192,8 @@ Todas em `database/migrations/`. Seeders principais:
 - `CategoriasProdutosSeeder` — 10 categorias de produtos
 - `ParamsDimensionamentoSeeder` — parâmetros do motor de cálculo
 - `CidadesEstadosSeeder` — municípios brasileiros
-- `IrradiacaoSolarSeeder` — dados de irradiação por município
+- `IrradiacaoSolarSeeder`, `IrradiacaoSolarComplementoSeeder`, `IrradiacaoSolarTodosSeeder` — dados de irradiação por município
+- `ConcessionariasSeeder` — concessionárias e tarifas
 - `DadosTesteSeeder` — clientes, leads e orçamentos fictícios
 
 Campos críticos do schema:
@@ -326,7 +346,7 @@ Acesso: `usePage<PageProps>().props`
 
 ## Status atual do desenvolvimento
 
-**Plataforma em desenvolvimento.** O servidor `crmsolar.rexar.com.br` roda com `APP_ENV=production`, mas **todos os dados do banco são de teste** — não há dados reais de clientes. Credenciais fracas de seed (`1020`) são aceitáveis enquanto durar essa fase; **trocar antes do go-live**.
+**Plataforma em desenvolvimento.** O servidor `crmsolar.rexar.com.br` é o ambiente de desenvolvimento (em 2026-10-05 o `.env` estava com `APP_ENV=local` e `APP_DEBUG=false` — definir `APP_ENV=production` antes do go-live) e **todos os dados do banco são de teste** — não há dados reais de clientes. Credenciais fracas de seed (`1020`) são aceitáveis enquanto durar essa fase; **trocar antes do go-live**.
 
 Trabalho de atualização integrado à `main`.
 
@@ -350,7 +370,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**424 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**451 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -394,6 +414,7 @@ Trabalho de atualização integrado à `main`.
 - Regra de ouro: o `status` operacional não mudou (financeiro/comissões continuam iguais). Colunas Em aprovação e Ganho são **derivadas** do status; nunca grave etapa de sistema em `funil_etapa_id`.
 - Datas: app em UTC; navegador envia ISO com fuso; textos do servidor usam `config('app.timezone_exibicao')` (`APP_TIMEZONE_EXIBICAO`, padrão `America/Sao_Paulo`).
 - Testes em `tests/Feature/Funil/` (+ `tests/Concerns/CriaFunil.php`).
+- **Evolução da experiência** (seção 22 da doc): saúde do card (`card.saude`, calculada no servidor), painel lateral (`GET funil/{orcamento}`), WhatsApp/ligar, filtros `sem_passo`/`sla`/`ordem`, desfazer, mobile em abas, e no admin reatribuir consultor e ações em lote. Reatribuir troca o `comissao_percentual` dos itens para o do novo consultor.
 
 ### Pendências conhecidas (funcionalidade)
 - **Funil — Fase 2:** aba Recuperação (novos parados, negócios acima do SLA, perdidos reativáveis — usa `motivos_perda.reativar_apos_dias` e `funil.max_tentativas_reativacao`), métricas do funil e "contatos de hoje" no dashboard. **Fase 3:** atividades detalhadas e automações. Ver `docs/funil-de-vendas.md`, seção 19

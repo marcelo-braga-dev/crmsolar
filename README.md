@@ -6,9 +6,9 @@ CRM para empresas de energia solar. Gerencia o pipeline completo de vendas: **le
 
 | Camada     | Tecnologia                                      |
 |------------|-------------------------------------------------|
-| Backend    | Laravel 13 · PHP 8.3                            |
+| Backend    | Laravel 13 · PHP 8.3+                           |
 | Frontend   | React 18 · TypeScript · Inertia.js v2           |
-| UI         | MUI v7 · Recharts                               |
+| UI         | MUI v7 · Recharts · @dnd-kit (Kanban)           |
 | Build      | Vite 6                                          |
 | Banco      | MySQL 8.4                                       |
 | Infra      | Docker (Laravel Sail)                           |
@@ -62,20 +62,21 @@ npm run build                   # produção
 ### Área Admin
 
 - **Dashboard** — KPIs gerais, evolução mensal, pipeline por status, ranking de consultores
-- **Orçamentos** — visão geral de todas as propostas com filtros e status
+- **Orçamentos** — **Funil (Kanban)** de todos os consultores (aprovar = soltar em Ganho) e **Lista** com filtros e mudança de status
 - **Clientes** — cadastro e gestão de clientes
 - **Leads** — acompanhamento de leads recebidos
-- **Catálogo de Produtos** — painéis, inversores, trafos, kits solares, categorias, marcas
-- **Precificação** — 5 camadas de margem: principal, por estado, por consultor, por estrutura, por fornecedor
+- **Produtos** — **Kits Solares** (sistemas completos usados no dimensionamento) e **Catálogo** de produtos avulsos, com atalhos por categoria (painéis, inversores, transformadores…) e abas de Categorias e Marcas
+- **Precificação** — 3 camadas de margem (principal por faixa de potência → estado → fornecedor) e simulador de preço. A comissão do consultor não entra no preço
 - **Usuários** — gestão de admins e consultores
 - **Financeiro** — comissões e faturamento
 - **Fornecedores** — cadastro de fornecedores
 - **Integrações** — sincronização de catálogo Edeltec, histórico de execuções
-- **Configurações** — bancos, concessionárias, parâmetros de dimensionamento, sistema
+- **Configurações** — auditoria (log de alterações), bancos, concessionárias, parâmetros de dimensionamento, funil de vendas (etapas, motivos de perda), sistema
 
 ### Área Consultor
 
 - **Dashboard** — KPIs pessoais, evolução mensal, pipeline, orçamentos recentes
+- **Funil de vendas (Kanban)** — etapas comerciais com arrastar e soltar, caixa de entrada, próximo contato, perda com motivo e reativação ([especificação](docs/funil-de-vendas.md))
 - **Orçamentos** — criação com dimensionamento automático por grupo tarifário ANEEL:
   - **B1** — Residencial (Baixa Tensão)
   - **B2** — Rural
@@ -85,7 +86,7 @@ npm run build                   # produção
 - **Clientes** — CRUD com busca de CEP automática
 - **Leads** — acompanhamento dos leads atribuídos
 - **Propostas de Serviços** — criação de propostas para serviços avulsos (O&M, limpeza, etc.)
-- **Contratos** — geração a partir de orçamentos aprovados
+- **Contratos** — geração a partir de orçamentos aprovados (valor e dados técnicos vêm do orçamento), com PDF
 - **Visitas Técnicas** — agendamento e registro de visitas
 - **Financeiro** — extrato de comissões
 
@@ -108,25 +109,44 @@ app/
       Admin/           — controllers da área admin
       Consultor/       — controllers da área consultor
       Api/             — endpoints públicos
-  Models/              — 29 modelos Eloquent (sem padrão EAV)
+      FunilController  — quadro Kanban (Admin e Consultor)
+  Models/              — 30 modelos Eloquent
   Services/
     DimensionamentoService.php   — engine de cálculo solar
     GrupoTarifarioService.php    — análise econômica por grupo ANEEL
     PrecificacaoService.php      — cálculo de preços com margens em camadas
-    Integracoes/                 — serviços de sync com distribuidores
+    Funil/FunilService.php       — regras do funil de vendas
+    Integracoes/Edeltec/         — sincronização do catálogo Edeltec
+  Jobs/SincronizarEdeltec.php    — sincronização em fila (opcional)
 
 resources/js/
   Pages/
     Admin/             — páginas da área admin
     Consultor/         — páginas da área consultor
+    Funil/             — quadro Kanban (compartilhado)
     Auth/              — telas de autenticação
   Components/          — componentes reutilizáveis (PageHeader, KpiCard, etc.)
   Layouts/             — AppLayout (autenticado), GuestLayout (auth)
 
 database/
-  migrations/          — 34 migrations
+  migrations/          — 40 migrations
   seeders/             — dados de estrutura + dados de teste
+
+docs/
+  funil-de-vendas.md   — especificação do funil (regras, permissões, modelo de dados)
 ```
+
+## Variáveis de ambiente específicas
+
+Além das padrão do Laravel (ver `.env.example`):
+
+| Variável                 | Padrão              | Uso                                                                 |
+|--------------------------|---------------------|---------------------------------------------------------------------|
+| `APP_TIMEZONE_EXIBICAO`  | `America/Sao_Paulo` | Fuso dos textos gerados no servidor (a aplicação grava em UTC)      |
+| `EDELTEC_API_KEY`, `EDELTEC_SECRET`, `EDELTEC_API_URL` | — | Credenciais da API Edeltec (sincronização do catálogo de kits) |
+| `EDELTEC_SYNC_FILA`      | `false`             | `true` = botão "Integrar" enfileira a sincronização. Exige worker `queue:work` |
+
+A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php artisan schedule:run` no cron).
 
 ## Status do projeto
 
@@ -139,7 +159,7 @@ database/
 ## Testes
 
 ```bash
-php artisan test   # 336 testes, SQLite em memória
+php artisan test   # 424 testes, SQLite em memória
 ```
 
 > ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).
