@@ -43,6 +43,9 @@
         <table>
             <tr>
                 <td>
+                    @if($logoPdf = \App\Services\IdentidadeVisual::logoParaPdf())
+                        <img src="{{ $logoPdf }}" alt="" style="max-height: 46px; max-width: 190px; margin-bottom: 6px;"><br>
+                    @endif
                     <div class="empresa-nome">{{ \App\Models\Config::get('empresa_nome', config('app.name')) }}</div>
                 </td>
                 <td class="doc-title">

@@ -137,6 +137,7 @@ app/Http/Controllers/
       ConcessionariasController      — CRUD concessionárias de energia
       DimensionamentoController      — parâmetros do motor de cálculo
       FunilVendasController          — etapas do Kanban, motivos de perda e parâmetros do funil
+      IdentidadeVisualController     — nome da plataforma, rodapé do login, logos, favicon e cores
       SistemaController              — configurações gerais
     Integracoes/
       EdeltecController              — integração Edeltec
@@ -238,6 +239,7 @@ resources/js/Pages/
       Auditoria/Index.tsx            — log de auditoria com filtros
       Dimensionamento/Index.tsx      — parâmetros do motor de cálculo
       Funil/Index.tsx                — etapas, cores, motivos de perda e parâmetros do funil
+      IdentidadeVisual/Index.tsx     — identidade visual com pré-visualização ao vivo
       Sistema/Index.tsx
     Integracoes/
       Edeltec/Index.tsx
@@ -345,7 +347,14 @@ GET /api/cep/{cep}
 ```typescript
 auth.user: { id, name, email, tipo: 'admin' | 'consultor', status }
 flash: { success?, error?, warning?, info? }
+identidade: { nome, rodape, cor_primaria, cor_secundaria, menu_fundo, menu_fonte, logo_url, logo_clara_url, favicon_url }
 ```
+
+### Identidade visual (Admin → Configurações → Identidade visual)
+- Guardada em `configs` (grupo `identidade`) e lida por `App\Services\IdentidadeVisual::atual()` (com cache — limpe com `limparCache()` ao gravar). Imagens no disco `public`, pasta `identidade/` (SVG recusado: pode conter script).
+- O tema MUI é montado por `criarTema(identidade)` (`resources/js/theme.ts`) e trocado a cada navegação em `app.tsx`. **Não fixe cores da marca em componentes**: use `theme.palette.primary/secondary` e `theme.palette.sidebar.{bg,text,textMuted,strong,active,hover,border}`; nome/logos via `useIdentidade()` (`resources/js/hooks/useIdentidade.ts`).
+- Também aplicada na view raiz (título e favicon), na tela de login, no cabeçalho dos PDFs (`IdentidadeVisual::logoParaPdf()`) e em `config('app.name')` (e-mails), pelo `AppServiceProvider`.
+- Contraste mínimo de 3:1 entre fonte e fundo do menu (validado no servidor e na tela). Alterações vão para a Auditoria.
 Acesso: `usePage<PageProps>().props`
 
 ## Status atual do desenvolvimento
@@ -374,7 +383,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**455 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
+**466 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).

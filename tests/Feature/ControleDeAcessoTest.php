@@ -29,7 +29,7 @@ class ControleDeAcessoTest extends TestCase
             'admin.fornecedores.create', 'admin.integracoes.edeltec',
             'admin.integracoes.historico', 'admin.configuracoes.bancos.index',
             'admin.configuracoes.concessionarias.index', 'admin.configuracoes.dimensionamento',
-            'admin.configuracoes.sistema', 'admin.configuracoes.auditoria', 'admin.perfil.edit', 'admin.perfil.senha',
+            'admin.configuracoes.sistema', 'admin.configuracoes.auditoria', 'admin.configuracoes.identidade', 'admin.perfil.edit', 'admin.perfil.senha',
         ], array_map(fn ($n) => [$n], $r));
     }
 

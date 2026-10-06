@@ -4,7 +4,10 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        @php($identidade = \App\Services\IdentidadeVisual::atual())
+        <title inertia>{{ $identidade['nome'] }}</title>
+        <link rel="icon" href="{{ $identidade['favicon_url'] ?? '/favicon.ico' }}">
+        <meta name="theme-color" content="{{ $identidade['menu_fundo'] }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

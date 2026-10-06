@@ -21,6 +21,7 @@ import LockResetRoundedIcon from '@mui/icons-material/LockResetRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { router } from '@inertiajs/react';
 import { User } from '@/types';
+import { rotuloTipoUsuario } from '@/Components/UI/rotuloTipoUsuario';
 import { SIDEBAR_WIDTH } from '../Sidebar/Sidebar';
 
 interface TopBarProps {
@@ -65,11 +66,6 @@ export function TopBar({ user, onMenuToggle, title }: TopBarProps) {
         handleMenuClose();
         const base = user.tipo === 'consultor' ? '/consultor' : '/admin';
         router.visit(`${base}/perfil/senha`);
-    };
-
-    const roleLabel: Record<string, string> = {
-        admin: 'Administrador',
-        consultor: 'Consultor',
     };
 
     return (
@@ -138,7 +134,7 @@ export function TopBar({ user, onMenuToggle, title }: TopBarProps) {
                     <Box sx={{ px: 2, py: 1.5 }}>
                         <Typography variant="subtitle2" fontWeight={600} noWrap>{user.name}</Typography>
                         <Typography variant="caption" color="text.secondary" noWrap>
-                            {roleLabel[user.tipo] ?? user.tipo}
+                            {rotuloTipoUsuario(user.tipo)}
                         </Typography>
                     </Box>
                     <Divider />

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\IdentidadeVisual;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
@@ -25,6 +26,20 @@ class AppServiceProvider extends ServiceProvider
         Vite::prefetch(concurrency: 3);
 
         $this->configureRateLimiting();
+        $this->usarNomeDaIdentidadeVisual();
+    }
+
+    /**
+     * Nome da plataforma definido pelo Admin (Identidade visual) vale também para e-mails e
+     * qualquer uso de config('app.name'). Antes das migrations (tabela inexistente) mantém o .env.
+     */
+    private function usarNomeDaIdentidadeVisual(): void
+    {
+        try {
+            config(['app.name' => IdentidadeVisual::nome()]);
+        } catch (\Throwable) {
+            // banco ainda não migrado/indisponível: segue com APP_NAME
+        }
     }
 
     /**

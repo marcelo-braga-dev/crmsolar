@@ -123,6 +123,7 @@ export const adminNav: NavSection[] = [
                     { title: 'Concessionárias', href: '/admin/configuracoes/concessionarias' },
                     { title: 'Dimensionamento', href: '/admin/configuracoes/dimensionamento' },
                     { title: 'Funil de vendas', href: '/admin/configuracoes/funil' },
+                    { title: 'Identidade visual', href: '/admin/configuracoes/identidade-visual' },
                     { title: 'Sistema', href: '/admin/configuracoes/sistema' },
                 ],
             },

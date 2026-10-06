@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\IdentidadeVisual;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -21,6 +22,8 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user()?->only('id', 'name', 'email', 'tipo', 'status'),
             ],
+            // Nome, logos, favicon e cores definidos em Configurações → Identidade visual (também nas telas de login).
+            'identidade' => fn () => IdentidadeVisual::atual(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

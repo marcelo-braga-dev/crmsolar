@@ -13,6 +13,19 @@ export interface User {
     email_verified_at?: string;
 }
 
+/** Identidade visual (Admin → Configurações → Identidade visual), compartilhada com todas as páginas. */
+export interface Identidade {
+    nome: string;
+    rodape: string;
+    cor_primaria: string;
+    cor_secundaria: string;
+    menu_fundo: string;
+    menu_fonte: string;
+    logo_url: string | null;
+    logo_clara_url: string | null;
+    favicon_url: string | null;
+}
+
 export interface Flash {
     success?: string;
     error?: string;
@@ -27,6 +40,7 @@ export type PageProps<
         user: User;
     };
     flash?: Flash;
+    identidade?: Identidade;
     ziggy?: {
         url: string;
         port: number | null;

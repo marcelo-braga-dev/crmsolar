@@ -71,7 +71,7 @@ npm run build                   # produção
 - **Financeiro** — comissões e faturamento
 - **Fornecedores** — cadastro de fornecedores
 - **Integrações** — sincronização de catálogo Edeltec, histórico de execuções
-- **Configurações** — auditoria (log de alterações), bancos, concessionárias, parâmetros de dimensionamento, funil de vendas (etapas, motivos de perda), sistema
+- **Configurações** — auditoria (log de alterações), bancos, concessionárias, parâmetros de dimensionamento, funil de vendas (etapas, motivos de perda), **identidade visual** (nome da plataforma, logos, favicon, cores primária/secundária e do menu, com pré-visualização), sistema
 
 ### Área Consultor
 
@@ -159,7 +159,7 @@ A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php a
 ## Testes
 
 ```bash
-php artisan test   # 455 testes, SQLite em memória
+php artisan test   # 466 testes, SQLite em memória
 ```
 
 > ⚠️ No servidor, **rode `php artisan optimize:clear` antes dos testes**: com a configuração em cache o `phpunit.xml` é ignorado e os testes iriam para o MySQL real (o `RefreshDatabase` apagaria o banco). O `tests/TestCase.php` aborta nesse caso.

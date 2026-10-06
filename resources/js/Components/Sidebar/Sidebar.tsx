@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+    Avatar,
     Box,
     Collapse,
     Drawer,
@@ -15,8 +16,11 @@ import {
 import ExpandLessRoundedIcon from '@mui/icons-material/ExpandLessRounded';
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import ElectricBoltRoundedIcon from '@mui/icons-material/ElectricBoltRounded';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { NavSection, NavItem } from './navConfig';
+import { useIdentidade } from '@/hooks/useIdentidade';
+import { rotuloTipoUsuario } from '@/Components/UI/rotuloTipoUsuario';
+import type { PageProps } from '@/types';
 
 export const SIDEBAR_WIDTH = 260;
 
@@ -48,8 +52,8 @@ function NavItemRow({
 
     const activeSx = {
         backgroundColor: alpha(theme.palette.primary.main, 0.15),
-        color: '#FFFFFF',
-        '& .MuiListItemIcon-root': { color: theme.palette.primary.light },
+        color: theme.palette.sidebar.strong,
+        '& .MuiListItemIcon-root': { color: theme.palette.sidebar.active },
         '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.2) },
     };
 
@@ -58,8 +62,8 @@ function NavItemRow({
         '& .MuiListItemIcon-root': { color: theme.palette.sidebar.textMuted },
         '&:hover': {
             backgroundColor: theme.palette.sidebar.hover,
-            color: '#FFFFFF',
-            '& .MuiListItemIcon-root': { color: '#FFFFFF' },
+            color: theme.palette.sidebar.strong,
+            '& .MuiListItemIcon-root': { color: theme.palette.sidebar.strong },
         },
     };
 
@@ -141,7 +145,7 @@ function NavItemRow({
                                             mr: 1.5,
                                             ml: 0.5,
                                             backgroundColor: childActive
-                                                ? theme.palette.primary.light
+                                                ? theme.palette.sidebar.active
                                                 : theme.palette.sidebar.textMuted,
                                             flexShrink: 0,
                                         }}
@@ -171,6 +175,8 @@ function SidebarContent({
     currentPath: string;
 }) {
     const theme = useTheme();
+    const identidade = useIdentidade();
+    const usuario = usePage<PageProps>().props.auth?.user;
     return (
         <Box
             sx={{
@@ -181,7 +187,7 @@ function SidebarContent({
                 overflowX: 'hidden',
             }}
         >
-            {/* Logo */}
+            {/* Marca (Configurações → Identidade visual) */}
             <Box
                 sx={{
                     px: 2.5,
@@ -191,35 +197,47 @@ function SidebarContent({
                     gap: 1.5,
                     borderBottom: `1px solid ${theme.palette.sidebar.border}`,
                     mb: 1,
+                    minHeight: 76,
                 }}
             >
-                <Box
+                {/* Logo em avatar redondo; sem logo, o ícone padrão no mesmo formato. */}
+                <Avatar
+                    src={identidade.logo_url ?? undefined}
+                    alt={identidade.nome}
                     sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 2,
-                        background: 'linear-gradient(135deg, #F59E0B 0%, #EF4444 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        width: 42,
+                        height: 42,
                         flexShrink: 0,
+                        bgcolor: identidade.logo_url ? '#FFFFFF' : undefined,
+                        background: identidade.logo_url
+                            ? undefined
+                            : `linear-gradient(135deg, ${theme.palette.secondary.main} 0%, ${theme.palette.secondary.dark} 100%)`,
+                        border: `2px solid ${alpha(theme.palette.sidebar.text, 0.18)}`,
+                        // Logos costumam ser retangulares: cabem inteiras no círculo, com respiro.
+                        '& .MuiAvatar-img': { objectFit: 'contain', p: '5px' },
                     }}
                 >
-                    <ElectricBoltRoundedIcon sx={{ color: '#fff', fontSize: 20 }} />
-                </Box>
-                <Box>
+                    <ElectricBoltRoundedIcon sx={{ color: theme.palette.secondary.contrastText, fontSize: 21 }} />
+                </Avatar>
+                <Box sx={{ minWidth: 0 }}>
                     <Typography
                         variant="subtitle1"
-                        sx={{ color: '#FFFFFF', fontWeight: 700, lineHeight: 1.2, fontSize: '0.95rem' }}
+                        noWrap
+                        sx={{ color: theme.palette.sidebar.strong, fontWeight: 700, lineHeight: 1.2, fontSize: '0.95rem' }}
                     >
-                        CRM Solar
+                        {identidade.nome}
                     </Typography>
-                    <Typography
-                        variant="caption"
-                        sx={{ color: theme.palette.sidebar.textMuted, fontSize: '0.7rem' }}
-                    >
-                        Gestão Solar
-                    </Typography>
+                    {/* Função de quem está logado (Administrador, Consultor…). */}
+                    {usuario && (
+                        <Typography
+                            variant="caption"
+                            noWrap
+                            component="div"
+                            sx={{ color: theme.palette.sidebar.textMuted, fontSize: '0.7rem' }}
+                        >
+                            {rotuloTipoUsuario(usuario.tipo)}
+                        </Typography>
+                    )}
                 </Box>
             </Box>
 

@@ -1,12 +1,18 @@
 import React from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, alpha, useTheme } from '@mui/material';
 import WbSunnyRoundedIcon from '@mui/icons-material/WbSunnyRounded';
+import { useIdentidade } from '@/hooks/useIdentidade';
 
 interface GuestLayoutProps {
     children: React.ReactNode;
 }
 
 export default function GuestLayout({ children }: GuestLayoutProps) {
+    const identidade = useIdentidade();
+    const theme = useTheme();
+    // Fundo claro: usa a logo para fundo claro (ou a do menu, se só houver ela).
+    const logo = identidade.logo_clara_url ?? identidade.logo_url;
+
     return (
         <Box
             sx={{
@@ -19,30 +25,37 @@ export default function GuestLayout({ children }: GuestLayoutProps) {
                 py: { xs: 4, sm: 6 },
                 backgroundColor: '#F8FAFC',
                 backgroundImage:
-                    'radial-gradient(60rem 30rem at 50% -10%, rgba(37,99,235,0.07) 0%, transparent 70%)',
+                    `radial-gradient(60rem 30rem at 50% -10%, ${alpha(theme.palette.primary.main, 0.07)} 0%, transparent 70%)`,
             }}
         >
             {/* Marca */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 3.5 }}>
-                <Box
-                    sx={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: 2,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: '#0F172A',
-                    }}
-                >
-                    <WbSunnyRoundedIcon sx={{ color: '#F59E0B', fontSize: 21 }} />
-                </Box>
-                <Typography
-                    variant="h6"
-                    sx={{ fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary' }}
-                >
-                    CRM Solar
-                </Typography>
+                {logo ? (
+                    <Box component="img" src={logo} alt={identidade.nome} sx={{ maxHeight: 48, maxWidth: 220, objectFit: 'contain' }} />
+                ) : (
+                    <Box
+                        sx={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: theme.palette.sidebar.bg,
+                        }}
+                    >
+                        <WbSunnyRoundedIcon sx={{ color: theme.palette.secondary.main, fontSize: 21 }} />
+                    </Box>
+                )}
+                {/* Com logo própria o nome não é repetido: a logo já é a marca. */}
+                {!logo && (
+                    <Typography
+                        variant="h6"
+                        sx={{ fontWeight: 700, letterSpacing: '-0.02em', color: 'text.primary' }}
+                    >
+                        {identidade.nome}
+                    </Typography>
+                )}
             </Box>
 
             {/* Card */}
@@ -62,7 +75,7 @@ export default function GuestLayout({ children }: GuestLayoutProps) {
             </Paper>
 
             <Typography variant="caption" sx={{ mt: 3 }}>
-                © {new Date().getFullYear()} CRM Solar · CRM para energia solar
+                © {new Date().getFullYear()} {identidade.nome}{identidade.rodape ? ` · ${identidade.rodape}` : ''}
             </Typography>
         </Box>
     );

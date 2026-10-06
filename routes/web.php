@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\Configuracoes\BancosController;
 use App\Http\Controllers\Admin\Configuracoes\ConcessionariasController;
 use App\Http\Controllers\Admin\Configuracoes\DimensionamentoController;
 use App\Http\Controllers\Admin\Configuracoes\FunilVendasController;
+use App\Http\Controllers\Admin\Configuracoes\IdentidadeVisualController;
 use App\Http\Controllers\Admin\Configuracoes\SistemaController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\Financeiro\ComissoesController;
@@ -148,6 +149,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         });
         Route::get('sistema', [SistemaController::class, 'index'])->name('sistema');
         Route::put('sistema', [SistemaController::class, 'update'])->name('sistema.update');
+        // POST (não PUT): o formulário envia arquivos (multipart)
+        Route::get('identidade-visual', [IdentidadeVisualController::class, 'index'])->name('identidade');
+        Route::post('identidade-visual', [IdentidadeVisualController::class, 'update'])->name('identidade.update');
+        Route::delete('identidade-visual', [IdentidadeVisualController::class, 'destroy'])->name('identidade.restaurar');
     });
 
     Route::prefix('perfil')->name('perfil.')->group(function () {
