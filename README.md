@@ -159,7 +159,7 @@ A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php a
 ## Testes
 
 ```bash
-php artisan test   # 453 testes, SQLite em memória
+php artisan test   # 455 testes, SQLite em memória
 ```
 
 > ⚠️ No servidor, **rode `php artisan optimize:clear` antes dos testes**: com a configuração em cache o `phpunit.xml` é ignorado e os testes iriam para o MySQL real (o `RefreshDatabase` apagaria o banco). O `tests/TestCase.php` aborta nesse caso.
