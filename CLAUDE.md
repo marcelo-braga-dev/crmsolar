@@ -85,6 +85,12 @@ CI (`.github/workflows/ci.yml`): Pint (`--test`), Larastan, `php artisan test`, 
 
 `MarketingDemoSeeder` cria, numa **instalação separada** (banco próprio), uma empresa fictícia operando há 16 meses: equipe, clientes, leads, orçamentos pelo `FunilService`, contratos, visitas, pós-venda, auditoria e integrações, com datas relativas a hoje e dados marcados como fictícios. Só roda com `DEMO_SEED_PERMITIDO=true` (`config('app.demo_seed_permitido')`) — **nunca no servidor de desenvolvimento**. Logins `@crmsolar.demo`, senha `demo@2026`. Ao mudar regra de negócio, fluxo de status ou o que uma tela consulta, confira se o simulador (`database/seeders/Support/SimuladorComercial.php`) continua coerente — `MarketingDemoSeederTest` pega quebras.
 
+### Modo demonstração (`DEMO_MODE`) — `DEMO.md`
+
+Mesma plataforma em instalação separada: visitante entra sem senha, troca de perfil pela barra no rodapé e **não grava nada** (middleware `BloqueiaEscritaNaDemonstracao`, no servidor). Desligado por padrão (rotas `/demo` → 404, prop `demo` = `null`).
+- ⚠️ **Toda nova rota POST que só lê ou calcula precisa entrar em `readonly_post_routes` (`config/demo.php`)**, senão fica bloqueada na demonstração. Tela `.create` que serve de vitrine (calcula sem gravar) vai em `readonly_form_routes`.
+- Lógica em `App\Services\Demo\ModoDemonstracao` (perfis em `PERFIS`); testes em `tests/Feature/Demo/ModoDemonstracaoTest.php`.
+
 ## Architecture
 
 ### Role system — ATENÇÃO
@@ -348,6 +354,7 @@ GET /api/cep/{cep}
 auth.user: { id, name, email, tipo: 'admin' | 'consultor', status }
 flash: { success?, error?, warning?, info? }
 identidade: { nome, rodape, cor_primaria, cor_secundaria, menu_fundo, menu_fonte, logo_url, logo_clara_url, favicon_url }
+demo: { enabled, role, visitor, roles: {key,label}[], allowed_paths, message } | null   // modo demonstração
 ```
 
 ### Identidade visual (Admin → Configurações → Identidade visual)
@@ -383,7 +390,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**466 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
+**484 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).

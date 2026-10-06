@@ -159,7 +159,7 @@ A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php a
 ## Testes
 
 ```bash
-php artisan test   # 466 testes, SQLite em memória
+php artisan test   # 484 testes, SQLite em memória
 ```
 
 > ⚠️ No servidor, **rode `php artisan optimize:clear` antes dos testes**: com a configuração em cache o `phpunit.xml` é ignorado e os testes iriam para o MySQL real (o `RefreshDatabase` apagaria o banco). O `tests/TestCase.php` aborta nesse caso.
@@ -168,7 +168,7 @@ php artisan test   # 466 testes, SQLite em memória
 
 ## Base de demonstração
 
-Para apresentar o produto há uma base fictícia completa (empresa operando há 16 meses, todas as telas cheias, logins por perfil), gerada pelo `MarketingDemoSeeder` numa instalação separada. Passo a passo, contas e renovação em [`DEMO.md`](DEMO.md).
+Para apresentar o produto há uma base fictícia completa (empresa operando há 16 meses, todas as telas cheias, logins por perfil), gerada pelo `MarketingDemoSeeder`, e um **modo demonstração** (`DEMO_MODE=true`): o visitante entra sem senha, troca de perfil com um clique, só visualiza (bloqueio no servidor) e fica registrado como lead. Tudo numa instalação separada — passo a passo, contas, campanhas e renovação em [`DEMO.md`](DEMO.md).
 
 ## Comandos úteis
 

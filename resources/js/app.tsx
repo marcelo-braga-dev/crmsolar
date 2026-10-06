@@ -1,7 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
@@ -9,7 +9,11 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import NProgress from 'nprogress';
 import { IDENTIDADE_PADRAO, criarTema } from './theme';
-import type { Identidade } from './types';
+import type { Page } from '@inertiajs/core';
+import type { Identidade, PageProps } from './types';
+
+// Modo demonstração: só baixado quando ligado (fora dele, nenhum componente de demo é carregado).
+const DemoBar = lazy(() => import('./Components/Demo/DemoBar').then((m) => ({ default: m.DemoBar })));
 
 /** Nome da plataforma (Identidade visual) usado no título das abas; atualizado a cada navegação. */
 let nomePlataforma = IDENTIDADE_PADRAO.nome;
@@ -63,12 +67,22 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.tsx'),
         ),
     setup({ el, App, props }) {
-        const inicial = props.initialPage.props.identidade as Identidade | undefined;
+        const pagina = props.initialPage as Page<PageProps>;
+        const inicial = pagina.props.identidade;
         nomePlataforma = inicial?.nome ?? nomePlataforma;
+
+        // Modo demonstração (DEMO.md): guarda de somente leitura e barra na raiz, fora dos layouts.
+        const demo = pagina.props.demo;
+        if (demo?.enabled) void import('./Components/Demo/demoGuard').then((m) => m.instalarGuardaDemo(demo));
 
         createRoot(el).render(
             <TemaDaIdentidade inicial={inicial}>
                 <App {...props} />
+                {demo?.enabled && (
+                    <Suspense fallback={null}>
+                        <DemoBar paginaInicial={pagina} />
+                    </Suspense>
+                )}
             </TemaDaIdentidade>,
         );
     },

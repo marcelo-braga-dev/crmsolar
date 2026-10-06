@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\BloqueiaEscritaNaDemonstracao;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsConsultor;
@@ -22,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             EnsureUserIsActive::class,
             HandleInertiaRequests::class,
+            // Modo demonstração: depois do Inertia (o aviso vai como flash para a página). Desligado, só repassa.
+            BloqueiaEscritaNaDemonstracao::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 

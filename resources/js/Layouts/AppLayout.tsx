@@ -17,7 +17,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up('lg'));
     const [mobileOpen, setMobileOpen] = useState(false);
-    const { auth, flash } = usePage<PageProps>().props;
+    const { auth, flash, demo } = usePage<PageProps>().props;
     const [snack, setSnack] = useState<{ open: boolean; message: string; severity: 'success' | 'error' | 'warning' | 'info' }>({
         open: false,
         message: '',
@@ -43,12 +43,14 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     useEffect(() => {
         if (flash?.success) setSnack({ open: true, message: flash.success, severity: 'success' });
         else if (flash?.error) setSnack({ open: true, message: flash.error, severity: 'error' });
-        else if (flash?.warning) setSnack({ open: true, message: flash.warning, severity: 'warning' });
+        // O aviso de bloqueio da demonstração é mostrado pela barra de demonstração (sem duplicar).
+        else if (flash?.warning && flash.warning !== demo?.message) setSnack({ open: true, message: flash.warning, severity: 'warning' });
         else if (flash?.info) setSnack({ open: true, message: flash.info, severity: 'info' });
     }, [flash]);
 
     return (
-        <Box sx={{ display: 'flex', height: '100vh', backgroundColor: 'background.default' }}>
+        // --demo-dock: altura da barra do modo demonstração (0 fora dele).
+        <Box sx={{ display: 'flex', height: 'calc(100vh - var(--demo-dock, 0px))', backgroundColor: 'background.default' }}>
             {/* Sidebar */}
             <Sidebar
                 open={mobileOpen}

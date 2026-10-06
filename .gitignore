@@ -33,3 +33,4 @@ Thumbs.db
 
 # Configurações pessoais do Claude Code
 /.claude/settings.local.json
+/.env.antes-*

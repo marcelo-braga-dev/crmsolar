@@ -26,6 +26,16 @@ export interface Identidade {
     favicon_url: string | null;
 }
 
+/** Modo demonstração (DEMO.md) — null quando desligado. */
+export interface DemoProps {
+    enabled: true;
+    role: string | null;
+    visitor: string | null;
+    roles: { key: string; label: string }[];
+    allowed_paths: string[];
+    message: string;
+}
+
 export interface Flash {
     success?: string;
     error?: string;
@@ -41,6 +51,7 @@ export type PageProps<
     };
     flash?: Flash;
     identidade?: Identidade;
+    demo?: DemoProps | null;
     ziggy?: {
         url: string;
         port: number | null;

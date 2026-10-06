@@ -16,8 +16,15 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        // Modo demonstração: acesso sem senha (o visitante se identifica e vira lead).
+        if (config('demo.enabled')) {
+            return Inertia::render('Demo/Acesso', [
+                'utm' => array_filter($request->only(['utm_source', 'utm_medium', 'utm_campaign']), 'is_string'),
+            ]);
+        }
+
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),

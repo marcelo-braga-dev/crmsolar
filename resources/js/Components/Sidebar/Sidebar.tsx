@@ -287,6 +287,7 @@ export function Sidebar({ open, onClose, variant, sections, currentPath }: Sideb
             '& .MuiDrawer-paper': {
                 width: SIDEBAR_WIDTH,
                 boxSizing: 'border-box',
+                height: 'calc(100% - var(--demo-dock, 0px))', // não fica atrás da barra da demonstração
                 border: 'none',
                 boxShadow:
                     variant === 'permanent'

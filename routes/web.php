@@ -36,11 +36,19 @@ use App\Http\Controllers\Consultor\GrupoTarifario\GrupoB3Controller;
 use App\Http\Controllers\Consultor\OrcamentoItensController;
 use App\Http\Controllers\Consultor\PropostasServicosController;
 use App\Http\Controllers\Consultor\VisitasController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\FunilController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
+
+// Modo demonstração (DEMO.md): existem sempre, mas respondem 404 com DEMO_MODE desligado.
+Route::prefix('demo')->name('demo.')->group(function () {
+    Route::post('acesso', [DemoController::class, 'acesso'])->middleware('throttle:10,1')->name('acesso');
+    Route::post('perfil/{perfil}', [DemoController::class, 'trocarPerfil'])->middleware(['auth', 'throttle:60,1'])->name('perfil');
+    Route::get('visitantes.csv', [DemoController::class, 'visitantesCsv'])->middleware('throttle:10,1')->name('visitantes');
+});
 
 Route::get('/dashboard', function () {
     return Auth::user()?->isAdmin()
