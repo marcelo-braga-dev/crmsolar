@@ -186,7 +186,9 @@ Ações: **Reativar** (volta à primeira etapa, `tentativas_reativacao + 1`) ou 
 
 - Cada oportunidade tem `proximo_contato_em`.
 - **Registrar contato**: anotação + nova data → vai para a linha do tempo.
-- Contato vencido: destaque vermelho no card e contagem no indicador **"Atrasados"**.
+- Contato vencido: card com saúde **atrasado** (vermelho) e contagem no indicador **"Contatos atrasados"**.
+- Negociação numa etapa aberta sem contato agendado: saúde **sem próximo passo** e contagem no indicador de mesmo nome. Mover um card assim entre etapas abertas pede a data (pode-se escolher "Sem data").
+- Aprovar a venda limpa o próximo contato (o acompanhamento segue pelo pós-venda).
 
 ## 11. Interface
 
@@ -194,22 +196,29 @@ Ações: **Reativar** (volta à primeira etapa, `tentativas_reativacao + 1`) ou 
 
 ```
 ┌─────────────────────────────────┐
-│ ▌ João da Silva            #142 │  ← faixa com a cor da etapa
-│   R$ 32.400 · 6,2 kWp · B1      │
-│   Fortaleza/CE                  │
-│   🕑 5d na etapa   📅 hoje       │  ← aging colorido pelo SLA · próximo contato
-│   [Reprovado] [Contrato]        │  ← selos de situação
-│                          (AS) ⋮ │  ← consultor (só admin) · menu de ações
+│▌● Comercial Pereira Ltda   #142 │  ← faixa com a cor da etapa · ponto de saúde
+│▌ R$ 32.400                      │
+│▌ 6,2 kWp · B1 · Fortaleza/CE    │
+│▌ [📅 hoje 14:00]     ◎ ☎  (AS)  │  ← próximo passo · WhatsApp/ligar (hover) · consultor (admin)
+│▌ ▓▓▓▓▓▓░░░░░░░░░░░░   5d / 7d   │  ← tempo na etapa ÷ SLA
+│▌ [Reprovado] [Contrato]         │  ← selos de situação
 └─────────────────────────────────┘
 ```
 
-- Cabeçalho da coluna: quantidade · soma (R$) · valor ponderado (exibido só nas etapas abertas).
-- Indicadores no topo: em negociação, previsão ponderada (etapas abertas **+ Em aprovação**, com a probabilidade de 95%), contatos atrasados (clique filtra) e caixa de entrada.
-- Topo do quadro: busca por cliente, filtros (consultor — admin; grupo tarifário; só atrasados), totais do funil e botão da Caixa de entrada.
+- **Saúde** (seção 22.3): 🔴 atrasado · 🟡 atenção · ⚪ sem próximo passo · 🟢 em dia; só em etapas abertas e Em aprovação.
+- **Densidade**: confortável ou compacta (esconde linha técnica e selos), preferência no navegador.
+- Clicar no card abre o **painel lateral** (cliente, WhatsApp/ligar/e-mail, próximo contato, ações, responsável — admin, itens e linha do tempo) sem sair do quadro; "Abrir completo" leva à tela do orçamento.
+- Cabeçalho da coluna: quantidade · soma (R$) · valor ponderado (etapas abertas e Em aprovação) · barra da participação da etapa no valor em negociação.
+- **Faixa do funil** acima do quadro: valor por etapa; clicar rola até a coluna.
+- Indicadores no topo: em negociação, previsão ponderada (etapas abertas **+ Em aprovação**, com a probabilidade de 95%), contatos atrasados e sem próximo passo (clique filtra) e caixa de entrada.
+- Filtros: busca instantânea por cliente ou `#número`, consultor (admin), grupo tarifário, chips **Atrasados**, **Sem próximo passo** e **Prazo estourado**; ordenação **Prioridade** (padrão: contato atrasado → contato mais cedo → mais tempo na etapa), **Maior valor** ou **Mais tempo na etapa**. Tudo fica na URL.
 - Ganho e Perdido mostram os últimos 30 dias (`FunilService::DIAS_FECHADOS_NO_QUADRO`); o histórico completo fica em **Orçamentos → Lista**.
-- Ordem automática dentro da coluna: contato atrasado primeiro, depois o mais antigo na etapa.
-- Arrastar e soltar com `@dnd-kit` (mouse, toque e teclado); atualização otimista com reversão se o servidor recusar.
-- Mobile: rolagem horizontal com encaixe por coluna.
+- Arrastar e soltar com `@dnd-kit` (mouse, toque e teclado); atualização otimista com reversão se o servidor recusar. Movimento entre etapas abertas pode ser **desfeito** por alguns segundos.
+- Depois de abrir o WhatsApp ou ligar, o quadro oferece **registrar o contato**.
+- **Seleção em lote** (admin, botão "Selecionar"): mover para etapa aberta, trocar responsável ou marcar como perdido vários cards.
+- Atalhos: `/` busca, `C` caixa de entrada, `Esc` sai da seleção.
+- **Celular**: uma etapa por vez, escolhida em abas; sem arraste — movimentos pelo menu ⋮ do card ou pelo painel.
+- Consultor tem o botão **Novo orçamento** (leva à seleção de grupo tarifário).
 
 ### Menu
 
@@ -224,6 +233,9 @@ Ações: **Reativar** (volta à primeira etapa, `tentativas_reativacao + 1`) ou 
 | Mover entre etapas abertas, para Perdido e para Em aprovação | os próprios | todos |
 | Aprovar (Em aprovação → Ganho) / reprovar | não | sim |
 | Reativar perdido, registrar contato | os próprios | todos |
+| Ver o painel lateral do card | os próprios | todos |
+| Trocar o responsável (negociação em andamento) | não | sim |
+| Ações em lote | não | sim |
 | Configurar etapas, motivos e parâmetros | não | sim |
 
 ## 13. Configuração (Admin)
@@ -363,11 +375,14 @@ Fase 1 cobre, com dono × outro consultor × admin × visitante:
 
 - **Arrastar e soltar:** `@dnd-kit/core` com sensores de mouse (6 px para não confundir com clique), toque (segurar 180 ms) e teclado. O card que acompanha o cursor é um `DragOverlay`. Toda ação também existe pelo menu ⋮ do card ("Mover para…"), alternativa acessível ao arraste.
 - **Atualização otimista:** o card muda de coluna antes da resposta; a resposta do Inertia devolve o quadro real, que substitui o estado local (se o servidor recusar, o card volta sozinho e aparece a mensagem).
+- **Recarga parcial:** movimentos pedem só `colunas`, `caixa`, `resumo` e `flash` (`only`); durante a requisição só o card em envio deixa de ser arrastável.
+- **Painel lateral:** carregado sob demanda por `GET funil/{orcamento}` (`FunilService::detalhe()`, JSON) e recarregado quando o quadro muda.
+- **Contatos:** `FunilService::contatos()` monta `telefone` (dígitos, para `tel:`) e `whatsapp` (com DDI 55, para `wa.me`), preferindo o celular.
 - **Concorrência:** cada requisição envia `origem` (id da etapa ou `caixa`); o serviço trava o orçamento (`lockForUpdate`) e recusa se a coluna atual for outra.
 - **Fuso horário:** a aplicação grava em UTC. O navegador envia o próximo contato em ISO com fuso (`toISOString()`) e exibe as datas recebidas no horário local. Textos gerados no servidor (linha do tempo) usam `config('app.timezone_exibicao')` — `APP_TIMEZONE_EXIBICAO`, padrão `America/Sao_Paulo`.
 - **Desempenho:** o quadro carrega as negociações abertas do usuário (ou filtro) e os fechamentos dos últimos 30 dias; cada coluna exibe até 100 cards (os totais consideram todos).
 - **Colunas recolhidas:** preferência por navegador (`localStorage`); Perdido começa recolhida e reabre sozinha durante o arraste.
-- **Telas antigas:** a tela do orçamento (Consultor e Admin) recusa mudança de status de orçamento perdido; a linha do tempo mostra o tipo do evento (Funil, Contato, Perdido, Reativado).
+- **Telas antigas:** a tela do orçamento (Consultor e Admin) recusa mudança de status de orçamento perdido; a linha do tempo mostra o tipo do evento (Funil, Contato, Perdido, Reativado, Responsável).
 
 ### Testes
 

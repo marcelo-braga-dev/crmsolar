@@ -284,7 +284,7 @@ resources/js/
       TablePagination.tsx            — paginação padrão para tabelas
     Produtos/
       CategoriasAba.tsx, MarcasAba.tsx — abas do Catálogo de produtos
-    Funil/                           — CardOrcamento, ColunaFunil, CaixaEntrada, Dialogos, tipos.ts (quadro Kanban, @dnd-kit/core)
+    Funil/                           — CardOrcamento, ColunaFunil, CaixaEntrada, PainelOrcamento (painel lateral), Dialogos, tipos.ts (quadro Kanban, @dnd-kit/core)
   Layouts/
     AppLayout.tsx                    — sidebar + topbar + flash snackbar
     GuestLayout.tsx                  — layout de autenticação (split-screen escuro)
@@ -370,7 +370,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**451 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real). Testes legados do Breeze (Registration/Profile) foram removidos.
+**451 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -418,7 +418,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Pendências conhecidas (funcionalidade)
 - **Funil — Fase 2:** aba Recuperação (novos parados, negócios acima do SLA, perdidos reativáveis — usa `motivos_perda.reativar_apos_dias` e `funil.max_tentativas_reativacao`), métricas do funil e "contatos de hoje" no dashboard. **Fase 3:** atividades detalhadas e automações. Ver `docs/funil-de-vendas.md`, seção 19
-- **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos leva à seleção de grupo. Decidir se unifica
+- **Entradas de "Novo orçamento"** — Dashboard e ficha do cliente levam ao fluxo Convencional (com opção de kWp direto); a lista de Orçamentos e o Funil levam à seleção de grupo. Decidir se unifica
 
 ### Problemas encontrados na análise (2026-10-02) — corrigir antes do go-live
 

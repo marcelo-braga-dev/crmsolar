@@ -62,7 +62,7 @@ npm run build                   # produção
 ### Área Admin
 
 - **Dashboard** — KPIs gerais, evolução mensal, pipeline por status, ranking de consultores
-- **Orçamentos** — **Funil (Kanban)** de todos os consultores (aprovar = soltar em Ganho) e **Lista** com filtros e mudança de status
+- **Orçamentos** — **Funil (Kanban)** de todos os consultores (aprovar = soltar em Ganho, trocar responsável, ações em lote) e **Lista** com filtros e mudança de status
 - **Clientes** — cadastro e gestão de clientes
 - **Leads** — acompanhamento de leads recebidos
 - **Produtos** — **Kits Solares** (sistemas completos usados no dimensionamento) e **Catálogo** de produtos avulsos, com atalhos por categoria (painéis, inversores, transformadores…) e abas de Categorias e Marcas
@@ -76,7 +76,7 @@ npm run build                   # produção
 ### Área Consultor
 
 - **Dashboard** — KPIs pessoais, evolução mensal, pipeline, orçamentos recentes
-- **Funil de vendas (Kanban)** — etapas comerciais com arrastar e soltar, caixa de entrada, próximo contato, perda com motivo e reativação ([especificação](docs/funil-de-vendas.md))
+- **Funil de vendas (Kanban)** — etapas comerciais com arrastar e soltar, caixa de entrada, próximo contato, perda com motivo e reativação; saúde de cada negociação (atrasado, atenção, sem próximo passo, em dia), painel lateral com WhatsApp/ligar e linha do tempo, filtros e ordenação, versão para celular ([especificação](docs/funil-de-vendas.md))
 - **Orçamentos** — criação com dimensionamento automático por grupo tarifário ANEEL:
   - **B1** — Residencial (Baixa Tensão)
   - **B2** — Rural
@@ -159,8 +159,10 @@ A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php a
 ## Testes
 
 ```bash
-php artisan test   # 424 testes, SQLite em memória
+php artisan test   # 451 testes, SQLite em memória
 ```
+
+> ⚠️ No servidor, **rode `php artisan optimize:clear` antes dos testes**: com a configuração em cache o `phpunit.xml` é ignorado e os testes iriam para o MySQL real (o `RefreshDatabase` apagaria o banco). O `tests/TestCase.php` aborta nesse caso.
 
 > ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).
 
