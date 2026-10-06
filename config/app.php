@@ -71,6 +71,10 @@ return [
     // Datas continuam gravadas em UTC; o navegador converte as que recebe em ISO.
     'timezone_exibicao' => env('APP_TIMEZONE_EXIBICAO', 'America/Sao_Paulo'),
 
+    // Base de demonstração (DEMO.md): o MarketingDemoSeeder só roda com esta chave ligada,
+    // para nunca popular por engano o banco de desenvolvimento ou de produção.
+    'demo_seed_permitido' => (bool) env('DEMO_SEED_PERMITIDO', false),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

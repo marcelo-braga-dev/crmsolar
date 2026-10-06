@@ -49,6 +49,7 @@
     </style>
 </head>
 <body>
+    @include('pdf._aviso_demo')
 
     <div class="header">
         <table>
