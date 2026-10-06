@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class IrradiacaoSolarSeeder extends Seeder
 {
@@ -13,9 +14,9 @@ class IrradiacaoSolarSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::disableForeignKeyConstraints(); // portável: MySQL e SQLite (testes)
         DB::table('irradiacao_solar')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        Schema::enableForeignKeyConstraints();
 
         // [cidade, estado] => [jan, fev, mar, abr, mai, jun, jul, ago, set, out, nov, dez]
         $dados = [

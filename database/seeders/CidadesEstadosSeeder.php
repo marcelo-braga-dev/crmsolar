@@ -4,15 +4,16 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CidadesEstadosSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::disableForeignKeyConstraints(); // portável: MySQL e SQLite (testes)
         DB::table('irradiacao_solar')->truncate();
         DB::table('cidades_estados')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        Schema::enableForeignKeyConstraints();
 
         $cidades = [
             ['cidade' => 'Abadia de Goiás', 'estado' => 'Goiás', 'sigla' => 'GO'],
