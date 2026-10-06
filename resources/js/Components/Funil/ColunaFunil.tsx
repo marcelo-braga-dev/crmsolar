@@ -4,6 +4,10 @@ import { useDroppable } from '@dnd-kit/core';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import LockRoundedIcon from '@mui/icons-material/LockRounded';
+import GavelRoundedIcon from '@mui/icons-material/GavelRounded';
+import EmojiEventsRoundedIcon from '@mui/icons-material/EmojiEventsRounded';
+import ThumbDownAltRoundedIcon from '@mui/icons-material/ThumbDownAltRounded';
+import MoveDownRoundedIcon from '@mui/icons-material/MoveDownRounded';
 import { ColunaFunil as Coluna, moedaCompacta } from './tipos';
 
 interface Props {
@@ -11,6 +15,10 @@ interface Props {
     /** Durante um arraste: true = pode soltar aqui, false = não pode, null = nada sendo arrastado. */
     aceita: boolean | null;
     recolhida: boolean;
+    /** Valor das negociações abertas + Em aprovação, para a barra de participação da etapa. */
+    valorDoFunil: number;
+    /** No celular a coluna ocupa a largura toda (uma etapa por vez). */
+    cheia?: boolean;
     onAlternar: () => void;
     children: React.ReactNode;
 }
@@ -21,22 +29,35 @@ const DESCRICAO_SISTEMA: Record<string, string> = {
     perdido: 'Vendas perdidas nos últimos 30 dias. Arraste para uma etapa para reativar',
 };
 
-export function ColunaFunil({ coluna, aceita, recolhida, onAlternar, children }: Props) {
+const VAZIO: Record<string, { icone: React.ElementType; texto: string }> = {
+    aberta: { icone: MoveDownRoundedIcon, texto: 'Arraste negociações para esta etapa' },
+    aprovacao: { icone: GavelRoundedIcon, texto: 'Arraste aqui para enviar para aprovação' },
+    ganho: { icone: EmojiEventsRoundedIcon, texto: 'Nenhuma venda nos últimos 30 dias' },
+    perdido: { icone: ThumbDownAltRoundedIcon, texto: 'Nenhuma perda nos últimos 30 dias' },
+};
+
+export function ColunaFunil({ coluna, aceita, recolhida, valorDoFunil, cheia, onAlternar, children }: Props) {
     const { setNodeRef, isOver } = useDroppable({ id: `etapa-${coluna.id}`, data: { coluna }, disabled: aceita === false });
     const destaque = aceita === true && isOver;
     const sistema = coluna.tipo !== 'aberta';
+    const noFunil = coluna.tipo === 'aberta' || coluna.tipo === 'aprovacao';
+    const participacao = noFunil && valorDoFunil > 0 ? coluna.valor / valorDoFunil : 0;
 
-    if (recolhida) {
+    if (recolhida && !cheia) {
         return (
             <Box
+                id={`coluna-${coluna.id}`}
                 ref={setNodeRef}
                 onClick={onAlternar}
+                role="button"
+                aria-label={`Expandir ${coluna.nome}`}
                 sx={{
                     flex: '0 0 48px', alignSelf: 'stretch', borderRadius: 3, cursor: 'pointer',
                     bgcolor: destaque ? alpha(coluna.cor, 0.18) : alpha(coluna.cor, 0.06),
                     border: '1px solid', borderColor: destaque ? coluna.cor : alpha(coluna.cor, 0.2),
                     display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1.5, gap: 1,
                     opacity: aceita === false ? 0.4 : 1, transition: 'all .15s',
+                    '&:hover': { bgcolor: alpha(coluna.cor, 0.12) },
                 }}
             >
                 <ChevronLeftRoundedIcon fontSize="small" sx={{ color: coluna.cor }} />
@@ -48,36 +69,42 @@ export function ColunaFunil({ coluna, aceita, recolhida, onAlternar, children }:
         );
     }
 
+    const vazio = VAZIO[coluna.tipo];
+    const IconeVazio = vazio.icone;
+
     return (
         <Box
+            id={`coluna-${coluna.id}`}
             sx={{
-                flex: '0 0 296px', display: 'flex', flexDirection: 'column', maxHeight: '100%', minHeight: 0,
-                borderRadius: 3, bgcolor: destaque ? alpha(coluna.cor, 0.1) : '#EEF2F6',
-                border: '2px solid', borderColor: destaque ? coluna.cor : 'transparent',
-                opacity: aceita === false ? 0.45 : 1, transition: 'background-color .15s, border-color .15s, opacity .15s',
+                flex: cheia ? '1 1 100%' : '0 0 300px', display: 'flex', flexDirection: 'column', maxHeight: '100%', minHeight: 0,
+                borderRadius: 3,
+                bgcolor: destaque ? alpha(coluna.cor, 0.12) : alpha(coluna.cor, 0.045),
+                border: '1px solid', borderColor: destaque ? coluna.cor : alpha(coluna.cor, 0.14),
+                boxShadow: destaque ? `0 0 0 3px ${alpha(coluna.cor, 0.18)}` : 'none',
+                opacity: aceita === false ? 0.45 : 1, transition: 'background-color .15s, border-color .15s, opacity .15s, box-shadow .15s',
             }}
         >
-            <Box sx={{ px: 1.5, pt: 1.25, pb: 1 }}>
+            <Box sx={{ px: 1.5, pt: 1.25, pb: 1.1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: coluna.cor, flexShrink: 0 }} />
-                    <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ flex: 1 }}>{coluna.nome}</Typography>
+                    <Box sx={{ width: 10, height: 10, borderRadius: '3px', bgcolor: coluna.cor, flexShrink: 0 }} />
+                    <Typography variant="subtitle2" fontWeight={700} noWrap sx={{ flex: 1, color: '#0F172A' }}>{coluna.nome}</Typography>
                     {sistema && (
                         <Tooltip title={DESCRICAO_SISTEMA[coluna.tipo]}>
                             <LockRoundedIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
                         </Tooltip>
                     )}
-                    <Box sx={{ px: 0.9, py: 0.1, borderRadius: 10, bgcolor: alpha(coluna.cor, 0.14), color: coluna.cor }}>
+                    <Box sx={{ minWidth: 24, px: 0.75, py: 0.1, borderRadius: 10, bgcolor: 'background.paper', border: '1px solid', borderColor: alpha(coluna.cor, 0.3), color: coluna.cor, textAlign: 'center' }}>
                         <Typography variant="caption" fontWeight={700}>{coluna.quantidade}</Typography>
                     </Box>
-                    {(coluna.tipo === 'ganho' || coluna.tipo === 'perdido') && (
+                    {!cheia && (coluna.tipo === 'ganho' || coluna.tipo === 'perdido') && (
                         <IconButton size="small" onClick={onAlternar} aria-label="Recolher coluna" sx={{ mr: -0.75 }}>
                             <ChevronRightRoundedIcon fontSize="small" />
                         </IconButton>
                     )}
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.75, mt: 0.5, pl: 2.25 }}>
-                    <Typography variant="body2" fontWeight={700}>{moedaCompacta(coluna.valor)}</Typography>
-                    {coluna.tipo === 'aberta' && coluna.probabilidade !== null && (
+                    <Typography variant="body2" fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums' }}>{moedaCompacta(coluna.valor)}</Typography>
+                    {noFunil && coluna.probabilidade !== null && (
                         <Tooltip title={`Valor ponderado: ${coluna.probabilidade}% de chance de fechamento`}>
                             <Typography variant="caption" color="text.secondary">
                                 ≈ {moedaCompacta(coluna.ponderado)} · {coluna.probabilidade}%
@@ -85,7 +112,15 @@ export function ColunaFunil({ coluna, aceita, recolhida, onAlternar, children }:
                         </Tooltip>
                     )}
                 </Box>
-                <Box sx={{ height: 3, borderRadius: 2, bgcolor: coluna.cor, mt: 1, opacity: 0.85 }} />
+                {noFunil ? (
+                    <Tooltip title={`${Math.round(participacao * 100)}% do valor em negociação`}>
+                        <Box sx={{ height: 4, borderRadius: 2, bgcolor: alpha(coluna.cor, 0.15), mt: 1, overflow: 'hidden' }}>
+                            <Box sx={{ width: `${Math.max(participacao > 0 ? 3 : 0, participacao * 100)}%`, height: '100%', bgcolor: coluna.cor, borderRadius: 2, transition: 'width .3s' }} />
+                        </Box>
+                    </Tooltip>
+                ) : (
+                    <Box sx={{ height: 4, borderRadius: 2, bgcolor: coluna.cor, mt: 1, opacity: 0.6 }} />
+                )}
             </Box>
 
             <Box
@@ -97,10 +132,9 @@ export function ColunaFunil({ coluna, aceita, recolhida, onAlternar, children }:
             >
                 {children}
                 {coluna.quantidade === 0 && (
-                    <Box sx={{ border: '1.5px dashed', borderColor: alpha(coluna.cor, 0.35), borderRadius: 2, py: 3, textAlign: 'center' }}>
-                        <Typography variant="caption" color="text.disabled">
-                            {coluna.tipo === 'aprovacao' ? 'Arraste aqui para enviar para aprovação' : 'Nenhum orçamento'}
-                        </Typography>
+                    <Box sx={{ border: '1.5px dashed', borderColor: alpha(coluna.cor, 0.3), borderRadius: 2, py: 3, px: 2, textAlign: 'center', color: alpha(coluna.cor, 0.7) }}>
+                        <IconeVazio sx={{ fontSize: 26, mb: 0.5 }} />
+                        <Typography variant="caption" color="text.secondary" component="div">{vazio.texto}</Typography>
                     </Box>
                 )}
                 {coluna.cards.length < coluna.quantidade && (

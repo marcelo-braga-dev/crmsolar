@@ -5,8 +5,10 @@ namespace Tests\Feature\Funil;
 use App\Models\Config;
 use App\Models\FunilEtapa;
 use App\Models\Orcamento;
+use App\Models\User;
 use App\Services\Funil\FunilService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Concerns\CriaDados;
 use Tests\Concerns\CriaFunil;
@@ -231,5 +233,91 @@ class FunilQuadroTest extends TestCase
     public function test_orcamento_criado_ja_tem_relogio_de_etapa(): void
     {
         $this->assertNotNull(Orcamento::find($this->orcamento($this->consultor())->id)->etapa_entrou_em);
+    }
+
+    // ── Correções e saúde do card (docs/funil-de-vendas.md, seção 22) ─────
+
+    /** Card do orçamento no quadro do usuário, procurando em todas as colunas e na caixa. */
+    private function cardNoQuadro(User $usuario, int $id, array $filtros = []): ?array
+    {
+        $quadro = app(FunilService::class)->quadro($usuario, $filtros);
+
+        return collect($quadro['colunas'])->flatMap(fn ($c) => $c['cards'])
+            ->concat($quadro['caixa'])
+            ->firstWhere('id', $id);
+    }
+
+    public function test_aprovar_limpa_o_proximo_contato(): void
+    {
+        $orcamento = $this->orcamento($this->consultor(), ['status' => 'aprovando', 'proximo_contato_em' => now()->addDay()]);
+
+        $orcamento->update(['status' => 'aprovado']); // mesmo caminho da tela do orçamento e do quadro
+
+        $this->assertNull($orcamento->fresh()->proximo_contato_em);
+    }
+
+    public function test_ganho_com_contato_antigo_nao_aparece_como_atrasado(): void
+    {
+        $consultor = $this->consultor();
+        $ganho = $this->orcamento($consultor, ['status' => 'aprovado']);
+        // Dado anterior à correção: venda aprovada que manteve o follow-up vencido.
+        $ganho->forceFill(['proximo_contato_em' => now()->subDay()])->saveQuietly();
+
+        $card = $this->cardNoQuadro($consultor, $ganho->id);
+        $this->assertFalse($card['contato_atrasado']);
+        $this->assertNull($card['saude']);
+        $this->assertNull($this->cardNoQuadro($consultor, $ganho->id, ['atrasados' => true]));
+    }
+
+    public function test_busca_por_numero_exige_numero_puro(): void
+    {
+        $consultor = $this->consultor();
+        $orcamento = $this->orcamento($consultor, ['funil_etapa_id' => $this->etapaAberta()->id]);
+
+        $this->assertNotNull($this->cardNoQuadro($consultor, $orcamento->id, ['busca' => (string) $orcamento->id]));
+        $this->assertNull($this->cardNoQuadro($consultor, $orcamento->id, ['busca' => "{$orcamento->id}abc"]));
+    }
+
+    /** @return array<string, array{string, int, ?string, ?string}> [coluna, dias na etapa, próximo contato (UTC), saúde esperada] */
+    public static function saudes(): array
+    {
+        // Agora fixo: 2026-10-06 15:00 UTC = 12:00 em São Paulo. Etapa 1 tem SLA 2 dias; etapa 2, SLA 5.
+        return [
+            'contato futuro → em dia' => ['etapa1', 0, '2026-10-08 12:00:00', 'em_dia'],
+            'sem próximo contato → sem passo' => ['etapa1', 0, null, 'sem_passo'],
+            'contato vencido → atrasado' => ['etapa1', 0, '2026-10-06 14:00:00', 'atrasado'],
+            'SLA estourado → atrasado' => ['etapa1', 3, '2026-10-08 12:00:00', 'atrasado'],
+            'contato hoje mais tarde → atenção' => ['etapa1', 0, '2026-10-06 20:00:00', 'atencao'],
+            'contato amanhã no fuso local → em dia' => ['etapa1', 0, '2026-10-07 04:00:00', 'em_dia'],
+            '70% do SLA → atenção' => ['etapa2', 4, '2026-10-08 12:00:00', 'atencao'],
+            'abaixo de 70% do SLA → em dia' => ['etapa2', 3, '2026-10-08 12:00:00', 'em_dia'],
+            'em aprovação sem contato → em dia' => [FunilEtapa::APROVACAO, 0, null, 'em_dia'],
+            'ganho → sem saúde' => [FunilEtapa::GANHO, 0, null, null],
+            'perdido → sem saúde' => [FunilEtapa::PERDIDO, 0, null, null],
+            'caixa de entrada → sem saúde' => ['caixa', 0, null, null],
+        ];
+    }
+
+    #[DataProvider('saudes')]
+    public function test_saude_do_card(string $coluna, int $dias, ?string $contato, ?string $esperada): void
+    {
+        Carbon::setTestNow(Carbon::parse('2026-10-06 15:00:00', 'UTC'));
+        config(['app.timezone_exibicao' => 'America/Sao_Paulo']);
+
+        $consultor = $this->consultor();
+        $orcamento = $this->orcamento($consultor, match ($coluna) {
+            'etapa1' => ['funil_etapa_id' => $this->etapaAberta(1)->id],
+            'etapa2' => ['funil_etapa_id' => $this->etapaAberta(2)->id],
+            FunilEtapa::APROVACAO => ['status' => 'aprovando'],
+            FunilEtapa::GANHO => ['status' => 'aprovado'],
+            FunilEtapa::PERDIDO => ['funil_etapa_id' => $this->etapaAberta(1)->id, 'perdido_em' => now(), 'motivo_perda_id' => $this->motivo()->id],
+            default => [],
+        });
+        $orcamento->forceFill([
+            'etapa_entrou_em' => now()->subDays($dias),
+            'proximo_contato_em' => $contato ? Carbon::parse($contato, 'UTC') : null,
+        ])->saveQuietly();
+
+        $this->assertSame($esperada, $this->cardNoQuadro($consultor, $orcamento->id)['saude']);
     }
 }

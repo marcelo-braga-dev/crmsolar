@@ -63,6 +63,8 @@ interface AgendaProps {
     aberto: boolean;
     titulo: string;
     cliente?: string;
+    /** Orientação exibida acima dos campos. */
+    descricao?: string;
     /** Mostra o campo de anotação (registrar contato). */
     comNota?: boolean;
     textoConfirmar: string;
@@ -82,7 +84,7 @@ const atalhos = (): { rotulo: string; data: Date }[] => {
     ];
 };
 
-export function DialogAgenda({ aberto, titulo, cliente, comNota, textoConfirmar, enviando, onFechar, onConfirmar }: AgendaProps) {
+export function DialogAgenda({ aberto, titulo, cliente, descricao, comNota, textoConfirmar, enviando, onFechar, onConfirmar }: AgendaProps) {
     const [nota, setNota] = useState('');
     const [data, setData] = useState('');
 
@@ -95,6 +97,7 @@ export function DialogAgenda({ aberto, titulo, cliente, comNota, textoConfirmar,
             <DialogTitle>{titulo}</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '8px !important' }}>
                 {cliente && <Typography variant="body2" color="text.secondary">{cliente}</Typography>}
+                {descricao && <Alert severity="info" sx={{ py: 0 }}>{descricao}</Alert>}
                 {comNota && (
                     <TextField
                         label="O que foi conversado" value={nota} onChange={(e) => setNota(e.target.value)}

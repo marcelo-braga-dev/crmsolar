@@ -2,6 +2,7 @@
 
 namespace App\Services\Funil;
 
+use App\Models\Cliente;
 use App\Models\Config;
 use App\Models\FunilEtapa;
 use App\Models\MotivoPerda;
@@ -28,6 +29,15 @@ class FunilService
 
     /** Identificador da caixa de entrada nas requisições (não é uma etapa). */
     public const CAIXA = 'caixa';
+
+    /** Saúde do card (seção 22.3). */
+    public const SAUDE_ATRASADO = 'atrasado';
+
+    public const SAUDE_ATENCAO = 'atencao';
+
+    public const SAUDE_SEM_PASSO = 'sem_passo';
+
+    public const SAUDE_EM_DIA = 'em_dia';
 
     /** @var EloquentCollection<int, FunilEtapa>|null */
     private ?EloquentCollection $etapas = null;
@@ -155,6 +165,110 @@ class FunilService
                 : 'Sem próximo contato agendado.'));
             $this->historico($orc, $ator, 'contato', $mensagem);
         });
+    }
+
+    /**
+     * Troca o consultor responsável (só admin, só negociação em andamento). O percentual de comissão
+     * gravado nos itens passa a ser o do novo consultor: a comissão é de quem fecha a venda.
+     *
+     * @return bool false quando o consultor já era o responsável (nada muda)
+     */
+    public function reatribuir(Orcamento $orcamento, User $novo, User $ator): bool
+    {
+        $this->exigirAdmin($ator, 'Só o administrador reatribui negociações.');
+
+        if (! $novo->isConsultor() || ! $novo->status) {
+            throw new MovimentoInvalido('Escolha um consultor ativo.');
+        }
+
+        $mudou = false;
+        $this->transacao($orcamento, null, function (Orcamento $orc) use ($novo, $ator, &$mudou) {
+            if (! $orc->emNegociacao()) {
+                throw new MovimentoInvalido('Só negociações em andamento podem ser reatribuídas.');
+            }
+            if ($orc->consultor_id === $novo->id) {
+                return;
+            }
+            $mudou = true;
+
+            $anterior = $orc->consultor->name ?? 'sem consultor';
+            $orc->update(['consultor_id' => $novo->id]);
+            // Pelo model (não query builder) para a alteração de comissão ficar na Auditoria.
+            $orc->itens()->get()->each->update(['comissao_percentual' => (float) ($novo->comissao_percentual ?? 0)]);
+
+            $this->historico($orc, $ator, 'responsavel', "Responsável: {$anterior} → {$novo->name}.");
+        });
+
+        return $mudou;
+    }
+
+    /**
+     * Aplica a mesma ação a vários orçamentos (só admin). Cada um é validado como se fosse movido
+     * sozinho; as recusas não impedem os demais.
+     *
+     * @param  array<int, int>  $ids
+     * @param  array{etapa_id?: int, consultor_id?: int, motivo_perda_id?: int, observacao?: string|null}  $dados
+     * @return array{feitos: int, recusados: array<int, string>}
+     */
+    public function lote(array $ids, string $acao, array $dados, User $ator): array
+    {
+        $this->exigirAdmin($ator, 'Só o administrador executa ações em lote.');
+
+        $resultado = ['feitos' => 0, 'recusados' => []];
+
+        foreach (Orcamento::whereIn('id', $ids)->orderBy('id')->get() as $orcamento) {
+            try {
+                if ($acao === 'mover' && ! $orcamento->emNegociacao()) {
+                    // Em lote não se aprova, reprova nem reativa: isso é decisão caso a caso.
+                    throw new MovimentoInvalido('Só negociações em andamento podem ser movidas em lote.');
+                }
+                $origem = (string) ($this->etapaDe($orcamento)->id ?? self::CAIXA);
+                match ($acao) {
+                    'mover' => $this->mover($orcamento, FunilEtapa::findOrFail($dados['etapa_id']), $ator, $origem),
+                    'reatribuir' => $this->reatribuir($orcamento, User::findOrFail($dados['consultor_id']), $ator),
+                    'perder' => $this->perder($orcamento, MotivoPerda::findOrFail($dados['motivo_perda_id']), $dados['observacao'] ?? null, $ator, $origem),
+                    default => throw new MovimentoInvalido("Ação em lote desconhecida: {$acao}."),
+                };
+                $resultado['feitos']++;
+            } catch (MovimentoInvalido $e) {
+                $resultado['recusados'][$orcamento->id] = $e->getMessage();
+            }
+        }
+
+        return $resultado;
+    }
+
+    /** Dados do painel lateral do card: cliente, contatos, itens e linha do tempo. */
+    public function detalhe(Orcamento $orcamento): array
+    {
+        $orcamento->load([
+            'cliente', 'cidade:id,cidade,sigla', 'consultor:id,name', 'motivoPerda:id,nome', 'contrato:id,orcamento_id,status',
+            'itens' => fn ($q) => $q->orderBy('ordem'),
+            'historicos' => fn ($q) => $q->with('usuario:id,name')->latest('id')->limit(30),
+        ]);
+        $etapa = $this->etapaDe($orcamento);
+
+        return [
+            ...$this->card($orcamento, $etapa),
+            'etapa' => $etapa ? ['id' => $etapa->id, 'nome' => $etapa->nome, 'cor' => $etapa->cor, 'tipo' => $etapa->tipo] : null,
+            'email' => $orcamento->cliente?->email,
+            'geracao_estimada' => (int) $orcamento->geracao_estimada,
+            'criado_em' => $orcamento->created_at->toIso8601String(),
+            'perda_observacao' => $orcamento->perda_observacao,
+            'itens' => $orcamento->itens->map(fn ($i) => [
+                'descricao' => $i->descricao,
+                'tipo' => $i->tipo,
+                'quantidade' => (float) $i->quantidade,
+                'total' => (float) $i->preco_venda_total,
+            ])->values()->all(),
+            'historico' => $orcamento->historicos->map(fn (OrcamentoHistorico $h) => [
+                'id' => $h->id,
+                'tipo' => $h->tipo,
+                'mensagem' => $h->mensagem,
+                'usuario' => $h->usuario?->name,
+                'em' => $h->created_at->toIso8601String(),
+            ])->values()->all(),
+        ];
     }
 
     private function moverParaAberta(Orcamento $orc, ?FunilEtapa $atual, FunilEtapa $destino, User $ator): void
@@ -286,7 +400,10 @@ class FunilService
     /**
      * Dados do quadro para o usuário: colunas com cards, caixa de entrada e totais.
      *
-     * @param  array{consultor_id?: int|string|null, busca?: string|null, grupo?: string|null, atrasados?: bool}  $filtros
+     * Filtros: consultor_id (admin), busca, grupo, atrasados (contato vencido), sem_passo (etapa aberta
+     * sem próximo contato), sla (acima do tempo esperado na etapa) e ordem (prioridade | valor | antigo).
+     *
+     * @param  array{consultor_id?: int|string|null, busca?: string|null, grupo?: string|null, atrasados?: bool, sem_passo?: bool, sla?: bool, ordem?: string|null}  $filtros
      */
     public function quadro(User $usuario, array $filtros = []): array
     {
@@ -301,12 +418,20 @@ class FunilService
         $caixa = $base()->whereNull('perdido_em')->where('status', 'novo')->whereNull('funil_etapa_id')
             ->oldest()->get();
 
-        $porEtapa = $emNegociacao->groupBy(fn (Orcamento $o) => $this->etapaDe($o)?->id);
+        if ($filtros['sla'] ?? false) {
+            // Prazo da etapa depende da coluna, então o filtro é aplicado depois da consulta.
+            $emNegociacao = $emNegociacao->filter(fn (Orcamento $o) => $this->slaEstourado($o, $this->etapaDe($o)))->values();
+            $emAprovacao = $emAprovacao->filter(fn (Orcamento $o) => $this->slaEstourado($o, $this->etapaSistema(FunilEtapa::APROVACAO)))->values();
+            [$ganhos, $perdidos, $caixa] = [new EloquentCollection, new EloquentCollection, new EloquentCollection];
+        }
 
-        $colunas = $this->etapasAbertas()->map(fn (FunilEtapa $e) => $this->coluna($e, $porEtapa->get($e->id, collect())))
-            ->push($this->coluna($this->etapaSistema(FunilEtapa::APROVACAO), $emAprovacao))
-            ->push($this->coluna($this->etapaSistema(FunilEtapa::GANHO), $ganhos))
-            ->push($this->coluna($this->etapaSistema(FunilEtapa::PERDIDO), $perdidos));
+        $porEtapa = $emNegociacao->groupBy(fn (Orcamento $o) => $this->etapaDe($o)?->id);
+        $ordem = $filtros['ordem'] ?? null;
+
+        $colunas = $this->etapasAbertas()->map(fn (FunilEtapa $e) => $this->coluna($e, $porEtapa->get($e->id, collect()), $ordem))
+            ->push($this->coluna($this->etapaSistema(FunilEtapa::APROVACAO), $emAprovacao, $ordem))
+            ->push($this->coluna($this->etapaSistema(FunilEtapa::GANHO), $ganhos, $ordem))
+            ->push($this->coluna($this->etapaSistema(FunilEtapa::PERDIDO), $perdidos, $ordem));
 
         $diasCaixa = (int) Config::get('funil.dias_caixa_entrada', 7);
         $abertos = $emNegociacao->concat($emAprovacao);
@@ -321,6 +446,7 @@ class FunilService
                 'valor_aberto' => round((float) $abertos->sum('preco_total'), 2),
                 'ponderado' => round($colunas->whereIn('tipo', [FunilEtapa::ABERTA, FunilEtapa::APROVACAO])->sum('ponderado'), 2),
                 'atrasados' => $abertos->filter(fn (Orcamento $o) => $o->proximo_contato_em?->isPast())->count(),
+                'sem_passo' => $emNegociacao->whereNull('proximo_contato_em')->count(),
                 'caixa' => $caixa->count(),
                 'dias_caixa_entrada' => $diasCaixa,
             ],
@@ -332,7 +458,7 @@ class FunilService
     {
         return Orcamento::query()
             ->with([
-                'cliente:id,tipo_pessoa,nome,razao_social',
+                'cliente:id,tipo_pessoa,nome,razao_social,celular,telefone',
                 'cidade:id,cidade,sigla',
                 'consultor:id,name',
                 'motivoPerda:id,nome,reativavel',
@@ -342,23 +468,48 @@ class FunilService
             ->when(! $usuario->isAdmin(), fn ($q) => $q->where('consultor_id', $usuario->id))
             ->when($usuario->isAdmin() && ! empty($filtros['consultor_id']), fn ($q) => $q->where('consultor_id', $filtros['consultor_id']))
             ->when($filtros['grupo'] ?? null, fn ($q, $g) => $q->where('grupo_tarifario', $g))
-            ->when($filtros['busca'] ?? null, fn ($q, $b) => $q->where(fn ($q) => $q
-                ->where('id', ltrim($b, '#'))
-                ->orWhereHas('cliente', fn ($q) => $q->withTrashed()->where('nome', 'like', "%{$b}%")->orWhere('razao_social', 'like', "%{$b}%"))))
-            ->when($filtros['atrasados'] ?? false, fn ($q) => $q->where('proximo_contato_em', '<', now()));
+            ->when($filtros['busca'] ?? null, fn ($q, $b) => $this->buscar($q, $b))
+            // Atraso de contato só existe em negociação aberta (ganhos e perdidos não têm follow-up).
+            ->when($filtros['atrasados'] ?? false, fn ($q) => $q->where('proximo_contato_em', '<', now())
+                ->whereNull('perdido_em')->whereNotIn('status', Orcamento::STATUS_GANHO))
+            // Sem próximo passo: negociação numa etapa aberta (fora da caixa) sem contato agendado.
+            ->when($filtros['sem_passo'] ?? false, fn ($q) => $q->whereNull('proximo_contato_em')->whereNull('perdido_em')
+                ->whereIn('status', Orcamento::STATUS_EM_NEGOCIACAO)
+                ->where(fn ($q) => $q->whereNotNull('funil_etapa_id')->orWhere('status', 'aprovacao_reprovada')));
+    }
+
+    /**
+     * Busca por número do orçamento (só "123" ou "#123") ou por nome/razão social do cliente.
+     *
+     * @param  Builder<Orcamento>  $query
+     */
+    private function buscar(Builder $query, string $busca): void
+    {
+        $numero = ltrim($busca, '#');
+        $like = "%{$busca}%";
+
+        $query->where(fn ($q) => $q
+            ->when(ctype_digit($numero), fn ($q) => $q->where('id', (int) $numero))
+            ->orWhereHas('cliente', fn ($q) => $q->withTrashed()->where(fn ($q) => $q
+                ->where('nome', 'like', $like)->orWhere('razao_social', 'like', $like))));
     }
 
     /** @param  Collection<int, Orcamento>  $orcamentos */
-    private function coluna(FunilEtapa $etapa, Collection $orcamentos): array
+    private function coluna(FunilEtapa $etapa, Collection $orcamentos, ?string $ordem = null): array
     {
         $valor = (float) $orcamentos->sum('preco_total');
+        $maisAntigo = fn (Orcamento $a, Orcamento $b) => ($a->etapa_entrou_em->timestamp ?? 0) <=> ($b->etapa_entrou_em->timestamp ?? 0);
 
-        // Prioridade: contato atrasado → próximo contato mais cedo → há mais tempo parado.
-        $ordenados = $orcamentos->sortBy([
-            fn (Orcamento $a, Orcamento $b) => (int) ! $a->proximo_contato_em?->isPast() <=> (int) ! $b->proximo_contato_em?->isPast(),
-            fn (Orcamento $a, Orcamento $b) => ($a->proximo_contato_em->timestamp ?? PHP_INT_MAX) <=> ($b->proximo_contato_em->timestamp ?? PHP_INT_MAX),
-            fn (Orcamento $a, Orcamento $b) => ($a->etapa_entrou_em->timestamp ?? 0) <=> ($b->etapa_entrou_em->timestamp ?? 0),
-        ]);
+        $ordenados = $orcamentos->sortBy(match ($ordem) {
+            'valor' => [fn (Orcamento $a, Orcamento $b) => (float) $b->preco_total <=> (float) $a->preco_total, $maisAntigo],
+            'antigo' => [$maisAntigo],
+            // Prioridade (padrão): contato atrasado → próximo contato mais cedo → há mais tempo parado.
+            default => [
+                fn (Orcamento $a, Orcamento $b) => (int) ! $a->proximo_contato_em?->isPast() <=> (int) ! $b->proximo_contato_em?->isPast(),
+                fn (Orcamento $a, Orcamento $b) => ($a->proximo_contato_em->timestamp ?? PHP_INT_MAX) <=> ($b->proximo_contato_em->timestamp ?? PHP_INT_MAX),
+                $maisAntigo,
+            ],
+        });
 
         return [
             'id' => $etapa->id,
@@ -374,10 +525,43 @@ class FunilService
         ];
     }
 
-    private function card(Orcamento $o, ?FunilEtapa $etapa): array
+    /** Dias na coluna atual (na caixa, desde a criação; em Perdido, desde a perda). */
+    private function diasNaEtapa(Orcamento $o, ?FunilEtapa $etapa): int
     {
         $referencia = $etapa?->tipo === FunilEtapa::PERDIDO ? $o->perdido_em : ($etapa ? $o->etapa_entrou_em : $o->created_at);
-        $dias = (int) ($referencia ?? $o->created_at)->diffInDays(now());
+
+        return (int) ($referencia ?? $o->created_at)->diffInDays(now());
+    }
+
+    private function slaEstourado(Orcamento $o, ?FunilEtapa $etapa): bool
+    {
+        return in_array($etapa?->tipo, [FunilEtapa::ABERTA, FunilEtapa::APROVACAO], true)
+            && $etapa->sla_dias !== null && $this->diasNaEtapa($o, $etapa) > $etapa->sla_dias;
+    }
+
+    /**
+     * Telefone para "Ligar" e número internacional para o WhatsApp (wa.me). Prefere o celular;
+     * números brasileiros sem DDI recebem 55.
+     *
+     * @return array{telefone: string|null, whatsapp: string|null}
+     */
+    public static function contatos(?Cliente $cliente): array
+    {
+        $digitos = preg_replace('/\D/', '', (string) ($cliente?->celular ?: $cliente?->telefone));
+
+        if (strlen($digitos) < 10) {
+            return ['telefone' => null, 'whatsapp' => null];
+        }
+
+        return ['telefone' => $digitos, 'whatsapp' => strlen($digitos) <= 11 ? "55{$digitos}" : $digitos];
+    }
+
+    private function card(Orcamento $o, ?FunilEtapa $etapa): array
+    {
+        $dias = $this->diasNaEtapa($o, $etapa);
+        $acompanhado = $etapa === null || in_array($etapa->tipo, [FunilEtapa::ABERTA, FunilEtapa::APROVACAO], true);
+        $slaEstourado = $this->slaEstourado($o, $etapa);
+        $contatoAtrasado = $acompanhado && (bool) $o->proximo_contato_em?->isPast();
 
         return [
             'id' => $o->id,
@@ -389,14 +573,39 @@ class FunilService
             'status' => $o->status,
             'consultor' => $o->consultor ? ['id' => $o->consultor->id, 'nome' => $o->consultor->name] : null,
             'dias_na_etapa' => $dias,
-            'sla_estourado' => $etapa?->sla_dias !== null && $etapa->tipo !== FunilEtapa::GANHO && $dias > $etapa->sla_dias,
+            'sla_estourado' => $slaEstourado,
             'proximo_contato_em' => $o->proximo_contato_em?->toIso8601String(),
-            'contato_atrasado' => (bool) $o->proximo_contato_em?->isPast(),
+            'contato_atrasado' => $contatoAtrasado,
+            'saude' => $this->saude($o, $etapa, $dias, $slaEstourado, $contatoAtrasado),
             'reprovado' => $o->status === 'aprovacao_reprovada',
             'tem_contrato' => $o->contrato !== null,
             'motivo_perda' => $o->motivoPerda?->nome,
             'reativavel' => (bool) $o->motivoPerda?->reativavel,
             'tentativas_reativacao' => $o->tentativas_reativacao,
+            ...self::contatos($o->cliente),
         ];
+    }
+
+    /**
+     * Indicador único de saúde do card (docs/funil-de-vendas.md, seção 22.3). Null = coluna
+     * sem acompanhamento comercial (Ganho, Perdido) ou caixa de entrada, que usa o selo "esfriando".
+     */
+    private function saude(Orcamento $o, ?FunilEtapa $etapa, int $dias, bool $slaEstourado, bool $contatoAtrasado): ?string
+    {
+        if (! in_array($etapa?->tipo, [FunilEtapa::ABERTA, FunilEtapa::APROVACAO], true)) {
+            return null;
+        }
+
+        if ($contatoAtrasado || $slaEstourado) {
+            return self::SAUDE_ATRASADO;
+        }
+
+        $fuso = config('app.timezone_exibicao');
+        $contatoHoje = $o->proximo_contato_em?->copy()->setTimezone($fuso)->isSameDay(now($fuso));
+        if ($contatoHoje || ($etapa->sla_dias && $dias * 10 >= $etapa->sla_dias * 7)) {
+            return self::SAUDE_ATENCAO;
+        }
+
+        return $etapa->tipo === FunilEtapa::ABERTA && $o->proximo_contato_em === null ? self::SAUDE_SEM_PASSO : self::SAUDE_EM_DIA;
     }
 }

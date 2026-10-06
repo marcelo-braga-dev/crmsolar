@@ -4,4 +4,5 @@ export const ROTULO_EVENTO: Record<string, string> = {
     contato: 'Contato',
     perda: 'Perdido',
     reativacao: 'Reativado',
+    responsavel: 'Responsável',
 };

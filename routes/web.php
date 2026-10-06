@@ -59,6 +59,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('funil/{orcamento}/perder', [FunilController::class, 'perder'])->name('funil.perder');
     Route::post('funil/{orcamento}/reativar', [FunilController::class, 'reativar'])->name('funil.reativar');
     Route::post('funil/{orcamento}/contato', [FunilController::class, 'contato'])->name('funil.contato');
+    Route::get('funil/{orcamento}', [FunilController::class, 'show'])->name('funil.show');
+    Route::post('funil/lote', [FunilController::class, 'lote'])->name('funil.lote');
+    Route::post('funil/{orcamento}/consultor', [FunilController::class, 'reatribuir'])->name('funil.reatribuir');
 
     Route::resource('orcamentos', OrcamentosController::class)
         ->only(['index', 'show', 'update']);
@@ -167,6 +170,7 @@ Route::middleware(['auth', 'consultor'])->prefix('consultor')->name('consultor.'
     Route::post('funil/{orcamento}/perder', [FunilController::class, 'perder'])->name('funil.perder');
     Route::post('funil/{orcamento}/reativar', [FunilController::class, 'reativar'])->name('funil.reativar');
     Route::post('funil/{orcamento}/contato', [FunilController::class, 'contato'])->name('funil.contato');
+    Route::get('funil/{orcamento}', [FunilController::class, 'show'])->name('funil.show');
 
     // Rotas estáticas ANTES do resource para evitar captura pelo parâmetro {orcamento}
     Route::get('orcamentos/selecionar-grupo', fn () => inertia('Consultor/Orcamentos/SelecionarGrupo'))->name('orcamentos.selecionar_grupo');

@@ -98,6 +98,11 @@ class Orcamento extends Model
             if ($mudouColuna && ! $orcamento->isDirty('etapa_entrou_em')) {
                 $orcamento->etapa_entrou_em = now();
             }
+
+            // Venda fechada não tem mais follow-up comercial: sem isso o card ganho ficaria "atrasado".
+            if ($orcamento->isDirty('status') && in_array($orcamento->status, self::STATUS_GANHO, true)) {
+                $orcamento->proximo_contato_em = null;
+            }
         });
     }
 
