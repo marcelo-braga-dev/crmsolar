@@ -134,6 +134,7 @@ database/
 
 docs/
   funil-de-vendas.md   — especificação do funil (regras, permissões, modelo de dados)
+  guia-marketing.md    — guia completo para marketing, site de vendas e treinamento (funcionalidades, argumentos, roteiros)
 ```
 
 ## Variáveis de ambiente específicas
@@ -165,6 +166,10 @@ php artisan test   # 484 testes, SQLite em memória
 > ⚠️ No servidor, **rode `php artisan optimize:clear` antes dos testes**: com a configuração em cache o `phpunit.xml` é ignorado e os testes iriam para o MySQL real (o `RefreshDatabase` apagaria o banco). O `tests/TestCase.php` aborta nesse caso.
 
 > ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).
+
+## Material de marketing e treinamento
+
+O guia [`docs/guia-marketing.md`](docs/guia-marketing.md) descreve todas as funcionalidades como existem hoje, argumentos de venda e respostas a objeções, recomendações para o site de vendas, roteiro de demonstração, trilhas de treinamento e os limites atuais (o que não prometer).
 
 ## Base de demonstração
 
