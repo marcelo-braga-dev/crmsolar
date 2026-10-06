@@ -163,7 +163,6 @@ export default function ClientesIndex({ clientes, filters, consultores }: Props)
                     <TableHead>
                         <TableRow>
                             <TableCell>Cliente</TableCell>
-                            <TableCell>Contato</TableCell>
                             <TableCell>Cidade</TableCell>
                             <TableCell>Vendedor</TableCell>
                             <TableCell>Status</TableCell>
@@ -174,7 +173,7 @@ export default function ClientesIndex({ clientes, filters, consultores }: Props)
                     <TableBody>
                         {clientes.data.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                                     <PeopleRoundedIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
                                     <Typography color="text.secondary">Nenhum cliente encontrado</Typography>
                                 </TableCell>
@@ -187,23 +186,23 @@ export default function ClientesIndex({ clientes, filters, consultores }: Props)
                                         <Avatar sx={{ width: 36, height: 36, fontSize: '0.9rem', bgcolor: 'primary.light' }}>
                                             {(nomeDisplay(c) ?? '?').charAt(0).toUpperCase()}
                                         </Avatar>
-                                        <Box>
-                                            <Typography variant="body2" fontWeight={600}>
-                                                {nomeDisplay(c) ?? '—'}
+                                        <Box sx={{ minWidth: 0 }}>
+                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                                                <Typography variant="body2" fontWeight={600}>
+                                                    {nomeDisplay(c) ?? '—'}
+                                                </Typography>
+                                                <Chip
+                                                    label={c.tipo_pessoa === 'pj' ? 'PJ' : 'PF'}
+                                                    size="small"
+                                                    sx={{ height: 18, fontSize: '0.65rem' }}
+                                                />
+                                            </Box>
+                                            {/* Contato logo abaixo do nome (antes era uma coluna própria). */}
+                                            <Typography variant="caption" color="text.secondary" component="div">
+                                                {[c.email, c.celular ?? c.telefone].filter(Boolean).join(' · ') || 'Sem contato cadastrado'}
                                             </Typography>
-                                            <Chip
-                                                label={c.tipo_pessoa === 'pj' ? 'PJ' : 'PF'}
-                                                size="small"
-                                                sx={{ height: 18, fontSize: '0.65rem', mt: 0.3 }}
-                                            />
                                         </Box>
                                     </Box>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="body2">{c.email ?? '—'}</Typography>
-                                    <Typography variant="caption" color="text.secondary">
-                                        {c.celular ?? c.telefone ?? '—'}
-                                    </Typography>
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="body2">
