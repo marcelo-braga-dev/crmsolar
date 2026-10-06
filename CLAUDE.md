@@ -81,6 +81,10 @@ CI (`.github/workflows/ci.yml`): Pint (`--test`), Larastan, `php artisan test`, 
 | admin@teste.com          | 1020     | admin     |
 | consultor@teste.com      | 1020     | consultor |
 
+### Base de demonstração (marketing) — `DEMO.md`
+
+`MarketingDemoSeeder` cria, numa **instalação separada** (banco próprio), uma empresa fictícia operando há 16 meses: equipe, clientes, leads, orçamentos pelo `FunilService`, contratos, visitas, pós-venda, auditoria e integrações, com datas relativas a hoje e dados marcados como fictícios. Só roda com `DEMO_SEED_PERMITIDO=true` (`config('app.demo_seed_permitido')`) — **nunca no servidor de desenvolvimento**. Logins `@crmsolar.demo`, senha `demo@2026`. Ao mudar regra de negócio, fluxo de status ou o que uma tela consulta, confira se o simulador (`database/seeders/Support/SimuladorComercial.php`) continua coerente — `MarketingDemoSeederTest` pega quebras.
+
 ## Architecture
 
 ### Role system — ATENÇÃO
@@ -370,7 +374,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**451 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
+**453 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -379,6 +383,7 @@ Trabalho de atualização integrado à `main`.
 - Para rodar os testes de um commit isolado (simular o CI), use `git archive HEAD` numa pasta e **copie** o `vendor` — com symlink o autoload do Composer resolve para o projeto original e testa o working tree, não o commit.
 - Laravel desliga CSRF em testes — mudanças em rotas públicas POST precisam ser conferidas com `curl`.
 - `actingAs($user)` usa o objeto em memória: atributos com default só no banco (ex.: `comissao_percentual`) chegam `null` se não forem passados no `create`.
+- Seeders precisam rodar em MySQL **e** SQLite: use `Schema::disableForeignKeyConstraints()` (não `SET FOREIGN_KEY_CHECKS`). `MarketingDemoSeederTest` roda a base de demonstração inteira em SQLite (~25 s, com `MarketingDemoSeeder::$escala` reduzida).
 
 ### Resolvido na segunda rodada
 - **Inversores, Painéis e Transformadores** — rotas, menu e `ProdutosPorCategoriaController` (base comum). Usam as categorias do seeder (`inversor-solar`, `painel-solar`, `transformador`) e só editam produtos da própria categoria

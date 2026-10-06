@@ -159,12 +159,16 @@ A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php a
 ## Testes
 
 ```bash
-php artisan test   # 451 testes, SQLite em memória
+php artisan test   # 453 testes, SQLite em memória
 ```
 
 > ⚠️ No servidor, **rode `php artisan optimize:clear` antes dos testes**: com a configuração em cache o `phpunit.xml` é ignorado e os testes iriam para o MySQL real (o `RefreshDatabase` apagaria o banco). O `tests/TestCase.php` aborta nesse caso.
 
 > ⛔ **Exigência máxima:** tudo que for criado ou alterado (funcionalidade, correção, regra de negócio, rota, validação, permissão) **deve vir acompanhado de testes automatizados no mesmo trabalho**, e a suíte completa precisa passar com **0 falhas** antes de considerar a tarefa concluída. Bug corrigido exige teste que reproduza o bug. Detalhes em [`CLAUDE.md`](CLAUDE.md#-exigência-máxima--tudo-que-for-trabalhado-deve-ser-testado).
+
+## Base de demonstração
+
+Para apresentar o produto há uma base fictícia completa (empresa operando há 16 meses, todas as telas cheias, logins por perfil), gerada pelo `MarketingDemoSeeder` numa instalação separada. Passo a passo, contas e renovação em [`DEMO.md`](DEMO.md).
 
 ## Comandos úteis
 
