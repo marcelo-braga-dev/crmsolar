@@ -32,7 +32,8 @@ class FunilConfiguracaoTest extends TestCase
 
     public function test_migration_coloca_reprovados_na_primeira_etapa(): void
     {
-        Artisan::call('migrate:rollback', ['--step' => 1]);
+        // Desfaz só a migration do funil (não "a última": outras migrations vieram depois).
+        Artisan::call('migrate:rollback', ['--path' => 'database/migrations/2026_10_04_000000_create_funil_de_vendas.php']);
         $consultor = $this->consultor();
         $cliente = $this->cliente($consultor);
         $id = DB::table('orcamentos')->insertGetId([
