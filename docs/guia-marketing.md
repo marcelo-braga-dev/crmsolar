@@ -4,6 +4,8 @@ Atualizado em 06/10/2026 · Versão compartilhada (editável): https://claude.ai
 
 O CRM Solar organiza toda a venda de uma empresa de energia solar em um só lugar: do primeiro contato do lead até a usina instalada e o pós-venda. Este guia descreve cada função como ela existe hoje no sistema, para a equipe de marketing usar em divulgação, o time do site de vendas montar páginas e argumentos, e o treinamento ensinar o uso.
 
+> **Confidencial:** o nome da distribuidora integrada não pode aparecer em material de divulgação, no site nem na demonstração. Use sempre "distribuidora parceira" ou "distribuidora".
+
 ## 1. Visão geral e proposta de valor
 
 **Em uma frase:** o CRM Solar transforma a conta de luz do cliente em uma proposta técnica e financeira pronta, e acompanha a negociação até o contrato assinado e a instalação concluída.
@@ -25,7 +27,7 @@ O CRM Solar organiza toda a venda de uma empresa de energia solar em um só luga
 | Feito para energia solar | Dimensionamento por grupo tarifário ANEEL (B1, B2, B3 e Grupo A), irradiação por município, kits fotovoltaicos e concessionárias já cadastrados |
 | Preço sem erro | Precificação automática em 3 camadas de margem (por potência, por estado e por fornecedor); o consultor não digita preço de kit |
 | Análise econômica para o cliente final | Economia mensal, payback simples e descontado, TIR, VPL e economia em 25 anos em cada proposta |
-| Catálogo sempre atualizado | Integração com a distribuidora Edeltec sincroniza kits e preços automaticamente todos os dias |
+| Catálogo sempre atualizado | Integração com distribuidora parceira sincroniza kits e preços automaticamente todos os dias |
 | Funil que não deixa venda esfriar | Indicador de saúde de cada negociação, próximo passo obrigatório, caixa de entrada e WhatsApp com um clique |
 | Controle e segurança | Dois perfis com áreas separadas, aprovação interna antes do contrato e registro de auditoria |
 
@@ -89,7 +91,7 @@ São 18 módulos, organizados no menu lateral de cada perfil. A tabela diz o que
 | Precificação | Sim | Não | Margens por faixa de potência, estado e fornecedor, com simulador de preço |
 | Usuários | Sim | Não | Cadastro de administradores e consultores, com percentual de comissão |
 | Fornecedores | Sim | Não | Distribuidoras de equipamentos |
-| Integrações | Sim | Não | Sincronização do catálogo Edeltec e histórico de execuções |
+| Integrações | Sim | Não | Sincronização do catálogo da distribuidora e histórico de execuções |
 | Configurações | Sim | Não | Auditoria, bancos, concessionárias, parâmetros de cálculo, funil, identidade visual e sistema |
 | Perfil e senha | Sim | Sim | Dados pessoais e troca de senha |
 | API pública da proposta | — | — | Endereço com chave única por orçamento que devolve os dados da proposta (sem documentos, custos nem margens) para exibir em um site ou aplicativo |
@@ -272,7 +274,7 @@ A tela de precificação tem um **simulador**: informe preço de custo, potênci
 
 O administrador ajusta o sistema à realidade da empresa sem depender de programador: catálogo sincronizado, tarifas, parâmetros de cálculo, funil e a marca.
 
-**Integração Edeltec.** Sincroniza o catálogo de kits e os preços da distribuidora Edeltec automaticamente todos os dias às 4h, ou na hora pelo botão "Integrar". Kits novos entram, preços mudam e kits retirados pelo fornecedor deixam de aparecer para os consultores. O histórico mostra cada execução: início, duração, itens importados, atualizados e desativados, avisos (ex.: SKU com preço zerado) e falhas. As credenciais da API ficam no servidor.
+**Integração com a distribuidora.** Sincroniza o catálogo de kits e os preços da distribuidora parceira automaticamente todos os dias às 4h, ou na hora pelo botão "Integrar". Kits novos entram, preços mudam e kits retirados pelo fornecedor deixam de aparecer para os consultores. O histórico mostra cada execução: início, duração, itens importados, atualizados e desativados, avisos (ex.: SKU com preço zerado) e falhas. As credenciais da API ficam no servidor.
 
 **Configurações:**
 
@@ -372,7 +374,7 @@ A promessa central é vender mais rápido e com preço certo, sem perder negocia
 | --- | --- |
 | "Já uso planilha de dimensionamento" | A planilha calcula, mas não aplica sua política de preço, não gera proposta, não acompanha o follow-up nem calcula comissão. Aqui tudo isso sai do mesmo cálculo. |
 | "Minha equipe não vai usar" | O consultor trabalha num quadro visual, arrasta cards e fala com o cliente pelo WhatsApp a partir do card. A demonstração mostra isso sem instalar nada. |
-| "Meu fornecedor não é a Edeltec" | Kits e produtos de qualquer fornecedor podem ser cadastrados; a Edeltec tem sincronização automática diária. |
+| "Meu fornecedor não é o mesmo da integração" | Kits e produtos de qualquer fornecedor podem ser cadastrados; a distribuidora parceira tem sincronização automática diária. |
 | "Atendo cliente rural e industrial" | Há fluxos próprios para Grupo B2 rural (com bombeamento) e Grupo A (ponta, fora da ponta, demanda, horo-sazonal Verde e Azul). |
 | "Cada vendedor dá um preço" | O consultor não digita preço de kit: o preço vem das margens definidas pelo gestor, e o orçamento passa por aprovação antes do contrato. |
 | "E a segurança dos dados?" | Cada consultor vê só a própria carteira, há registro de auditoria e as APIs públicas não expõem documentos nem custos. |
@@ -435,7 +437,7 @@ Uma demonstração comercial completa leva cerca de 20 minutos e alterna os dois
 2. Sistema: nome, telefone e e-mail da empresa para os PDFs.
 3. Concessionárias: conferir tarifas dos estados atendidos.
 4. Dimensionamento: conferir perdas e margem de segurança.
-5. Fornecedores e catálogo: ativar a integração Edeltec e/ou cadastrar kits e produtos.
+5. Fornecedores e catálogo: ativar a integração com a distribuidora e/ou cadastrar kits e produtos.
 6. Precificação: faixas por potência, margens por estado e por fornecedor; validar no simulador.
 7. Funil de vendas: etapas, prazos e motivos de perda da empresa.
 8. Usuários: cadastrar consultores com o percentual de comissão.
@@ -463,7 +465,7 @@ Uma demonstração comercial completa leva cerca de 20 minutos e alterna os dois
 | Preciso instalar algo? | Não: o sistema funciona no navegador, no computador e no celular. |
 | Posso mudar as etapas do funil? | Sim: nome, cor, ordem, probabilidade e prazo de cada etapa, além dos motivos de perda. |
 | Como a comissão é calculada? | Valor de venda de cada item × percentual do consultor gravado no orçamento, contando as vendas aprovadas, em instalação e finalizadas. |
-| O preço do kit muda sozinho? | Muda quando o custo do kit muda (pela integração Edeltec ou pelo cadastro) ou quando o gestor altera as margens; orçamentos já salvos mantêm o preço. |
+| O preço do kit muda sozinho? | Muda quando o custo do kit muda (pela integração com a distribuidora ou pelo cadastro) ou quando o gestor altera as margens; orçamentos já salvos mantêm o preço. |
 | Funciona para todo o Brasil? | A irradiação cobre os 5.571 municípios e há 33 concessionárias de todos os estados cadastradas. |
 | Dá para receber leads do meu site? | Sim, pela API pública de leads (seção 7). |
 
@@ -492,7 +494,7 @@ Uma demonstração comercial completa leva cerca de 20 minutos e alterna os dois
 | Assinatura de contrato | O contrato sai em PDF para assinatura fora do sistema; não há assinatura eletrônica nem tela para marcar o contrato como assinado ou cancelado |
 | Visitas técnicas | O formulário pede tipo e endereço da visita, mas esses dois campos ainda não são gravados (defeito a corrigir) |
 | Financiamento | Bancos e linhas são só cadastro de referência; não há simulação de parcelas na proposta |
-| Integrações | Sincronização automática só com a Edeltec; demais fornecedores por cadastro |
+| Integrações | Sincronização automática só com uma distribuidora parceira; demais fornecedores por cadastro |
 | Comunicação com o cliente | O sistema abre a conversa no WhatsApp e a ligação, mas não envia mensagens nem e-mails automáticos |
 | Proposta on-line | Existe a API pública com os dados da proposta, mas não uma página pronta para o cliente abrir |
 | Aplicativo | Não há aplicativo nas lojas; o uso no celular é pelo navegador |

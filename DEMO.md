@@ -72,7 +72,7 @@ O `DemoDadosFicticiosSeeder` roda no fim (e pode rodar de novo sem duplicar nada
 - PDFs de orçamento e contrato com a faixa **"Documento de demonstração com dados fictícios"** (configuração `demo_aviso`, que só existe nesta base);
 - textos que copiaram nomes (contratos, linha do tempo, anotações, Auditoria) atualizados para os nomes marcados.
 
-O fornecedor **Edeltec** mantém o nome (a tela Integrações → Edeltec o procura), mas CNPJ e contatos são fictícios. Marcas de equipamentos (Jinko, Growatt…) e concessionárias são dados de referência.
+**O nome da distribuidora integrada é confidencial** e não aparece na demonstração: o fornecedor da integração se chama "Distribuidora Parceira (fictícia)" (SKUs `DPA-`, contatos fictícios) e é encontrado pela coluna `fornecedores.integracao = 'distribuidora'`, não pelo nome. Com `DEMO_MODE` ligado, menu, títulos e histórico dizem só "Distribuidora" (`App\Services\Integracoes\NomeDistribuidora`); URL, nomes de rota (Ziggy) e componente são genéricos (`/admin/integracoes/distribuidora`). Bases geradas antes disso são corrigidas rodando de novo o `DemoDadosFicticiosSeeder`. `MarketingDemoSeederTest` e `IntegracaoEdeltecTest` falham se o nome voltar a aparecer nos dados ou no HTML. Marcas de equipamentos (Jinko, Growatt…) e concessionárias são dados de referência.
 
 ## Como subir a instância
 

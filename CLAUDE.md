@@ -88,6 +88,7 @@ CI (`.github/workflows/ci.yml`): Pint (`--test`), Larastan, `php artisan test`, 
 ### Modo demonstração (`DEMO_MODE`) — `DEMO.md`
 
 Mesma plataforma em instalação separada: visitante entra sem senha, troca de perfil pela barra no rodapé e **não grava nada** (middleware `BloqueiaEscritaNaDemonstracao`, no servidor). Desligado por padrão (rotas `/demo` → 404, prop `demo` = `null`).
+- ⚠️ **O nome da distribuidora integrada (Edeltec) é confidencial na demonstração.** Nada visível ao visitante pode citá-lo: nem dados, nem texto de tela, URL, nome de rota (vão para o HTML pelo Ziggy, inclusive rotas com nome herdado de grupo), nome de componente Inertia ou valor de coluna serializado. Texto de tela usa `NomeDistribuidora::exibido()` ("Distribuidora" com `DEMO_MODE`); o fornecedor é achado por `Fornecedor::daIntegracao()` (coluna `integracao`), nunca pelo nome.
 - ⚠️ **Toda nova rota POST que só lê ou calcula precisa entrar em `readonly_post_routes` (`config/demo.php`)**, senão fica bloqueada na demonstração. Tela `.create` que serve de vitrine (calcula sem gravar) vai em `readonly_form_routes`.
 - Lógica em `App\Services\Demo\ModoDemonstracao` (perfis em `PERFIS`); testes em `tests/Feature/Demo/ModoDemonstracaoTest.php`.
 
@@ -146,7 +147,7 @@ app/Http/Controllers/
       IdentidadeVisualController     — nome da plataforma, rodapé do login, logos, favicon e cores
       SistemaController              — configurações gerais
     Integracoes/
-      EdeltecController              — integração Edeltec
+      EdeltecController              — integração com a distribuidora (Edeltec); rota/tela genéricas `integracoes/distribuidora`
       HistoricoController            — log de sincronizações
 
   Consultor/
@@ -248,7 +249,7 @@ resources/js/Pages/
       IdentidadeVisual/Index.tsx     — identidade visual com pré-visualização ao vivo
       Sistema/Index.tsx
     Integracoes/
-      Edeltec/Index.tsx
+      Distribuidora/Index.tsx        — integração com a distribuidora (Edeltec)
       Historico/Index.tsx
 
   Funil/
@@ -397,7 +398,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**488 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
+**493 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
