@@ -24,6 +24,7 @@ interface Props extends PageProps {
     fornecedor?: FornecedorInfo;
     historicos: HistoricoRow[];
     configurado: boolean;
+    demonstracao: boolean;
 }
 
 function fmtDuracao(s?: number | null): string {
@@ -42,7 +43,7 @@ function StatusChip({ status }: { status: HistoricoRow['status'] }) {
     return <Chip label={label} color={color} size="small" />;
 }
 
-export default function EdeltecIndex({ fornecedor, historicos, configurado }: Props) {
+export default function EdeltecIndex({ fornecedor, historicos, configurado, demonstracao }: Props) {
     const [loading, setLoading] = React.useState(false);
     const ultima = historicos[0] ?? null;
 
@@ -72,7 +73,11 @@ export default function EdeltecIndex({ fornecedor, historicos, configurado }: Pr
                 }
             />
 
-            {!configurado && (
+            {demonstracao ? (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                    Nesta demonstração a sincronização com a Edeltec fica desligada. Os kits e o histórico abaixo são da base de exemplo.
+                </Alert>
+            ) : !configurado && (
                 <Alert severity="error" sx={{ mb: 3 }}>
                     Credenciais não configuradas. Adicione <strong>EDELTEC_API_KEY</strong> e <strong>EDELTEC_SECRET</strong> no arquivo <code>.env</code>.
                 </Alert>

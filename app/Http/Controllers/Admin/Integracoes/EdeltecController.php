@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SincronizarEdeltec;
 use App\Models\Fornecedor;
 use App\Models\IntegracaoHistorico;
+use App\Services\Demo\ModoDemonstracao;
 use App\Services\Integracoes\Edeltec\EdeltecImportService;
 use App\Services\Integracoes\Edeltec\EdeltecSincronizacaoEmAndamento;
 use Illuminate\Http\RedirectResponse;
@@ -15,7 +16,7 @@ use Inertia\Response;
 
 class EdeltecController extends Controller
 {
-    public function index(): Response
+    public function index(ModoDemonstracao $demo): Response
     {
         $fornecedor = Fornecedor::where('nome', 'like', '%edeltec%')
             ->orWhere('nome', 'like', '%Edeltec%')
@@ -52,6 +53,8 @@ class EdeltecController extends Controller
             ] : null,
             'historicos' => $historicos,
             'configurado' => $configurado,
+            // Na demonstração a sincronização não roda (nem pelo agendador): aviso neutro em vez de erro de credencial.
+            'demonstracao' => $demo->ativo(),
         ]);
     }
 

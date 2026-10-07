@@ -189,4 +189,18 @@ class IntegracaoEdeltecTest extends TestCase
 
         $this->assertTrue(Cache::lock(EdeltecImportService::LOCK, 60)->get());
     }
+
+    public function test_tela_avisa_que_a_sincronizacao_fica_desligada_na_demonstracao(): void
+    {
+        config(['services.edeltec.api_key' => null, 'services.edeltec.secret' => null]);
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->get(route('admin.integracoes.edeltec'))
+            ->assertInertia(fn ($page) => $page->where('configurado', false)->where('demonstracao', false));
+
+        config(['demo.enabled' => true]);
+
+        $this->actingAs($admin)->get(route('admin.integracoes.edeltec'))
+            ->assertInertia(fn ($page) => $page->where('configurado', false)->where('demonstracao', true));
+    }
 }
