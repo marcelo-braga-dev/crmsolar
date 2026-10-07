@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Config;
+use App\Models\Fornecedor;
+use App\Services\Integracoes\NomeDistribuidora;
 use Database\Seeders\Support\CatalogoDemo;
 use Database\Seeders\Support\Ficticio;
 use Illuminate\Database\Seeder;
@@ -21,6 +23,9 @@ use Illuminate\Support\Facades\DB;
  */
 class DemoDadosFicticiosSeeder extends Seeder
 {
+    /** Nome genérico do fornecedor da integração (o nome real da distribuidora é confidencial). */
+    public const DISTRIBUIDORA = 'Distribuidora Parceira';
+
     /** @var array<string, string> nome antigo => nome marcado */
     private array $mapa = [];
 
@@ -96,17 +101,31 @@ class DemoDadosFicticiosSeeder extends Seeder
         DB::table('fornecedores')->update(['cnpj' => null]);
 
         foreach ($fornecedores as $f) {
-            // "Edeltec" fica com o nome real: a tela de integração o procura. Os dados cadastrais são fictícios.
-            $nome = $f->nome === 'Edeltec' ? $f->nome : Ficticio::marcar($f->nome, true);
+            // Nome da distribuidora integrada é confidencial: vira um nome genérico (a integração a acha pela coluna `integracao`).
+            $integrada = $f->integracao === Fornecedor::INTEGRACAO_DISTRIBUIDORA || stripos($f->nome, NomeDistribuidora::REAL) !== false;
+            $nome = Ficticio::marcar($integrada ? self::DISTRIBUIDORA : $f->nome, true);
             $this->lembrar($f->nome, $nome);
             DB::table('fornecedores')->where('id', $f->id)->update([
                 'nome' => $nome,
+                ...($integrada ? [
+                    'integracao' => Fornecedor::INTEGRACAO_DISTRIBUIDORA,
+                    'email' => 'comercial@parceira.fornecedor.demo',
+                    'site' => 'https://parceira.fornecedor.demo',
+                ] : []),
                 'cnpj' => Ficticio::cnpjFornecedor($f->id),
                 'telefone' => Ficticio::telefone(800 + $f->id),
                 'celular' => null,
                 'representante' => $f->representante ? Ficticio::marcar($f->representante, Ficticio::nomeFeminino($f->representante)) : null,
             ]);
+
+            if ($integrada) {
+                DB::table('kits')->where('fornecedor_id', $f->id)->where('sku', 'like', 'EDL-%')
+                    ->update(['sku' => DB::raw("replace(sku, 'EDL-', 'DPA-')")]);
+            }
         }
+
+        DB::table('integracao_historicos')->where('alertas', 'like', '%edeltec%')
+            ->update(['alertas' => DB::raw("replace(alertas, 'api.edeltec', 'API da distribuidora')")]);
     }
 
     /** Contrato e assinatura copiam nome e documento do cliente: realinha com o cliente marcado. */

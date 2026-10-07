@@ -152,7 +152,7 @@ class CadastrosTest extends TestCase
         config(['services.edeltec.api_key' => null]);
 
         $this->actingAs($this->admin())
-            ->post(route('admin.integracoes.edeltec.integrar'))
+            ->post(route('admin.integracoes.distribuidora.integrar'))
             ->assertSessionHas('error');
     }
 }

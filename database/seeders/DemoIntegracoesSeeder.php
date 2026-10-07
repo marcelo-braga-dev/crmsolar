@@ -24,7 +24,7 @@ class DemoIntegracoesSeeder extends Seeder
             return;
         }
 
-        $edeltec = Fornecedor::where('nome', 'Edeltec')->first();
+        $edeltec = Fornecedor::daIntegracao()->first();
         $solaris = Fornecedor::where('nome', 'like', 'Solaris%')->first();
         $luminar = Fornecedor::where('nome', 'like', 'Luminar%')->first();
         if (! $edeltec) {
@@ -64,7 +64,7 @@ class DemoIntegracoesSeeder extends Seeder
 
             if ($diaDeFalha) {
                 $this->registrar($edeltec->id, 'edeltec', 'erro', $quando, Sorteio::entre(30, 65), [
-                    'alertas' => 'ERRO CRÍTICO: cURL error 28: Operation timed out after 30001 milliseconds (api.edeltec — demonstração)',
+                    'alertas' => 'ERRO CRÍTICO: cURL error 28: Operation timed out after 30001 milliseconds (API da distribuidora — demonstração)',
                 ]);
 
                 continue;

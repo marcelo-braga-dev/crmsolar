@@ -22,7 +22,7 @@ import { rotuloPaginacao } from '@/Components/UI/TablePagination';
 
 interface Historico {
     id: number;
-    tipo: 'edeltec' | 'excel' | 'manual';
+    tipo: 'distribuidora' | 'excel' | 'manual';
     status: 'iniciado' | 'concluido' | 'erro';
     itens_importados: number;
     itens_atualizados: number;
@@ -36,6 +36,8 @@ interface Historico {
 interface Props extends PageProps {
     historicos: PaginatedData<Historico>;
     filters: { tipo?: string; status?: string };
+    /** Nome exibido da distribuidora integrada ("Distribuidora" na demonstração). */
+    distribuidora: string;
 }
 
 const statusConfig = {
@@ -44,11 +46,11 @@ const statusConfig = {
     erro: { label: 'Erro', color: 'error' as const },
 };
 
-const tipoConfig = {
-    edeltec: { label: 'Edeltec', color: 'secondary' as const },
+const tipoConfig = (distribuidora: string) => ({
+    distribuidora: { label: distribuidora, color: 'secondary' as const },
     excel: { label: 'Excel', color: 'default' as const },
     manual: { label: 'Manual', color: 'default' as const },
-};
+});
 
 function duracao(iniciado: string, finalizado?: string): string {
     if (!finalizado) return 'Em andamento';
@@ -58,7 +60,8 @@ function duracao(iniciado: string, finalizado?: string): string {
     return `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
-export default function HistoricoIndex({ historicos, filters }: Props) {
+export default function HistoricoIndex({ historicos, filters, distribuidora }: Props) {
+    const tipos = tipoConfig(distribuidora);
     const [tipo, setTipo] = useState(filters.tipo ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
 
@@ -81,7 +84,7 @@ export default function HistoricoIndex({ historicos, filters }: Props) {
                         onChange={(e) => { setTipo(e.target.value); applyFilters({ tipo: e.target.value }); }}
                         sx={{ minWidth: 150 }}>
                         <MenuItem value="">Todos</MenuItem>
-                        <MenuItem value="edeltec">Edeltec</MenuItem>
+                        <MenuItem value="distribuidora">{distribuidora}</MenuItem>
                         <MenuItem value="excel">Excel</MenuItem>
                         <MenuItem value="manual">Manual</MenuItem>
                     </TextField>
@@ -125,7 +128,7 @@ export default function HistoricoIndex({ historicos, filters }: Props) {
                             </TableRow>
                         )}
                         {historicos.data.map((h) => {
-                            const tipoC = tipoConfig[h.tipo] ?? { label: h.tipo, color: 'default' as const };
+                            const tipoC = tipos[h.tipo] ?? { label: h.tipo, color: 'default' as const };
                             const statusC = statusConfig[h.status] ?? { label: h.status, color: 'default' as const };
                             return (
                                 <TableRow key={h.id} hover>

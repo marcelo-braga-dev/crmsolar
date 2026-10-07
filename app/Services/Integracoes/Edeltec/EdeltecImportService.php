@@ -72,9 +72,7 @@ class EdeltecImportService
 
     private function sincronizar(): IntegracaoHistorico
     {
-        $fornecedor = Fornecedor::where('nome', 'like', '%edeltec%')
-            ->orWhere('nome', 'like', '%Edeltec%')
-            ->firstOrFail();
+        $fornecedor = Fornecedor::daIntegracao()->firstOrFail();
 
         $this->fornecedorId = $fornecedor->id;
 

@@ -31,15 +31,15 @@ class DemoCatalogoSeeder extends Seeder
 {
     /** [chave, nome, fator de preço, margem do fornecedor %, prefixo de SKU] */
     private const FORNECEDORES = [
-        // Nome real porque a tela Integrações → Edeltec procura por ele; os dados cadastrais são fictícios.
-        ['edeltec', 'Edeltec', 1.00, 2.0, 'EDL'],
+        // Fornecedor da integração (coluna `integracao`). O nome real da distribuidora é confidencial na demonstração.
+        ['parceira', 'Distribuidora Parceira', 1.00, 2.0, 'DPA'],
         ['solaris', 'Solaris Distribuidora Solar', 1.03, 1.5, 'SOL'],
         ['luminar', 'Luminar Energia Distribuidora', 0.98, 3.0, 'LUM'],
     ];
 
     /** Painel de cada fornecedor: [marca, modelo, watts, custo]. */
     private const PAINEIS = [
-        'edeltec' => ['Jinko Solar', 'Tiger Neo N-type 575W', 575, 545.00],
+        'parceira' => ['Jinko Solar', 'Tiger Neo N-type 575W', 575, 545.00],
         'solaris' => ['Canadian Solar', 'HiKu7 Mono 550W', 550, 515.00],
         'luminar' => ['Trina Solar', 'Vertex N 610W', 610, 585.00],
     ];
@@ -92,8 +92,9 @@ class DemoCatalogoSeeder extends Seeder
                 'telefone' => sprintf('(20) 0000-%04d', 200 + $i),
                 'representante' => Sorteio::escolher(CatalogoDemo::NOMES_M).' '.Sorteio::escolher(CatalogoDemo::SOBRENOMES),
                 'site' => "https://{$chave}.fornecedor.demo",
-                'anotacoes' => $chave === 'edeltec' ? 'Catálogo sincronizado diariamente pela integração.' : 'Pedido mínimo de 1 kit; frete CIF acima de R$ 15 mil.',
+                'anotacoes' => $chave === 'parceira' ? 'Catálogo sincronizado diariamente pela integração.' : 'Pedido mínimo de 1 kit; frete CIF acima de R$ 15 mil.',
                 'ativo' => true,
+                'integracao' => $chave === 'parceira' ? Fornecedor::INTEGRACAO_DISTRIBUIDORA : null,
             ]);
             if (! $saida[$chave]->cnpj) {
                 $saida[$chave]->update(['cnpj' => Ficticio::cnpjFornecedor($saida[$chave]->id)]);
@@ -129,7 +130,7 @@ class DemoCatalogoSeeder extends Seeder
         foreach (self::INVERSORES as $i => [$marca, $modelo, $kw, $custo, $tensao]) {
             $inversores[$i] = $criar('inversor-solar', $marca, "Inversor {$marca} {$modelo}", [
                 'sku' => 'INV-'.strtoupper(substr($marca, 0, 3)).'-'.str_replace('.', '', (string) $kw), 'modelo' => $modelo,
-                'fornecedor_id' => $fornecedores['edeltec']->id, 'potencia' => $kw, 'unidade_potencia' => 'kW', 'tensao' => $tensao,
+                'fornecedor_id' => $fornecedores['parceira']->id, 'potencia' => $kw, 'unidade_potencia' => 'kW', 'tensao' => $tensao,
                 'preco_custo' => $custo, 'garantia' => $marca === 'Fronius' ? '7 anos (extensível a 12)' : '10 anos',
             ]);
         }
@@ -158,7 +159,7 @@ class DemoCatalogoSeeder extends Seeder
                 continue;
             }
             $criar($cat, $marca, $nome, [
-                'sku' => $sku, 'fornecedor_id' => $fornecedores[$i % 3 === 0 ? 'solaris' : 'edeltec']->id, 'potencia' => $pot,
+                'sku' => $sku, 'fornecedor_id' => $fornecedores[$i % 3 === 0 ? 'solaris' : 'parceira']->id, 'potencia' => $pot,
                 'unidade_potencia' => $unid, 'preco_custo' => $custo, 'garantia' => $garantia,
                 'unidade' => str_contains($nome, 'metro') ? 'm' : 'un',
                 // Um item descontinuado pelo fornecedor: aparece desativado no Catálogo.
@@ -232,11 +233,11 @@ class DemoCatalogoSeeder extends Seeder
         $bomba = Produto::where('sku', 'BMB-ANA-P100')->first();
         foreach ([[6, 'hibrido', 'Telha Colonial (Cerâmico)'], [10, 'hibrido', 'Laje'], [14, 'hibrido', 'Telha Metálica Perfil 55cm'],
             [4, 'offgrid', 'Solo'], [8, 'offgrid', 'Solo'], [4, 'bomba', 'Solo'], [8, 'bomba', 'Solo'], [14, 'bomba', 'Solo'], [24, 'bomba', 'Solo']] as [$qtd, $categoria, $estrutura]) {
-            $painel = $produtos['paineis']['edeltec'];
+            $painel = $produtos['paineis']['parceira'];
             $kwp = round($qtd * 0.575, 3);
             $sku = sprintf('EDL-%s-%03d', strtoupper(substr($categoria, 0, 3)), $qtd);
             $linhas[] = [
-                'fornecedor_id' => $fornecedores['edeltec']->id, 'estrutura_id' => $estruturas[$estrutura],
+                'fornecedor_id' => $fornecedores['parceira']->id, 'estrutura_id' => $estruturas[$estrutura],
                 'nome' => sprintf('Kit %s %s kWp — %d× %s', Kit::CATEGORIAS[$categoria], number_format($kwp, 2, ',', '.'), $qtd, $painel->modelo),
                 'modelo' => "{$qtd}x575W", 'sku' => $sku, 'potencia_kwp' => $kwp, 'tensao' => 220, 'inclui_trafo' => false,
                 'preco_custo' => round($kwp * 1000 * ($categoria === 'bomba' ? 2.4 : 3.6), 2), 'margem_padrao' => 0, 'categoria' => $categoria,

@@ -7,6 +7,7 @@ use App\Models\Config;
 use App\Models\Contrato;
 use App\Models\Fornecedor;
 use App\Models\IntegracaoHistorico;
+use App\Models\Kit;
 use App\Models\Lead;
 use App\Models\Orcamento;
 use App\Models\OrcamentoHistorico;
@@ -55,6 +56,33 @@ class MarketingDemoSeederTest extends TestCase
         $this->assertSame(0, Orcamento::count());
     }
 
+    public function test_marcacao_esconde_o_nome_da_distribuidora_de_base_antiga(): void
+    {
+        // Bases geradas antes da troca guardavam o nome real, e-mail, SKUs "EDL-" e o host da API nos alertas.
+        $f = Fornecedor::create(['nome' => 'Edeltec', 'email' => 'vendas@edeltec.com.br']);
+        $kit = $this->kitDe($f, 'EDL-ONG-001');
+        IntegracaoHistorico::create(['fornecedor_id' => $f->id, 'tipo' => 'edeltec', 'status' => 'erro', 'alertas' => 'cURL error 28 (api.edeltec — demonstração)']);
+
+        $this->seed(DemoDadosFicticiosSeeder::class);
+        $this->seed(DemoDadosFicticiosSeeder::class); // idempotente
+
+        $f->refresh();
+        $this->assertSame('Distribuidora Parceira (fictícia)', $f->nome);
+        $this->assertSame(Fornecedor::INTEGRACAO_DISTRIBUIDORA, $f->integracao);
+        $this->assertSame('comercial@parceira.fornecedor.demo', $f->email);
+        $this->assertSame('DPA-ONG-001', $kit->fresh()->sku);
+        $this->assertStringNotContainsStringIgnoringCase('edeltec', (string) IntegracaoHistorico::first()->alertas);
+        $this->assertTrue(Fornecedor::daIntegracao()->first()->is($f), 'a integração continua achando o fornecedor');
+    }
+
+    private function kitDe(Fornecedor $f, string $sku): Kit
+    {
+        return Kit::create([
+            'nome' => 'Kit teste', 'sku' => $sku, 'fornecedor_id' => $f->id, 'potencia_kwp' => 5,
+            'tensao' => 220, 'preco_custo' => 10000, 'categoria' => 'ongrid', 'ativo' => true, 'ativo_fornecedor' => true,
+        ]);
+    }
+
     public function test_marcacao_funciona_em_banco_que_ja_tem_fornecedores(): void
     {
         // O fornecedor de id maior guarda o CNPJ fictício que o de id menor vai receber (índice único).
@@ -90,6 +118,7 @@ class MarketingDemoSeederTest extends TestCase
         $this->nadaNoFuturoEFluxoCoerente();
         $this->dadosMarcadosComoFicticios();
         $this->telasCheiasEmTodosOsPerfis();
+        $this->nomeDaDistribuidoraConfidencial();
 
         // Idempotente: rodar de novo não duplica a base nem a marcação.
         $antes = [User::count(), Orcamento::count(), Cliente::where('nome', 'like', '%(fictício) (fictício)%')->count()];
@@ -210,5 +239,28 @@ class MarketingDemoSeederTest extends TestCase
         $this->actingAs($principal)->get(route('consultor.financeiro'))->assertInertia(fn ($page) => $page->where('total_comissoes', fn ($v) => $v > 0));
         $this->actingAs($principal)->get(route('consultor.visitas.index'))->assertInertia(fn ($page) => $page->where('visitas.total', fn ($v) => $v > 0));
         $this->actingAs($principal)->get(route('consultor.contratos.index'))->assertInertia(fn ($page) => $page->where('contratos.total', fn ($v) => $v > 0));
+    }
+
+    /** O nome real da distribuidora integrada é confidencial: nem nos dados nem no HTML das telas (com DEMO_MODE). */
+    private function nomeDaDistribuidoraConfidencial(): void
+    {
+        foreach (['fornecedores' => ['nome', 'email', 'site', 'anotacoes'], 'kits' => ['nome', 'sku'], 'integracao_historicos' => ['alertas'], 'activity_log' => ['description', 'properties']] as $tabela => $colunas) {
+            foreach ($colunas as $coluna) {
+                $this->assertSame(0, DB::table($tabela)->where($coluna, 'like', '%edeltec%')->count(), "{$tabela}.{$coluna} cita a distribuidora");
+            }
+        }
+
+        $fornecedor = Fornecedor::daIntegracao()->withCount('kits')->first();
+        $this->assertNotNull($fornecedor, 'a integração não acha o fornecedor');
+        $this->assertGreaterThan(100, $fornecedor->kits_count);
+
+        config(['demo.enabled' => true]);
+        $admin = User::where('email', 'admin'.self::DOMINIO)->first();
+        foreach (['admin.integracoes.distribuidora', 'admin.integracoes.historico', 'admin.fornecedores.index', 'admin.produtos.kits.index', 'admin.dashboard'] as $rota) {
+            $html = $this->actingAs($admin)->get(route($rota))->assertOk()->getContent();
+            $this->assertStringNotContainsStringIgnoringCase('edeltec', $html, "{$rota} mostra o nome da distribuidora");
+        }
+        $this->actingAs($admin)->get(route('admin.fornecedores.show', $fornecedor))
+            ->assertOk()->assertDontSee('edeltec', false)->assertDontSee('Edeltec', false);
     }
 }

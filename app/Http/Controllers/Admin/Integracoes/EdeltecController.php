@@ -9,6 +9,7 @@ use App\Models\IntegracaoHistorico;
 use App\Services\Demo\ModoDemonstracao;
 use App\Services\Integracoes\Edeltec\EdeltecImportService;
 use App\Services\Integracoes\Edeltec\EdeltecSincronizacaoEmAndamento;
+use App\Services\Integracoes\NomeDistribuidora;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -16,12 +17,9 @@ use Inertia\Response;
 
 class EdeltecController extends Controller
 {
-    public function index(ModoDemonstracao $demo): Response
+    public function index(ModoDemonstracao $demo, NomeDistribuidora $nome): Response
     {
-        $fornecedor = Fornecedor::where('nome', 'like', '%edeltec%')
-            ->orWhere('nome', 'like', '%Edeltec%')
-            ->withCount('kits')
-            ->first();
+        $fornecedor = Fornecedor::daIntegracao()->withCount('kits')->first();
 
         $historicos = IntegracaoHistorico::where('tipo', 'edeltec')
             ->with('fornecedor:id,nome')
@@ -45,7 +43,8 @@ class EdeltecController extends Controller
         $configurado = ! empty(config('services.edeltec.api_key'))
             && ! empty(config('services.edeltec.secret'));
 
-        return Inertia::render('Admin/Integracoes/Edeltec/Index', [
+        return Inertia::render('Admin/Integracoes/Distribuidora/Index', [
+            'distribuidora' => $nome->exibido(),
             'fornecedor' => $fornecedor ? [
                 'id' => $fornecedor->id,
                 'nome' => $fornecedor->nome,
@@ -55,6 +54,8 @@ class EdeltecController extends Controller
             'configurado' => $configurado,
             // Na demonstração a sincronização não roda (nem pelo agendador): aviso neutro em vez de erro de credencial.
             'demonstracao' => $demo->ativo(),
+            // Variáveis do .env citadas no aviso de credenciais; fora da demonstração apenas.
+            'variaveis_credenciais' => $demo->ativo() ? [] : ['EDELTEC_API_KEY', 'EDELTEC_SECRET'],
         ]);
     }
 

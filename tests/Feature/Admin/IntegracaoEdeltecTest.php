@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Jobs\SincronizarEdeltec;
+use App\Models\Fornecedor;
 use App\Models\IntegracaoHistorico;
 use App\Models\Kit;
 use App\Services\Integracoes\Edeltec\EdeltecImportService;
@@ -54,7 +55,7 @@ class IntegracaoEdeltecTest extends TestCase
 
     private function integrar()
     {
-        return $this->actingAs($this->admin())->post(route('admin.integracoes.edeltec.integrar'));
+        return $this->actingAs($this->admin())->post(route('admin.integracoes.distribuidora.integrar'));
     }
 
     public function test_importa_kits_e_registra_historico(): void
@@ -190,17 +191,69 @@ class IntegracaoEdeltecTest extends TestCase
         $this->assertTrue(Cache::lock(EdeltecImportService::LOCK, 60)->get());
     }
 
+    public function test_fora_da_demonstracao_a_tela_mostra_o_nome_da_distribuidora(): void
+    {
+        $this->actingAs($this->admin())->get(route('admin.integracoes.distribuidora'))
+            ->assertInertia(fn ($page) => $page->component('Admin/Integracoes/Distribuidora/Index')
+                ->where('distribuidora', 'Edeltec')
+                ->where('variaveis_credenciais', ['EDELTEC_API_KEY', 'EDELTEC_SECRET']));
+    }
+
+    public function test_na_demonstracao_o_nome_da_distribuidora_nao_aparece_em_nenhuma_tela(): void
+    {
+        config(['demo.enabled' => true]);
+        $fornecedor = $this->fornecedor(['nome' => 'Distribuidora Parceira (fictícia)', 'integracao' => Fornecedor::INTEGRACAO_DISTRIBUIDORA]);
+        $this->kit(['fornecedor_id' => $fornecedor->id]);
+        IntegracaoHistorico::create(['fornecedor_id' => $fornecedor->id, 'tipo' => 'edeltec', 'status' => 'concluido', 'iniciado_em' => now(), 'finalizado_em' => now()]);
+        $admin = $this->admin();
+
+        $this->actingAs($admin)->get(route('admin.integracoes.distribuidora'))
+            ->assertInertia(fn ($page) => $page->where('distribuidora', 'Distribuidora')
+                ->where('fornecedor.id', $fornecedor->id)
+                ->where('fornecedor.kits_count', 1)
+                ->where('variaveis_credenciais', [])
+                ->has('historicos', 1));
+
+        $this->actingAs($admin)->get(route('admin.integracoes.historico', ['tipo' => 'distribuidora']))
+            ->assertInertia(fn ($page) => $page->where('historicos.total', 1)->where('historicos.data.0.tipo', 'distribuidora'));
+
+        // HTML completo da primeira visita: props, componente e rotas do Ziggy (@routes).
+        foreach (['admin.integracoes.distribuidora', 'admin.integracoes.historico', 'admin.fornecedores.index', 'admin.produtos.kits.index'] as $rota) {
+            $html = $this->actingAs($admin)->get(route($rota))->assertOk()->getContent();
+            $posicao = stripos($html, 'edeltec');
+            $this->assertFalse($posicao, $rota.': '.substr($html, max(0, (int) $posicao - 150), 300));
+        }
+    }
+
+    public function test_endereco_antigo_redireciona(): void
+    {
+        $this->actingAs($this->admin())->get('/admin/integracoes/edeltec')
+            ->assertRedirect('/admin/integracoes/distribuidora');
+    }
+
+    public function test_integracao_acha_o_fornecedor_pela_coluna_mesmo_com_outro_nome(): void
+    {
+        $outro = $this->fornecedor(['nome' => 'Edeltec Antiga']);
+        $integrado = $this->fornecedor(['nome' => 'Distribuidora Parceira', 'integracao' => Fornecedor::INTEGRACAO_DISTRIBUIDORA]);
+        $this->apiComProdutos([$this->produtoApi('ED-1')]);
+
+        $this->integrar()->assertSessionHas('success');
+
+        $this->assertSame([$integrado->id], Kit::where('sku', 'ED-1')->pluck('fornecedor_id')->all());
+        $this->assertSame(0, $outro->kits()->count());
+    }
+
     public function test_tela_avisa_que_a_sincronizacao_fica_desligada_na_demonstracao(): void
     {
         config(['services.edeltec.api_key' => null, 'services.edeltec.secret' => null]);
         $admin = $this->admin();
 
-        $this->actingAs($admin)->get(route('admin.integracoes.edeltec'))
+        $this->actingAs($admin)->get(route('admin.integracoes.distribuidora'))
             ->assertInertia(fn ($page) => $page->where('configurado', false)->where('demonstracao', false));
 
         config(['demo.enabled' => true]);
 
-        $this->actingAs($admin)->get(route('admin.integracoes.edeltec'))
+        $this->actingAs($admin)->get(route('admin.integracoes.distribuidora'))
             ->assertInertia(fn ($page) => $page->where('configurado', false)->where('demonstracao', true));
     }
 }

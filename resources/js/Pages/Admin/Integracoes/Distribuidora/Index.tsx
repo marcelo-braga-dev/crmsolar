@@ -25,6 +25,9 @@ interface Props extends PageProps {
     historicos: HistoricoRow[];
     configurado: boolean;
     demonstracao: boolean;
+    /** Nome exibido: na demonstração o nome real da distribuidora é confidencial e vem "Distribuidora". */
+    distribuidora: string;
+    variaveis_credenciais: string[];
 }
 
 function fmtDuracao(s?: number | null): string {
@@ -43,25 +46,26 @@ function StatusChip({ status }: { status: HistoricoRow['status'] }) {
     return <Chip label={label} color={color} size="small" />;
 }
 
-export default function EdeltecIndex({ fornecedor, historicos, configurado, demonstracao }: Props) {
+export default function DistribuidoraIndex({ fornecedor, historicos, configurado, demonstracao, distribuidora, variaveis_credenciais }: Props) {
+    const titulo = demonstracao ? 'Integração com a distribuidora' : `Integração ${distribuidora}`;
     const [loading, setLoading] = React.useState(false);
     const ultima = historicos[0] ?? null;
 
     function handleIntegrar() {
-        if (!confirm('Iniciar integração com a Edeltec? Pode levar alguns minutos.')) return;
+        if (!confirm(`Iniciar integração com a ${distribuidora}? Pode levar alguns minutos.`)) return;
         setLoading(true);
-        router.post(route('admin.integracoes.edeltec.integrar'), {}, {
+        router.post(route('admin.integracoes.distribuidora.integrar'), {}, {
             onFinish: () => setLoading(false),
         });
     }
 
     return (
         <AppLayout>
-            <Head title="Integração Edeltec" />
+            <Head title={titulo} />
             <PageHeader
-                title="Integração Edeltec"
+                title={titulo}
                 subtitle="Sincroniza kits e preços via API do distribuidor"
-                breadcrumbs={[{ label: 'Integrações' }, { label: 'Edeltec' }]}
+                breadcrumbs={[{ label: 'Integrações' }, { label: distribuidora }]}
                 action={
                     <Button
                         variant="contained" startIcon={<SyncRoundedIcon />}
@@ -75,11 +79,13 @@ export default function EdeltecIndex({ fornecedor, historicos, configurado, demo
 
             {demonstracao ? (
                 <Alert severity="info" sx={{ mb: 3 }}>
-                    Nesta demonstração a sincronização com a Edeltec fica desligada. Os kits e o histórico abaixo são da base de exemplo.
+                    Nesta demonstração a sincronização com a distribuidora fica desligada. Os kits e o histórico abaixo são da base de exemplo.
                 </Alert>
             ) : !configurado && (
                 <Alert severity="error" sx={{ mb: 3 }}>
-                    Credenciais não configuradas. Adicione <strong>EDELTEC_API_KEY</strong> e <strong>EDELTEC_SECRET</strong> no arquivo <code>.env</code>.
+                    Credenciais não configuradas. Adicione {variaveis_credenciais.map((v, i) => (
+                        <React.Fragment key={v}>{i > 0 && ' e '}<strong>{v}</strong></React.Fragment>
+                    ))} no arquivo <code>.env</code>.
                 </Alert>
             )}
 
@@ -105,7 +111,7 @@ export default function EdeltecIndex({ fornecedor, historicos, configurado, demo
                                 </Box>
                             ) : (
                                 <Alert severity="warning" sx={{ mt: 0 }}>
-                                    Fornecedor "Edeltec" não encontrado. Cadastre-o em <strong>Fornecedores</strong> antes de integrar.
+                                    Fornecedor da integração não encontrado. Cadastre em <strong>Fornecedores</strong> um fornecedor com "{distribuidora}" no nome antes de integrar.
                                 </Alert>
                             )}
                         </CardContent>

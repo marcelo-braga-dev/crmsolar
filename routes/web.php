@@ -43,6 +43,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'));
 
+// Endereço antigo da integração. Fora dos grupos com nome: rota com nome entra no Ziggy (HTML) e citaria a distribuidora.
+Route::redirect('admin/integracoes/edeltec', '/admin/integracoes/distribuidora', 301);
+
 // Modo demonstração (DEMO.md): existem sempre, mas respondem 404 com DEMO_MODE desligado.
 Route::prefix('demo')->name('demo.')->group(function () {
     Route::post('acesso', [DemoController::class, 'acesso'])->middleware('throttle:10,1')->name('acesso');
@@ -130,8 +133,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->parameters(['fornecedores' => 'fornecedor']);
 
     Route::prefix('integracoes')->name('integracoes.')->group(function () {
-        Route::get('edeltec', [EdeltecController::class, 'index'])->name('edeltec');
-        Route::post('edeltec/integrar', [EdeltecController::class, 'integrar'])->name('edeltec.integrar');
+        // Caminho e nomes genéricos: o nome da distribuidora não aparece na URL nem nas rotas do navegador.
+        Route::get('distribuidora', [EdeltecController::class, 'index'])->name('distribuidora');
+        Route::post('distribuidora/integrar', [EdeltecController::class, 'integrar'])->name('distribuidora.integrar');
         Route::get('historico', [HistoricoController::class, 'index'])->name('historico');
     });
 

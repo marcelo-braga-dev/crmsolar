@@ -105,7 +105,7 @@ export const adminNav: NavSection[] = [
                 title: 'Integrações',
                 icon: <SyncRoundedIcon />,
                 children: [
-                    { title: 'Edeltec', href: '/admin/integracoes/edeltec' },
+                    { title: 'Distribuidora', href: '/admin/integracoes/distribuidora' },
                     { title: 'Histórico', href: '/admin/integracoes/historico' },
                 ],
             },
