@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Box, Card, CardContent, CardHeader, Chip, Divider, Grid,
+    Box, Card, CardContent, CardHeader, Chip, Divider,
     LinearProgress, Table, TableBody, TableCell, TableHead, TableRow, Tooltip, Typography, alpha,
 } from '@mui/material';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
@@ -8,6 +8,7 @@ import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 export interface EconomiaKit {
     // Kit base
@@ -29,7 +30,7 @@ export interface EconomiaKit {
     vpl_25a?: number; tir_25a?: number; economia_total_25a?: number; roi_percentual?: number;
 }
 
-const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtMoney = (v: Numerico) => formatarMoeda(v);
 const fmtNum   = (v: number, dec = 0) => v.toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
 
 interface Props {
@@ -68,24 +69,24 @@ export function AnaliseEconomica({ kit, corGrupo = '#2563EB' }: Props) {
                 </Box>
             )}
 
-            {/* KPIs principais */}
-            <Grid container spacing={1.5} sx={{ mb: 2 }}>
+            {/* KPIs principais — colunas pela largura do card (fica estreito ao lado da lista de kits), não da tela */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 1.5, mb: 2 }}>
                 {[
                     { label: 'Economia / Mês', value: fmtMoney(economiaMensal), icon: <TrendingUpRoundedIcon />, color: '#10B981', sub: `${fmtMoney(economiaAnual)}/ano` },
                     { label: 'Payback Simples', value: payback ? `${payback} anos` : '> 25 anos', icon: <AccessTimeRoundedIcon />, color: payback && payback <= 10 ? '#10B981' : payback && payback <= 15 ? '#F59E0B' : '#EF4444', sub: paybackDesc ? `Descontado: ${paybackDesc} anos` : '—' },
-                    { label: 'VPL 25 anos', value: fmtMoney(vpl), icon: <AccountBalanceRoundedIcon />, color: vpl > 0 ? '#10B981' : '#EF4444', sub: `TIR: ${tir}% a.a.` },
-                    { label: 'Retorno total', value: fmtMoney(economiaTotal), icon: <TrendingUpRoundedIcon />, color: corGrupo, sub: `ROI: ${roi}%` },
+                    { label: 'VPL 25 anos', value: formatarMoeda(vpl, 0), icon: <AccountBalanceRoundedIcon />, color: vpl > 0 ? '#10B981' : '#EF4444', sub: `TIR: ${tir}% a.a.` },
+                    { label: 'Retorno total', value: formatarMoeda(economiaTotal, 0), icon: <TrendingUpRoundedIcon />, color: corGrupo, sub: `ROI: ${roi}%` },
                 ].map(({ label, value, icon, color, sub }) => (
-                    <Grid key={label} size={{ xs: 6, sm: 3 }}>
-                        <Box sx={{ p: 1.5, borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+                    <Box key={label} sx={{ minWidth: 0 }}>
+                        <Box sx={{ p: 1.5, height: '100%', borderRadius: 2, border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
                             <Box sx={{ color, mb: 0.5 }}>{React.cloneElement(icon as React.ReactElement, { sx: { fontSize: 18 } })}</Box>
                             <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
-                            <Typography variant="subtitle2" fontWeight={700} sx={{ color }}>{value}</Typography>
-                            <Typography variant="caption" color="text.disabled">{sub}</Typography>
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ color, whiteSpace: 'nowrap' }}>{value}</Typography>
+                            <Typography variant="caption" color="text.disabled" display="block">{sub}</Typography>
                         </Box>
-                    </Grid>
+                    </Box>
                 ))}
-            </Grid>
+            </Box>
 
             {/* Detalhamento da economia */}
             {eco && (

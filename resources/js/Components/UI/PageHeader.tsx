@@ -54,7 +54,7 @@ export function PageHeader({ title, subtitle, breadcrumbs, action }: PageHeaderP
                     </Typography>
                 )}
             </Box>
-            {action && <Box sx={{ flexShrink: 0 }}>{action}</Box>}
+            {action && <Box sx={{ flexShrink: 0, maxWidth: '100%' }}>{action}</Box>}
         </Box>
     );
 }
