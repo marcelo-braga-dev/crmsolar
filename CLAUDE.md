@@ -323,6 +323,13 @@ resources/js/
 <Grid item xs={12} md={6}>
 ```
 
+### Valores monetários: sempre `formatarMoeda()`
+```tsx
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
+formatarMoeda(orcamento.preco_total)   // "R$ 38.113,37"
+```
+Colunas com cast `decimal:N` chegam ao React como **texto** ("38113.37"); `texto.toLocaleString()` devolve o texto sem formatar. Tipar como `Numerico`, não `number`.
+
 ### PageHeader é named export
 ```tsx
 import { PageHeader } from '@/Components/UI/PageHeader';  // correto
@@ -390,7 +397,7 @@ Trabalho de atualização integrado à `main`.
 
 ### Testes
 
-**484 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
+**488 testes, todos passando** (`php artisan test`, SQLite em memória — não toca no banco real **desde que a configuração não esteja em cache**; ver aviso no Deploy). Testes legados do Breeze (Registration/Profile) foram removidos.
 
 - `tests/Concerns/CriaDados.php` — construtores de dados (`admin()`, `consultor()`, `cliente()`, `orcamento()`, `kit()`, `produto()`…). O projeto só tem `UserFactory`; use o trait em vez de repetir `Model::create`.
 - Testes estruturais: `ControleDeAcessoTest` (matriz papel × tela), `IntegridadeDasRotasTest` (método existe + nome do parâmetro bate), `PaginasInertiaExistemTest` (todo `Inertia::render` tem `.tsx`).
@@ -398,6 +405,7 @@ Trabalho de atualização integrado à `main`.
 - PHPUnit 12: data provider só com atributo `#[DataProvider('metodo')]` — a annotation `@dataProvider` é ignorada (o teste roda sem argumentos e quebra).
 - Para rodar os testes de um commit isolado (simular o CI), use `git archive HEAD` numa pasta e **copie** o `vendor` — com symlink o autoload do Composer resolve para o projeto original e testa o working tree, não o commit.
 - Laravel desliga CSRF em testes — mudanças em rotas públicas POST precisam ser conferidas com `curl`.
+- `phpunit.xml` fixa `DEMO_MODE=false`: sem isso os testes herdavam o modo demonstração do `.env` do servidor e todo POST voltava bloqueado (9 falhas em `IntegracaoEdeltecTest`, entre outras).
 - `actingAs($user)` usa o objeto em memória: atributos com default só no banco (ex.: `comissao_percentual`) chegam `null` se não forem passados no `create`.
 - Seeders precisam rodar em MySQL **e** SQLite: use `Schema::disableForeignKeyConstraints()` (não `SET FOREIGN_KEY_CHECKS`). `MarketingDemoSeederTest` roda a base de demonstração inteira em SQLite (~25 s, com `MarketingDemoSeeder::$escala` reduzida).
 
