@@ -55,7 +55,7 @@ class OrcamentosController extends Controller
             'consultor:id,name,email',
             'cliente',
             'cidade:id,cidade,estado',
-            'info',
+            'info.estrutura:id,nome',
             'itens',
             'historicos.usuario:id,name',
             'aprovacao',

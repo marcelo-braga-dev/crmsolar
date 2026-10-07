@@ -33,6 +33,7 @@ import { PageHeader } from '@/Components/UI/PageHeader';
 import { TablePagination } from '@/Components/UI/TablePagination';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { PageProps, PaginatedData } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface Kit {
     id: number;
@@ -84,9 +85,7 @@ export default function KitsIndex({ kits, filters, fornecedores, estruturas, cat
         });
     }
 
-    const fmtMoney = (v?: number) => v != null
-        ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        : '—';
+    const fmtMoney = (v?: Numerico) => formatarMoeda(v);
 
     return (
         <AppLayout>

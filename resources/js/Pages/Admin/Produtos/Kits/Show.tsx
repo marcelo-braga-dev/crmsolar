@@ -25,6 +25,7 @@ import { Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { PageProps } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface Componente {
     id: number;
@@ -69,9 +70,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function KitsShow({ kit, categorias }: Props) {
-    const fmtMoney = (v?: number) => v != null
-        ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-        : '—';
+    const fmtMoney = (v?: Numerico) => formatarMoeda(v);
 
     return (
         <AppLayout>

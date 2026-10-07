@@ -19,6 +19,7 @@ import { PageHeader } from '@/Components/UI/PageHeader';
 import { OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { TablePagination } from '@/Components/UI/TablePagination';
 import { PageProps, PaginatedData, OrcamentoStatus } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface Orcamento {
     id: number; status: OrcamentoStatus; preco_total: number;
@@ -38,7 +39,7 @@ export default function ConsultorOrcamentosIndex({ orcamentos, filters, stats }:
         router.get(route('consultor.orcamentos.index'), { search, status, ...overrides }, { preserveState: true, replace: true });
     }
 
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
     const nomeCliente = (o: Orcamento) => o.cliente
         ? (o.cliente.tipo_pessoa === 'pj' ? o.cliente.razao_social : o.cliente.nome)
         : '—';

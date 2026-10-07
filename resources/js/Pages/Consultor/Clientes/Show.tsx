@@ -24,6 +24,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { ClienteStatusChip, OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { PageProps } from '@/types';
+import { formatarMoeda } from '@/utils/formatar';
 
 interface Props extends PageProps {
     cliente: {
@@ -203,7 +204,7 @@ export default function ClientesShow({ cliente }: Props) {
                                             </TableCell>
                                             <TableCell><OrcamentoStatusChip status={o.status as any} /></TableCell>
                                             <TableCell>
-                                                {o.preco_total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                {formatarMoeda(o.preco_total)}
                                             </TableCell>
                                             <TableCell>{o.geracao_estimada} kWh/mês</TableCell>
                                             <TableCell>{new Date(o.created_at).toLocaleDateString('pt-BR')}</TableCell>

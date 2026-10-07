@@ -15,6 +15,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { AnaliseEconomica, EconomiaKit } from '@/Components/UI/AnaliseEconomica';
 import { PageProps } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 const COR_GRUPO = '#D97706';
 const MESES: Record<string, string> = { jan:'Jan',fev:'Fev',mar:'Mar',abr:'Abr',mai:'Mai',jun:'Jun',jul:'Jul',ago:'Ago',set:'Set',out:'Out',nov:'Nov',dez:'Dez' };
@@ -43,7 +44,7 @@ export default function GrupoB3({ estruturas, clientes, concessionarias }: Props
     });
 
     const clienteSel = clientes.find((c) => String(c.id) === data.cliente_id) ?? null;
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
     const disponibilidade: Record<string, number> = { bifasico: 50, trifasico: 100 };
 
     function selecionarConcessionaria(id: string) {

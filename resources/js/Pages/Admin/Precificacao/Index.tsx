@@ -32,6 +32,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { PageProps } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface Faixa {
     id: number;
@@ -62,7 +63,7 @@ interface Props extends PageProps {
     fornecedores: FornecedorRow[];
 }
 
-const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtMoney = (v: Numerico) => formatarMoeda(v);
 const fmtPct = (v: number) => `${v.toFixed(2)}%`;
 
 function faixaLabel(f: Faixa) {

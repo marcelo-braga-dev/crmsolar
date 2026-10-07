@@ -13,6 +13,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { PageProps, OrcamentoStatus } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface OrcamentoEdit {
     id: number;
@@ -40,7 +41,7 @@ export default function OrcamentosEdit({ orcamento, flash }: Props) {
         : orcamento.cliente?.nome;
 
     const canEdit = orcamento.status === 'novo';
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
 
     const [submitting, setSubmitting] = useState(false);
     const { data, setData, errors } = useForm({

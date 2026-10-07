@@ -29,22 +29,23 @@ import { PageHeader } from '@/Components/UI/PageHeader';
 import { OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { PageProps, OrcamentoStatus } from '@/types';
 import { ROTULO_EVENTO } from '@/Components/Funil/eventoHistorico';
+import { formatarMoeda, paraNumero, type Numerico } from '@/utils/formatar';
 
 interface OrcamentoInfo {
-    tipo_sistema?: string;
-    tipo_ligacao?: string;
-    consumo_mensal?: number;
-    tarifa?: number;
-    estrutura?: string;
-    fornecedor?: string;
+    tipo_dimensionamento?: string;
+    fases?: string | null;
+    tensao?: number | null;
+    consumo?: Numerico;
+    tarifa_kwh?: Numerico;
+    estrutura?: { id: number; nome: string } | null;
 }
 
 interface OrcamentoItem {
     id: number;
     descricao: string;
     quantidade: number;
-    valor_unitario: number;
-    valor_total: number;
+    preco_venda_unitario: Numerico;
+    preco_venda_total: Numerico;
     ordem: number;
 }
 
@@ -60,8 +61,8 @@ interface Historico {
 interface OrcamentoFull {
     id: number;
     status: OrcamentoStatus;
-    preco_total: number;
-    geracao_estimada: number;
+    preco_total: Numerico;
+    geracao_estimada: Numerico;
     anotacoes?: string;
     token: string;
     created_at: string;
@@ -92,11 +93,14 @@ const STATUS_LABEL: Record<OrcamentoStatus, string> = {
     finalizado: 'Finalizado',
 };
 
+const TIPO_DIMENSIONAMENTO: Record<string, string> = { convencional: 'Convencional', demanda: 'Por Demanda', off_grid: 'Off-grid' };
+const FASES: Record<string, string> = { monofasico: 'Monofásico', bifasico: 'Bifásico', trifasico: 'Trifásico' };
+
 function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
     return (
         <Box sx={{ py: 1.25, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', gap: 2, '&:last-child': { border: 'none' } }}>
-            <Typography variant="body2" color="text.secondary" sx={{ minWidth: 160, fontWeight: 500 }}>{label}</Typography>
-            <Typography variant="body2">{value ?? '—'}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ width: { xs: 110, sm: 160 }, flexShrink: 0, fontWeight: 500 }}>{label}</Typography>
+            <Typography variant="body2" sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>{value ?? '—'}</Typography>
         </Box>
     );
 }
@@ -116,14 +120,16 @@ export default function OrcamentosShow({ orcamento, transicoes }: Props) {
         put(route('admin.orcamentos.update', orcamento.id));
     }
 
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
+
+    const tarifa = paraNumero(orcamento.info?.tarifa_kwh);
+    const geracao = paraNumero(orcamento.geracao_estimada);
+    const economiaMensal = tarifa !== null && geracao !== null ? geracao * tarifa : null;
 
     const destaque = [
         { label: 'Valor Total', value: fmtMoney(orcamento.preco_total), icon: <AttachMoneyRoundedIcon />, color: '#22c55e' },
-        { label: 'Geração Estimada', value: `${orcamento.geracao_estimada ?? 0} kWh/mês`, icon: <ElectricBoltRoundedIcon />, color: '#f59e0b' },
-        { label: 'Economia Estimada', value: orcamento.info?.tarifa && orcamento.geracao_estimada
-            ? fmtMoney(orcamento.geracao_estimada * orcamento.info.tarifa)
-            : '—', icon: <BoltRoundedIcon />, color: '#6366f1' },
+        { label: 'Geração Estimada', value: `${(geracao ?? 0).toLocaleString('pt-BR')} kWh/mês`, icon: <ElectricBoltRoundedIcon />, color: '#f59e0b' },
+        { label: 'Economia Estimada', value: economiaMensal !== null ? `${fmtMoney(economiaMensal)}/mês` : '—', icon: <BoltRoundedIcon />, color: '#6366f1' },
     ];
 
     return (
@@ -190,9 +196,9 @@ export default function OrcamentosShow({ orcamento, transicoes }: Props) {
                                 </Grid>
                                 <Grid size={{ xs: 12, sm: 6 }}>
                                     <InfoRow label="Vendedor" value={orcamento.consultor?.name} />
-                                    <InfoRow label="Tipo de Sistema" value={orcamento.info?.tipo_sistema} />
-                                    <InfoRow label="Tipo de Ligação" value={orcamento.info?.tipo_ligacao} />
-                                    <InfoRow label="Estrutura" value={orcamento.info?.estrutura} />
+                                    <InfoRow label="Tipo de Sistema" value={TIPO_DIMENSIONAMENTO[orcamento.info?.tipo_dimensionamento ?? '']} />
+                                    <InfoRow label="Tipo de Ligação" value={FASES[orcamento.info?.fases ?? ''] ?? orcamento.info?.fases ?? undefined} />
+                                    <InfoRow label="Estrutura" value={orcamento.info?.estrutura?.nome} />
                                 </Grid>
                             </Grid>
                         </CardContent>
@@ -220,10 +226,10 @@ export default function OrcamentosShow({ orcamento, transicoes }: Props) {
                                         <TableRow key={item.id}>
                                             <TableCell>{item.descricao}</TableCell>
                                             <TableCell align="right">{item.quantidade}</TableCell>
-                                            <TableCell align="right">{fmtMoney(item.valor_unitario)}</TableCell>
+                                            <TableCell align="right">{fmtMoney(item.preco_venda_unitario)}</TableCell>
                                             <TableCell align="right">
                                                 <Typography variant="body2" fontWeight={600}>
-                                                    {fmtMoney(item.valor_total)}
+                                                    {fmtMoney(item.preco_venda_total)}
                                                 </Typography>
                                             </TableCell>
                                         </TableRow>
@@ -312,9 +318,9 @@ export default function OrcamentosShow({ orcamento, transicoes }: Props) {
                             <CardHeader title="Dados Técnicos" titleTypographyProps={{ variant: 'subtitle1', fontWeight: 600 }} />
                             <Divider />
                             <CardContent>
-                                <InfoRow label="Consumo Mensal" value={orcamento.info.consumo_mensal ? `${orcamento.info.consumo_mensal} kWh/mês` : undefined} />
-                                <InfoRow label="Tarifa" value={orcamento.info.tarifa ? `R$ ${orcamento.info.tarifa}/kWh` : undefined} />
-                                <InfoRow label="Fornecedor" value={orcamento.info.fornecedor} />
+                                <InfoRow label="Consumo Mensal" value={paraNumero(orcamento.info.consumo) !== null ? `${paraNumero(orcamento.info.consumo)!.toLocaleString('pt-BR')} kWh/mês` : undefined} />
+                                <InfoRow label="Tarifa" value={tarifa !== null ? `${formatarMoeda(tarifa, 5)}/kWh` : undefined} />
+                                <InfoRow label="Tensão" value={orcamento.info.tensao ? `${orcamento.info.tensao}V` : undefined} />
                             </CardContent>
                         </Card>
                     )}

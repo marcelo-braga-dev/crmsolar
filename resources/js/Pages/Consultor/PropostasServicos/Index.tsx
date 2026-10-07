@@ -18,6 +18,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { TablePagination } from '@/Components/UI/TablePagination';
 import { PageProps, PaginatedData } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 type Status = 'rascunho' | 'enviada' | 'aceita' | 'recusada' | 'expirada';
 
@@ -40,7 +41,7 @@ export default function PropostasServicosIndex({ propostas, filters, stats }: Pr
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
 
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
     const nomeCliente = (p: Proposta) => p.cliente
         ? (p.cliente.tipo_pessoa === 'pj' ? p.cliente.razao_social : p.cliente.nome) ?? '—'
         : '—';

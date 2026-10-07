@@ -11,6 +11,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { PageProps } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 type Status = 'rascunho' | 'enviada' | 'aceita' | 'recusada' | 'expirada';
 
@@ -37,7 +38,7 @@ const COR_STATUS: Record<Status, string> = {
 export default function PropostasServicosShow({ proposta }: Props) {
     const st     = STATUS_MAP[proposta.status];
     const cor    = COR_STATUS[proposta.status];
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
     const nomeCli  = proposta.cliente
         ? (proposta.cliente.tipo_pessoa === 'pj' ? proposta.cliente.razao_social : proposta.cliente.nome) ?? '—'
         : '—';

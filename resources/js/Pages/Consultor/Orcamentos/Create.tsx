@@ -15,6 +15,7 @@ import { Head, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { PageHeader } from '@/Components/UI/PageHeader';
 import { PageProps } from '@/types';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface Estrutura { id: number; nome: string }
 interface ClienteOption {
@@ -112,7 +113,7 @@ export default function OrcamentosCreate({ tipo, estruturas, clientes, concessio
     });
 
     const clienteSelecionado = clientes.find((c) => String(c.id) === String(data.cliente_id)) ?? null;
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
 
     async function calcular() {
         const baseOk = data.cliente_id && data.estrutura_id;

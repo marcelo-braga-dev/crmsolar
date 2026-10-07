@@ -21,6 +21,7 @@ import { OrcamentoStatusChip } from '@/Components/UI/StatusChip';
 import { ConfirmDialog } from '@/Components/UI/ConfirmDialog';
 import { PageProps, OrcamentoStatus } from '@/types';
 import { ROTULO_EVENTO } from '@/Components/Funil/eventoHistorico';
+import { formatarMoeda, type Numerico } from '@/utils/formatar';
 
 interface ProdutoBusca {
     id: number; nome: string; modelo?: string; sku?: string;
@@ -59,8 +60,8 @@ const orientacaoLabel: Record<string, string> = {
 function InfoRow({ label, value }: { label: string; value?: React.ReactNode }) {
     return (
         <Box sx={{ py: 1.25, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', gap: 2, '&:last-child': { border: 'none' } }}>
-            <Typography variant="body2" color="text.secondary" sx={{ minWidth: 160, fontWeight: 500 }}>{label}</Typography>
-            <Typography variant="body2">{value ?? '—'}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ width: { xs: 110, sm: 160 }, flexShrink: 0, fontWeight: 500 }}>{label}</Typography>
+            <Typography variant="body2" sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>{value ?? '—'}</Typography>
         </Box>
     );
 }
@@ -221,7 +222,7 @@ export default function OrcamentosShow({ orcamento, flash }: Props) {
     const { put, delete: destroy, processing } = useForm({});
 
     const canEdit = orcamento.status === 'novo';
-    const fmtMoney = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const fmtMoney = (v: Numerico) => formatarMoeda(v);
 
     return (
         <AppLayout>
