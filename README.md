@@ -70,7 +70,7 @@ npm run build                   # produção
 - **Usuários** — gestão de admins e consultores
 - **Financeiro** — comissões e faturamento
 - **Fornecedores** — cadastro de fornecedores
-- **Integrações** — sincronização de catálogo Edeltec, histórico de execuções
+- **Integrações** — sincronização do catálogo da distribuidora parceira, histórico de execuções
 - **Configurações** — auditoria (log de alterações), bancos, concessionárias, parâmetros de dimensionamento, funil de vendas (etapas, motivos de perda), **identidade visual** (nome da plataforma, logos, favicon, cores primária/secundária e do menu, com pré-visualização), sistema
 
 ### Área Consultor
@@ -116,7 +116,7 @@ app/
     GrupoTarifarioService.php    — análise econômica por grupo ANEEL
     PrecificacaoService.php      — cálculo de preços com margens em camadas
     Funil/FunilService.php       — regras do funil de vendas
-    Integracoes/Edeltec/         — sincronização do catálogo Edeltec
+    Integracoes/Edeltec/         — sincronização do catálogo da distribuidora
   Jobs/SincronizarEdeltec.php    — sincronização em fila (opcional)
 
 resources/js/
@@ -144,10 +144,10 @@ Além das padrão do Laravel (ver `.env.example`):
 | Variável                 | Padrão              | Uso                                                                 |
 |--------------------------|---------------------|---------------------------------------------------------------------|
 | `APP_TIMEZONE_EXIBICAO`  | `America/Sao_Paulo` | Fuso dos textos gerados no servidor (a aplicação grava em UTC)      |
-| `EDELTEC_API_KEY`, `EDELTEC_SECRET`, `EDELTEC_API_URL` | — | Credenciais da API Edeltec (sincronização do catálogo de kits) |
+| `EDELTEC_API_KEY`, `EDELTEC_SECRET`, `EDELTEC_API_URL` | — | Credenciais da API da distribuidora (sincronização do catálogo de kits) |
 | `EDELTEC_SYNC_FILA`      | `false`             | `true` = botão "Integrar" enfileira a sincronização. Exige worker `queue:work` |
 
-A sincronização Edeltec também roda todo dia às 04h00 pelo agendador (`php artisan schedule:run` no cron).
+A sincronização com a distribuidora também roda todo dia às 04h00 pelo agendador (`php artisan schedule:run` no cron).
 
 ## Status do projeto
 

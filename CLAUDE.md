@@ -88,7 +88,7 @@ CI (`.github/workflows/ci.yml`): Pint (`--test`), Larastan, `php artisan test`, 
 ### Modo demonstração (`DEMO_MODE`) — `DEMO.md`
 
 Mesma plataforma em instalação separada: visitante entra sem senha, troca de perfil pela barra no rodapé e **não grava nada** (middleware `BloqueiaEscritaNaDemonstracao`, no servidor). Desligado por padrão (rotas `/demo` → 404, prop `demo` = `null`).
-- ⚠️ **O nome da distribuidora integrada (Edeltec) é confidencial na demonstração.** Nada visível ao visitante pode citá-lo: nem dados, nem texto de tela, URL, nome de rota (vão para o HTML pelo Ziggy, inclusive rotas com nome herdado de grupo), nome de componente Inertia ou valor de coluna serializado. Texto de tela usa `NomeDistribuidora::exibido()` ("Distribuidora" com `DEMO_MODE`); o fornecedor é achado por `Fornecedor::daIntegracao()` (coluna `integracao`), nunca pelo nome.
+- ⚠️ **O nome da distribuidora integrada é confidencial** (demonstração, divulgação, site e documentação; no código ele só aparece em nomes de classe, variável de ambiente, comando e teste). Nada visível ao visitante pode citá-lo: nem dados, nem texto de tela, URL, nome de rota (vão para o HTML pelo Ziggy, inclusive rotas com nome herdado de grupo), nome de componente Inertia ou valor de coluna serializado. Texto de tela usa `NomeDistribuidora::exibido()` ("Distribuidora" com `DEMO_MODE`); o fornecedor é achado por `Fornecedor::daIntegracao()` (coluna `integracao`), nunca pelo nome.
 - ⚠️ **Toda nova rota POST que só lê ou calcula precisa entrar em `readonly_post_routes` (`config/demo.php`)**, senão fica bloqueada na demonstração. Tela `.create` que serve de vitrine (calcula sem gravar) vai em `readonly_form_routes`.
 - Lógica em `App\Services\Demo\ModoDemonstracao` (perfis em `PERFIS`); testes em `tests/Feature/Demo/ModoDemonstracaoTest.php`.
 
@@ -147,7 +147,7 @@ app/Http/Controllers/
       IdentidadeVisualController     — nome da plataforma, rodapé do login, logos, favicon e cores
       SistemaController              — configurações gerais
     Integracoes/
-      EdeltecController              — integração com a distribuidora (Edeltec); rota/tela genéricas `integracoes/distribuidora`
+      EdeltecController              — integração com a distribuidora; rota/tela genéricas `integracoes/distribuidora`
       HistoricoController            — log de sincronizações
 
   Consultor/
@@ -193,7 +193,7 @@ app/Http/Controllers/
 - **`DimensionamentoService`** — engine de cálculo solar (convencional e demanda). Recebe consumo/demanda + parâmetros → retorna potência do sistema, quantidade de painéis, geração estimada.
 - **`GrupoTarifarioService`** — cálculo para todos os grupos ANEEL (B1/B2/B3/A). Recebe tarifa + consumo → retorna análise econômica (payback, TIR, economia mensal).
 - **`PrecificacaoService`** — aplica as 3 camadas de margem (principal por faixa de potência → estado → fornecedor) para calcular o preço de venda. A comissão do consultor (`users.comissao_percentual`, gerenciada em Usuarios/Consultores) é registrada no item do orçamento mas não é somada como camada de margem — não infla o preço de venda.
-- **`Integracoes/Edeltec/`** — serviço de sincronização de catálogo Edeltec. Roda pelo botão em Integrações → Edeltec, pelo comando `app:integracao-edeltec` (agendado diariamente às 04h00 em `routes/console.php`, log em `storage/logs/edeltec.log`) ou pelo job `App\Jobs\SincronizarEdeltec` (quando `EDELTEC_SYNC_FILA=true`).
+- **`Integracoes/Edeltec/`** — serviço de sincronização do catálogo da distribuidora. Roda pelo botão em Integrações → Distribuidora, pelo comando `app:integracao-edeltec` (agendado diariamente às 04h00 em `routes/console.php`, log em `storage/logs/edeltec.log`) ou pelo job `App\Jobs\SincronizarEdeltec` (quando `EDELTEC_SYNC_FILA=true`).
 - **`Funil/FunilService`** — funil de vendas: em que coluna cada orçamento aparece (colunas de sistema derivadas do `status`) e todas as movimentações (mover, aprovar/reprovar, perder, reativar, follow-up). **Especificação completa: `docs/funil-de-vendas.md`.**
 
 ### Database — Migrations (40 total)
@@ -249,7 +249,7 @@ resources/js/Pages/
       IdentidadeVisual/Index.tsx     — identidade visual com pré-visualização ao vivo
       Sistema/Index.tsx
     Integracoes/
-      Distribuidora/Index.tsx        — integração com a distribuidora (Edeltec)
+      Distribuidora/Index.tsx        — integração com a distribuidora
       Historico/Index.tsx
 
   Funil/
@@ -413,14 +413,14 @@ Trabalho de atualização integrado à `main`.
 ### Resolvido na segunda rodada
 - **Inversores, Painéis e Transformadores** — rotas, menu e `ProdutosPorCategoriaController` (base comum). Usam as categorias do seeder (`inversor-solar`, `painel-solar`, `transformador`) e só editam produtos da própria categoria
 - **Endereço do cliente** — componente `Components/UI/EnderecoFields.tsx` (CEP → endereço, estado → cidade) nos formulários do Admin e do Consultor. O form do Admin não tinha cidade (cliente não podia ser dimensionado); a edição agora recebe `cidade.sigla`
-- **Integração Aldo removida** (descontinuada): controller, página, rotas, menu, testes, fornecedor e seus kits/produtos de teste, tabela `integracao_aldo_mapeamentos` e o tipo `aldo` do histórico (migration `2026_10_02_000000_remove_integracao_aldo`). **Só a Edeltec é integrada**
+- **Integração Aldo removida** (descontinuada): controller, página, rotas, menu, testes, fornecedor e seus kits/produtos de teste, tabela `integracao_aldo_mapeamentos` e o tipo `aldo` do histórico (migration `2026_10_02_000000_remove_integracao_aldo`). **Só a distribuidora parceira é integrada**
 - **Fluxos Convencional/Demanda** — exigem e gravam `grupo_tarifario` (B1/B2/B3 ou A4–A1)
 - **Transições de status** — `Orcamento::TRANSICOES` + `podeIrPara()`; Admin só vê/aplica destinos permitidos; Consultor só envia para aprovação a partir de `novo`/`aprovacao_reprovada`
 - **Validação dos fluxos de orçamento** — FormRequests em `app/Http/Requests/Consultor/Dimensionamento/` (base `DimensionamentoRequest`: a mesma classe valida cálculo e `*.store`, que acrescenta `kit_id`/anotações). THS Azul agora é exigido também ao salvar
 - **Fluxos Convencional/Demanda** estendem `BaseGrupoController` (usam `mapearKits` e `salvarOrcamento`)
 - **Precificação** carrega as margens uma vez por requisição (antes 3 queries por kit); busca de produtos exige 2+ caracteres
 - **Auditoria** — `spatie/activitylog` também em margens (3 camadas), `Kit`/`Produto` (só `updated`/`deleted` de preço e disponibilidade — a sincronização cria milhares), `OrcamentoItem`, `Concessionaria`, `ParamDimensionamento` e `User` (nome, e-mail, tipo, status, comissão; nunca senha). Tela em **Configurações → Auditoria** (`AuditoriaController`). Atualizações em massa via query builder (`Model::where()->update()`) **não disparam auditoria** — atualize pelo model
-- **Integração Edeltec nunca funcionou** — 3 bugs: (1) `EdeltecApiClient` reatribuía propriedades `readonly` promovidas no construtor → `Error` em toda execução; (2) renovação de token no meio da paginação reenviava o token velho (closure capturava `$token` por valor); (3) `kits.sku` não tinha índice único, então o `upsert` nunca atualizava e cada sincronização duplicaria o catálogo — agora índice único `(fornecedor_id, sku)`. Testes com API simulada: `Services/EdeltecApiClientTest`, `Admin/IntegracaoEdeltecTest`. Obs.: a sincronização usa `upsert` (sem eventos de model), então preços vindos da Edeltec ficam no histórico da integração, não na Auditoria kit a kit
+- **Integração com a distribuidora nunca funcionou** — 3 bugs: (1) `EdeltecApiClient` reatribuía propriedades `readonly` promovidas no construtor → `Error` em toda execução; (2) renovação de token no meio da paginação reenviava o token velho (closure capturava `$token` por valor); (3) `kits.sku` não tinha índice único, então o `upsert` nunca atualizava e cada sincronização duplicaria o catálogo — agora índice único `(fornecedor_id, sku)`. Testes com API simulada: `Services/EdeltecApiClientTest`, `Admin/IntegracaoEdeltecTest`. Obs.: a sincronização usa `upsert` (sem eventos de model), então preços vindos da distribuidora ficam no histórico da integração, não na Auditoria kit a kit
 - **Larastan nível 5 no CI** (`phpstan.neon`, 0 erros). Relações dos models com tipo genérico (`@return BelongsTo<Cliente, $this>`) — mantenha o padrão em relações novas, senão o Larastan enxerga só `Model`
 - **Cliente excluído sumia dos próprios orçamentos/visitas/propostas** (soft delete fazia a relação voltar `null`; a tela de contrato ficava sem nome e documento) — relações `cliente()` agora usam `withTrashed()`. Teste: `Consultor/ClienteExcluidoTest`
 - **Verificação de e-mail do Breeze removida** — rotas sem efeito (User não implementa `MustVerifyEmail`, nenhuma rota usa `verified`)
@@ -433,7 +433,7 @@ Trabalho de atualização integrado à `main`.
 - **Orçamento com contrato podia voltar para `aprovando`/`novo`** e ter itens e preço alterados — `Orcamento::transicoesPermitidas()` remove os status pré-aprovação quando há contrato não cancelado. Testes em `TransicoesStatusTest`
 - `npm audit fix` (axios, form-data, qs e outras) — `npm audit` limpo
 - **Contrato gravava potência/geração/consumo digitados no formulário** — agora vêm do orçamento aprovado (potência = soma dos kits, geração do orçamento, consumo do `OrcamentoInfo`), como já era com `valor_total`; o formulário só preenche o que o orçamento não tiver (campos desabilitados na tela). Testes em `ContratoCreationTest`
-- **Sincronização Edeltec em fila (opcional)** — `EDELTEC_SYNC_FILA=true` faz o botão "Integrar" enfileirar o job `App\Jobs\SincronizarEdeltec` em vez de rodar na requisição (padrão `false` = comportamento antigo). **Só ative depois de configurar o worker `queue:work`** no servidor. `EdeltecImportService::importar()` usa a trava `integracao-edeltec` (cache, expira em 1h): botão, job e comando agendado nunca rodam ao mesmo tempo. Testes em `IntegracaoEdeltecTest`
+- **Sincronização com a distribuidora em fila (opcional)** — `EDELTEC_SYNC_FILA=true` faz o botão "Integrar" enfileirar o job `App\Jobs\SincronizarEdeltec` em vez de rodar na requisição (padrão `false` = comportamento antigo). **Só ative depois de configurar o worker `queue:work`** no servidor. `EdeltecImportService::importar()` usa a trava `integracao-edeltec` (cache, expira em 1h): botão, job e comando agendado nunca rodam ao mesmo tempo. Testes em `IntegracaoEdeltecTest`
 - **Listas com mais de uma página quebravam (React #60)** — botões de paginação usavam `Button` do MUI com `dangerouslySetInnerHTML`; rótulos agora são texto via `rotuloPaginacao()` (`Components/UI/TablePagination.tsx`)
 - **Cadastro manual de kit dava erro 500** — tensão era texto livre ("220V / 380V") para coluna inteira obrigatória. Agora tensão (`Kit::TENSOES`) e tipo de sistema (`Kit::CATEGORIAS`, antes ausente do form — todo kit manual virava on-grid) são selects obrigatórios; SKU único por fornecedor validado (antes o índice único dava 500); preço de custo obrigatório. `margem_padrao` saiu das telas de kit (não entra no preço — só as 3 camadas de Precificação). Testes em `Admin/ProdutosTest`
 - **Produtos: regras únicas** — `App\Http\Requests\Admin\ProdutoRequest` (categoria e custo obrigatórios, SKU único até 60, garantia em texto)
@@ -457,7 +457,7 @@ Trabalho de atualização integrado à `main`.
 
 #### 🔵 Melhorias recomendadas
 - Valores monetários com centavos inteiros ou `bcmath` em vez de `float`.
-- Ativar a sincronização Edeltec em fila: configurar o worker `queue:work` (supervisor/aaPanel) e só então definir `EDELTEC_SYNC_FILA=true`.
+- Ativar a sincronização com a distribuidora em fila: configurar o worker `queue:work` (supervisor/aaPanel) e só então definir `EDELTEC_SYNC_FILA=true`.
 - Ativar Sentry (`SENTRY_LARAVEL_DSN`) e `SESSION_ENCRYPT=true`. Subir o nível do Larastan aos poucos (hoje 5).
 
 **Prioridade:** qualidade → melhorias.

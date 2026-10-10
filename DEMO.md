@@ -17,7 +17,7 @@ Instalação separada da plataforma, aberta a quem pode comprar. Tem duas partes
 | Somente leitura | **garantido no servidor** pelo middleware `BloqueiaEscritaNaDemonstracao`: POST/PUT/PATCH/DELETE e as telas `.create`/`.edit`/`.senha` são negados (navegação volta com o aviso "Acesso de teste: criar, editar e excluir estão desativados nesta demonstração."; chamada de API recebe 403 em JSON). No navegador, a guarda `demoGuard` esmaece os botões de ação e avisa em vez de abrir formulários |
 | Liberados | logout, rotas `/demo`, `readonly_post_routes` (cálculos do dimensionamento e busca de kits) e `readonly_form_routes` (telas do simulador por grupo tarifário: o visitante dimensiona e vê kits e payback; só o "Salvar" é bloqueado) |
 | Senha | esqueci a senha, redefinição e confirmação levam ao acesso de demonstração; login com senha é bloqueado |
-| Rotinas | o agendador não roda a sincronização Edeltec (nem nada que importe ou envie) com `DEMO_MODE` ligado; sem cron de integrações nem worker de fila |
+| Rotinas | o agendador não roda a sincronização com a distribuidora (nem nada que importe ou envie) com `DEMO_MODE` ligado; sem cron de integrações nem worker de fila |
 | Visitantes | `GET /demo/visitantes.csv?token=DEMO_LEADS_TOKEN` (404 sem o token certo) ou `php artisan demo:visitantes [arquivo.csv] [--desde=AAAA-MM-DD]`. Colunas: nome, e-mail, telefone, empresa, primeiro e último acesso, visitas, telas vistas, perfis usados e UTMs. CSV com `;` e BOM (abre direto no Excel) |
 
 ### Links para campanhas
@@ -56,7 +56,7 @@ A "Sol Nascente Energia Solar (empresa fictícia)" abre há 16 meses e cresce m�
 | Funil | cada orçamento percorre o funil pelo `FunilService`: atendimento, contatos, visita técnica, negociação, financiamento, aprovação (às vezes reprovação e reenvio), ou perda com motivo — alguns reativados depois |
 | Pós-venda | contratos gerados e assinados, instalação, finalização, propostas de serviço (limpeza, O&M, carregador veicular) e ampliações |
 | Hoje | negociações em todas as etapas (em dia, atenção, atrasadas, sem próximo passo), caixa de entrada com itens esfriando, aprovações pendentes, visitas agendadas, contratos aguardando assinatura, instalações em andamento e vendas já fechadas no mês |
-| Casos-problema | negócios parados há meses (contato vencido, prazo da etapa estourado), contrato cancelado após assinatura, visita cancelada e reagendada, kits retirados pelo fornecedor, falha na sincronização Edeltec |
+| Casos-problema | negócios parados há meses (contato vencido, prazo da etapa estourado), contrato cancelado após assinatura, visita cancelada e reagendada, kits retirados pelo fornecedor, falha na sincronização com a distribuidora |
 | Histórico | linha do tempo de cada orçamento, Auditoria com quem fez o quê e quando (inclusive reajustes de tarifa, margens, prazos do funil e comissão), ~110 execuções de integração |
 
 As datas são **relativas a hoje**: rodar de novo daqui a meses gera uma base igualmente atual. A geração é **determinística** (semente fixa em `MarketingDemoSeeder::SEMENTE`): mesma data, mesma base.
@@ -97,7 +97,7 @@ O `DemoDadosFicticiosSeeder` roda no fim (e pode rodar de novo sem duplicar nada
    # DEMO_INITIAL_ROLE=admin
    ```
 
-3. **Sem cron de integrações nem worker** nesta instalação (com `DEMO_MODE` ligado o agendador já não roda a sincronização Edeltec; o histórico vem pronto).
+3. **Sem cron de integrações nem worker** nesta instalação (com `DEMO_MODE` ligado o agendador já não roda a sincronização com a distribuidora; o histórico vem pronto).
 4. Instale e gere a base:
 
    ```bash
@@ -153,7 +153,7 @@ Rodar o seeder de novo **sem** `migrate:fresh` não faz nada (ele detecta a base
 | `database/seeders/Support/SimuladorComercial.php` | a história: equipe, clientes, leads e o ciclo de cada orçamento pelo `FunilService` |
 | `database/seeders/Support/Agenda.php` | "viagem no tempo": cada evento roda com `Carbon::setTestNow()` na data dele e o usuário autenticado — timestamps, linha do tempo, relógio da etapa e Auditoria saem como na operação real; eventos depois de hoje ficam pendentes |
 | `database/seeders/Support/FabricaOrcamento.php` | orçamento como o `BaseGrupoController::salvarOrcamento` (mesmos serviços e campos) |
-| `database/seeders/DemoIntegracoesSeeder.php` | histórico Edeltec/planilha no formato do `EdeltecImportService` |
+| `database/seeders/DemoIntegracoesSeeder.php` | histórico da distribuidora/planilha no formato do `EdeltecImportService` |
 | `database/seeders/DemoDadosFicticiosSeeder.php` | marcação de dados fictícios (idempotente) |
 | `database/seeders/Support/CatalogoDemo.php`, `Ficticio.php`, `Sorteio.php` | catálogos fixos, formatos fictícios e sorteio determinístico |
 
